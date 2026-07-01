@@ -113,6 +113,32 @@ table.io .a{color:var(--dim);width:42%}
   color:var(--ink);border-radius:4px;padding:6px 8px;font-size:10px;margin-bottom:4px}
 .injector button.armed{border-color:var(--red);color:var(--red)}
 .injector .x{position:absolute;top:6px;right:8px;color:var(--dim);background:none;border:none;font-size:14px;width:auto;padding:0}
+/* career work-order card */
+.wocard{position:absolute;top:10px;right:10px;width:250px;background:var(--panel2);border:1px solid var(--blue);
+  border-radius:6px;padding:10px;z-index:9;box-shadow:0 6px 24px #000a}
+.wohead{display:flex;justify-content:space-between;font-size:10px;color:var(--blue);font-weight:700;letter-spacing:.5px}
+.wo-machine{font-size:12px;font-weight:700;color:var(--red);margin:5px 0 3px}
+.wo-complaint{font-size:11px;color:var(--ink);font-style:italic;background:#05080b;border-left:3px solid var(--amber);
+  padding:6px 8px;border-radius:3px;line-height:1.4;margin-bottom:8px}
+.wo-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+.wo-grid div{background:#05080b;border:1px solid var(--edge);border-radius:4px;padding:5px 7px}
+.wo-grid span{display:block;font-size:8px;color:var(--dim);letter-spacing:.5px}
+.wo-grid b{font-size:15px}
+.wo-status{font-size:10px;color:var(--dim);line-height:1.45;background:#05080b;border-radius:4px;padding:6px 8px}
+.wo-status.win{color:var(--green)} .wo-status.bad{color:var(--red)}
+.red{color:var(--red)} .green{color:var(--green)}
+/* end-of-shift modal */
+.modal{position:absolute;inset:0;background:#000a;display:flex;align-items:center;justify-content:center;z-index:20}
+.modalbox{background:var(--panel);border:1px solid var(--blue);border-radius:10px;padding:22px 26px;width:460px;
+  box-shadow:0 10px 40px #000c;text-align:center}
+.modalbox h2{margin:0 0 6px;color:var(--blue);letter-spacing:1px;font-size:16px}
+.grade{font-size:64px;font-weight:800;line-height:1;margin:6px 0}
+.modalbox table{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0}
+.modalbox td{padding:5px 8px;border-bottom:1px solid var(--edge);text-align:left}
+.modalbox td:last-child{text-align:right;color:var(--cyan);font-weight:700}
+.sm-log{max-height:150px;overflow:auto;font-size:10px;text-align:left;color:var(--dim);
+  background:#05080b;border-radius:5px;padding:8px;margin-top:8px}
+.sm-log div{padding:2px 0;border-bottom:1px solid #1a232c}
 /* status pill */
 .pill{padding:3px 9px;border-radius:11px;font-size:11px;font-weight:700;letter-spacing:.5px}
 .pill.idle{background:#1b2530;color:var(--dim)}
@@ -139,6 +165,7 @@ table.io .a{color:var(--dim);width:42%}
       <button class="btn go"    id="btn-auto">AUTO</button>
       <button class="btn stop"  id="btn-estop">■ E-STOP</button>
       <button class="btn reset" id="btn-reset">↻ RESET</button>
+      <button class="btn"       id="btn-career" style="border-color:var(--blue);color:var(--blue)">▶ START SHIFT</button>
       <button class="btn"       id="btn-inject">⚙ INSTRUCTOR</button>
     </div>
   </div>
@@ -445,6 +472,33 @@ table.io .a{color:var(--dim);width:42%}
     <div class="help" style="margin-top:6px">Each fault is a single data override on one component. Symptoms emerge from physics + the PLC scan — nothing is scripted.</div>
   </div>
 
+  <!-- CAREER: work-order card -->
+  <div class="wocard" id="wocard" style="display:none">
+    <div class="wohead"><span id="wo-ticket">TICKET 1/8</span><span id="wo-shift">SHIFT 00:00</span></div>
+    <div class="wo-machine" id="wo-machine">PRESS-LINE 3 · DOWN</div>
+    <div class="wo-complaint" id="wo-complaint">—</div>
+    <div class="wo-grid">
+      <div><span>DOWNTIME</span><b id="wo-down" class="red">$0</b></div>
+      <div><span>PARTS (ticket)</span><b id="wo-parts">$0</b></div>
+      <div><span>BUDGET LEFT</span><b id="wo-budget" class="green">$5000</b></div>
+      <div><span>FIXED</span><b id="wo-fixed">0/8</b></div>
+    </div>
+    <div class="wo-status" id="wo-status">Diagnose → pick the replacement part → RESET → ▶ CYCLE to verify.</div>
+    <button class="btn" id="wo-abandon" style="width:100%;font-size:11px;margin-top:6px">Give up on this ticket (skip, downtime penalty)</button>
+  </div>
+
+  <!-- CAREER: end-of-shift summary -->
+  <div class="modal" id="shiftmodal" style="display:none">
+    <div class="modalbox">
+      <h2 id="sm-title">SHIFT COMPLETE</h2>
+      <div class="grade" id="sm-grade">A</div>
+      <table id="sm-table"></table>
+      <div id="sm-log" class="sm-log"></div>
+      <button class="btn go" id="sm-again" style="width:100%;margin-top:10px">▶ START NEW SHIFT</button>
+      <button class="btn" id="sm-close" style="width:100%;margin-top:6px">Close (free-play sandbox)</button>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -719,6 +773,7 @@ function loop(now){
     plcAcc+=DT; if(plcAcc>=PLC_PERIOD){ plcAcc-=PLC_PERIOD; plcScan(); }
     if(S.plc.state!=='IDLE'&&S.plc.state!=='FAULTED'&&S.plc.state!=='ESTOP') S.cycleT+=DT;
     if(S.plc.state==='FAULTED'||S.plc.state==='ESTOP') S.cost+=DT*7;   // $7/s downtime
+    if(career.active&&career.open){ career.ticketTime+=DT; career.shiftTime+=DT; }  // career downtime clock
     acc-=DT;
   }
   render();
@@ -775,6 +830,8 @@ function render(){
   $('layer-phase').innerHTML = st==='FAULTED'
     ? `<span style="color:var(--red)">⛔ ${S.plc.faultCode}</span>`
     : `<span style="color:var(--dim)">phase:</span> <span style="color:var(--cyan)">${st}</span>`;
+
+  if(career.active) renderCareer();
 }
 
 function renderHyd(){
@@ -1034,10 +1091,11 @@ $('btn-repair').onclick=()=>{
   const p=$('repair-part').value; if(!p){ log('alarm','','Select a part first'); return; }
   const map={FILTER:'filter.R',PT110:'pt110.offset',LS402WIRE:'ls402.wiring',CYLSEAL:'cyl.gLeak',
              PUMP:'pump.slip',OIL:'cyl.beta',SPOOL:'valve.gMain',COILA:'coilA.R'};
-  const key=map[p];
-  if(faults[key]){ delete faults[key]; log('alarm','ok','REPAIR ✓ '+$('repair-part').selectedOptions[0].text+' — fault cleared. CYCLE to verify.');
+  const key=map[p]; const wasFault=!!faults[key]; const label=$('repair-part').selectedOptions[0].text;
+  if(wasFault){ delete faults[key]; log('alarm','ok','REPAIR ✓ '+label+' — fault cleared. CYCLE to verify.');
     document.querySelectorAll('.injector [data-f]').forEach(x=>x.classList.remove('armed')); }
-  else { log('alarm','info','Replaced '+p+' but it was NOT the fault. Parts cost incurred. Keep diagnosing.'); S.cost+=180; }
+  else { log('alarm','info','Replaced '+p+' but it was NOT the fault. Parts cost incurred. Keep diagnosing.'); if(!career.active) S.cost+=180; }
+  if(career.active) career.onRepair(p, wasFault);
 };
 // drawer tabs
 document.querySelectorAll('.dtab').forEach(t=>t.onclick=()=>{
@@ -1046,6 +1104,10 @@ document.querySelectorAll('.dtab').forEach(t=>t.onclick=()=>{
 });
 
 $('briefbody').innerHTML=`
+<b style="color:var(--blue)">▶ CAREER MODE:</b> press <b>START SHIFT</b> (top bar) for the game — 8 work orders with hidden faults,
+a parts budget, ticking downtime cost, and an end-of-shift grade. Only an operator complaint to go on; diagnose,
+replace the right part, CYCLE to verify. ⚙ INSTRUCTOR is the free-play sandbox below.
+<br><br>
 <b style="color:var(--ink)">HOW THIS PROTOTYPE WORKS</b><br>
 A live simulation, not a slideshow. It runs <b>real lumped-parameter solvers</b> — backward-Euler R-C hydraulics,
 nodal-analysis electrical, a rigid-body ram — plus an <i>independent</i> PLC scan sequencing idle→extend→press→retract.
@@ -1068,8 +1130,151 @@ seal=214 bar (pump fine), worn pump≈191 bar (pump can't make pressure).<br>
 ⑥ Air in oil → slow spongy pressure build.  ⑦ Sticky spool → slow extend but filter ΔP normal.<br>
 ⑧ Open SOL-A coil → ram won't move; multimeter shows 24V commanded at the coil but no pull-in.`;
 
+/* =========================================================================
+   CAREER MODE — a shift of work orders with HIDDEN seeded faults, a parts
+   budget, ticking downtime cost, and end-of-shift scoring. The sim/diagnosis
+   is unchanged; this only seeds faults, tracks economy, and grades.
+   ========================================================================= */
+const FAULTLIB=[
+  {id:'COILA', key:'coilA.R',      spec:{mode:'set',value:1e9},       part:'COILA',
+   complaint:'"Hit CYCLE and nothing moves — ram won\'t extend at all. Motor\'s running fine though."'},
+  {id:'FILTER',key:'filter.R',     spec:{mode:'scale',value:2000},    part:'FILTER',
+   complaint:'"Ram creeps down real slow then throws an extend-timeout. Been getting worse all week."'},
+  {id:'SPOOL', key:'valve.gMain',  spec:{mode:'scale',value:0.0012},  part:'SPOOL',
+   complaint:'"Slow to extend, trips on timeout. And before you ask — the filter got changed last month."'},
+  {id:'PT110', key:'pt110.offset', spec:{mode:'offset',value:20},     part:'PT110',
+   complaint:'"QC keeps kicking parts back as under-formed. Machine says all good — no alarms at all."'},
+  {id:'LS402', key:'ls402.wiring', spec:{mode:'set',value:0.5},       part:'LS402WIRE',
+   complaint:'"Every so often it stops at the bottom and won\'t come up. Maybe 1 in 10. Can\'t make it do it on command."'},
+  {id:'OIL',   key:'cyl.beta',     spec:{mode:'set',value:140},       part:'OIL',
+   complaint:'"Feels spongy — takes forever to build pressure then faults out. Reservoir looked a little foamy."'},
+  {id:'CYLSEAL',key:'cyl.gLeak',   spec:{mode:'set',value:0.03},      part:'CYLSEAL',
+   complaint:'"Can\'t make full tonnage. Pressure climbs then stalls, and it bleeds off on the hold. Pump sounds strained."'},
+  {id:'PUMP',  key:'pump.slip',    spec:{mode:'set',value:0.009},     part:'PUMP',
+   complaint:'"Can\'t build full pressure under load — weak parts, pressure-not-reached faults. Just like last quarter."'},
+];
+const PARTCOST={FILTER:40,PT110:300,LS402WIRE:80,CYLSEAL:600,PUMP:1500,OIL:200,SPOOL:250,COILA:60};
+const DOWNRATE=12, START_BUDGET=5000;
+
+const career={active:false,idx:0,order:[],budget:START_BUDGET,ticketTime:0,shiftTime:0,
+  ticketParts:0,wrongThis:0,partsTotal:0,downCost:0,lastGood:0,fixed:0,seeded:null,open:false,results:[]};
+
+function startShift(){
+  career.active=true; career.idx=0; career.order=FAULTLIB.map((_,i)=>i);
+  career.budget=START_BUDGET; career.partsTotal=0; career.downCost=0; career.fixed=0; career.results=[];
+  for(const k in faults) delete faults[k];
+  S.good=0; S.weak=0; S.cost=0;
+  $('injector').style.display='none'; $('btn-inject').disabled=true; $('btn-inject').style.opacity=.4;
+  $('btn-career').textContent='■ END SHIFT'; $('btn-career').style.borderColor='var(--red)'; $('btn-career').style.color='var(--red)';
+  $('shiftmodal').style.display='none'; $('wocard').style.display='block';
+  log('alarm','ok','▶ SHIFT STARTED · '+career.order.length+' work orders · budget $'+START_BUDGET);
+  nextTicket();
+}
+function nextTicket(){
+  if(career.idx>=career.order.length || career.budget<=0){ endShift(); return; }
+  doReset(); for(const k in faults) delete faults[k];
+  career.seeded=FAULTLIB[career.order[career.idx]];
+  faults[career.seeded.key]=career.seeded.spec;            // HIDDEN — player must diagnose
+  career.open=true; career.ticketTime=0; career.ticketParts=0; career.wrongThis=0; career.lastGood=S.good;
+  $('repair-part').value='';
+  $('wo-status').className='wo-status';
+  $('wo-status').textContent='Machine down. CYCLE to observe the symptom, diagnose with instruments, pick the part, then CYCLE to verify.';
+  log('alarm','info','📋 TICKET '+(career.idx+1)+' · operator: '+career.seeded.complaint);
+}
+career.onRepair=function(partValue, wasFault){
+  const cost=PARTCOST[partValue]||0;
+  career.budget-=cost; career.ticketParts+=cost; career.partsTotal+=cost;
+  if(faults[career.seeded.key]){                          // seeded fault still there -> wrong part
+    career.wrongThis++;
+    $('wo-status').className='wo-status bad';
+    $('wo-status').textContent='✗ That wasn\'t it — $'+cost+' in parts wasted. Keep diagnosing.';
+    log('alarm','active','✗ Wrong part ($'+cost+' wasted). Seeded fault still active.');
+  } else {
+    $('wo-status').className='wo-status';
+    $('wo-status').textContent='Part replaced ($'+cost+'). Now RESET & ▶ CYCLE to verify the fix.';
+  }
+  if(career.budget<=0){ log('alarm','active','💸 Budget exhausted!'); endShift(); }
+};
+function closeTicket(){
+  career.downCost += career.ticketTime*DOWNRATE;
+  career.fixed++;
+  career.results.push({id:career.seeded.id, part:career.seeded.part, time:career.ticketTime,
+    wrong:career.wrongThis, parts:career.ticketParts, firstFix:career.wrongThis===0});
+  log('alarm','ok','✅ TICKET '+(career.idx+1)+' CLOSED · '+career.seeded.id+' · '+
+    career.ticketTime.toFixed(0)+'s · $'+career.ticketParts+' parts'+(career.wrongThis===0?' · FIRST-FIX!':''));
+  career.open=false; career.idx++;
+  $('wo-status').className='wo-status win'; $('wo-status').textContent='✅ Solved! Loading next work order…';
+  setTimeout(nextTicket, 1400);
+}
+function abandonTicket(){
+  if(!career.open) return;
+  career.downCost += career.ticketTime*DOWNRATE + 500;    // give-up penalty
+  career.results.push({id:career.seeded.id, part:career.seeded.part, time:career.ticketTime,
+    wrong:career.wrongThis, parts:career.ticketParts, firstFix:false, skipped:true});
+  log('alarm','active','⏭ Ticket '+(career.idx+1)+' abandoned (+$500 penalty).');
+  for(const k in faults) delete faults[k];
+  career.open=false; career.idx++; nextTicket();
+}
+function endShift(){
+  career.active=false; career.open=false;
+  $('wocard').style.display='none';
+  $('btn-inject').disabled=false; $('btn-inject').style.opacity=1;
+  $('btn-career').textContent='▶ START SHIFT'; $('btn-career').style.borderColor='var(--blue)'; $('btn-career').style.color='var(--blue)';
+  for(const k in faults) delete faults[k]; doReset();
+  const solved=career.results.filter(r=>!r.skipped);
+  const ff=solved.filter(r=>r.firstFix).length;
+  const ffRate=solved.length? ff/solved.length : 0;
+  const avgMTTR=solved.length? solved.reduce((a,r)=>a+r.time,0)/solved.length : 0;
+  const total=career.downCost+career.partsTotal;
+  let grade='D', gc='var(--red)';
+  if(solved.length===career.order.length && ffRate>=0.85 && avgMTTR<28){ grade='A'; gc='var(--green)'; }
+  else if(ffRate>=0.7 && solved.length>=career.order.length-1){ grade='B'; gc='var(--cyan)'; }
+  else if(ffRate>=0.5){ grade='C'; gc='var(--amber)'; }
+  $('sm-grade').textContent=grade; $('sm-grade').style.color=gc;
+  $('sm-title').textContent = career.budget<=0? 'SHIFT OVER — BUDGET BLOWN' : 'SHIFT COMPLETE';
+  $('sm-table').innerHTML=[
+    ['Tickets solved', solved.length+' / '+career.order.length],
+    ['First-fix rate', Math.round(ffRate*100)+'%'],
+    ['Avg time-to-repair', avgMTTR.toFixed(0)+' s'],
+    ['Parts spend', '$'+career.partsTotal],
+    ['Downtime cost', '$'+career.downCost.toFixed(0)],
+    ['TOTAL COST', '$'+total.toFixed(0)],
+  ].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
+  $('sm-log').innerHTML=career.results.map((r,i)=>`<div>${r.skipped?'⏭':'✅'} #${i+1} ${r.id} · ${r.time.toFixed(0)}s · $${r.parts} · ${r.wrong} wrong ${r.firstFix?'· first-fix':''}</div>`).join('');
+  $('shiftmodal').style.display='flex';
+  log('alarm', grade==='A'?'ok':'info', '🏁 Shift done · grade '+grade+' · total cost $'+total.toFixed(0));
+}
+function renderCareer(){
+  if(!career.active) return;
+  // detect a verify: a completed cycle (good++) with the seeded fault gone
+  if(career.open && S.good>career.lastGood){
+    career.lastGood=S.good;
+    if(!faults[career.seeded.key]){ closeTicket(); }
+    else { $('wo-status').className='wo-status bad';
+      $('wo-status').textContent = career.seeded.id==='PT110'
+        ? 'Cycle completed but the part is a QC REJECT — sensor still lying, root cause NOT fixed.'
+        : 'Cycle completed, but the seeded fault isn\'t cleared yet — keep diagnosing.'; }
+  }
+  const down=career.ticketTime*DOWNRATE;
+  $('wo-ticket').textContent='TICKET '+Math.min(career.idx+1,career.order.length)+'/'+career.order.length;
+  $('wo-shift').textContent='SHIFT '+fmt(career.shiftTime);
+  $('wo-machine').textContent = career.open? 'PRESS-LINE 3 · DOWN' : 'PRESS-LINE 3';
+  if(career.seeded) $('wo-complaint').textContent=career.seeded.complaint;
+  $('wo-down').textContent='$'+down.toFixed(0);
+  $('wo-parts').textContent='$'+career.ticketParts;
+  $('wo-budget').textContent='$'+Math.max(0,career.budget);
+  $('wo-budget').className = career.budget<1000?'red':'green';
+  $('wo-fixed').textContent=career.fixed+'/'+career.order.length;
+}
+function fmt(s){ const m=Math.floor(s/60), ss=Math.floor(s%60); return (m<10?'0':'')+m+':'+(ss<10?'0':'')+ss; }
+
+$('btn-career').onclick=()=>{ if(career.active) endShift(); else startShift(); };
+$('wo-abandon').onclick=abandonTicket;
+$('sm-again').onclick=()=>{ $('shiftmodal').style.display='none'; startShift(); };
+$('sm-close').onclick=()=>{ $('shiftmodal').style.display='none'; };
+
 // boot
-log('alarm','ok','Workstation online · PRESS-LINE 3 · press ▶ CYCLE to run');
+log('alarm','ok','Workstation online · PRESS-LINE 3 · ▶ START SHIFT for career mode, or CYCLE to free-play');
 renderIO();
 requestAnimationFrame(loop);
 </script>

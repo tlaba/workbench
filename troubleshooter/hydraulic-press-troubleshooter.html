@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>PRESS-LINE 3 · Diagnostic Workstation</title>
+<style>
+:root{
+  --bg:#0d1117; --panel:#141b23; --panel2:#1b2530; --edge:#2a3744;
+  --ink:#c9d6e2; --dim:#7d8fa1; --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+  --amber:#ffb020; --green:#33d17a; --red:#ff5252; --blue:#4aa3ff; --cyan:#33d1c9;
+  --lo:#2b3a2b; --hi:#3a2b2b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+  font-family:var(--mono);font-size:13px;-webkit-font-smoothing:antialiased;overflow:hidden}
+button{font-family:var(--mono);cursor:pointer}
+.app{display:grid;height:100vh;
+  grid-template-rows:auto 1fr auto;
+  grid-template-columns:150px 1fr 250px;
+  grid-template-areas:"top top top" "tabs main instr" "tabs drawer drawer";
+  gap:6px;padding:6px}
+/* ---- top status bar ---- */
+.top{grid-area:top;display:flex;align-items:center;gap:14px;background:var(--panel);
+  border:1px solid var(--edge);border-radius:6px;padding:7px 12px}
+.wo{font-weight:700;color:var(--amber);letter-spacing:.5px}
+.wo small{color:var(--dim);font-weight:400;letter-spacing:0}
+.metric{display:flex;flex-direction:column;line-height:1.15}
+.metric b{font-size:15px}.metric span{color:var(--dim);font-size:10px;text-transform:uppercase;letter-spacing:.6px}
+.top .sp{flex:1}
+.ctrl{display:flex;gap:6px}
+.btn{background:var(--panel2);border:1px solid var(--edge);color:var(--ink);
+  padding:7px 12px;border-radius:5px;font-size:12px;font-weight:600;letter-spacing:.4px}
+.btn:hover{border-color:var(--blue)}
+.btn.go{background:#12351f;border-color:#2c7a48;color:var(--green)}
+.btn.stop{background:#3a1717;border-color:#7a2c2c;color:var(--red)}
+.btn.reset{background:#2b2416;border-color:#7a6a2c;color:var(--amber)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+/* ---- layer tabs ---- */
+.tabs{grid-area:tabs;display:flex;flex-direction:column;gap:5px}
+.tab{background:var(--panel);border:1px solid var(--edge);border-radius:6px;color:var(--dim);
+  padding:11px 10px;text-align:left;font-weight:600;font-size:12px;position:relative;transition:.1s}
+.tab:hover{color:var(--ink)}
+.tab.on{background:var(--panel2);color:var(--ink);border-color:var(--blue);box-shadow:inset 3px 0 0 var(--blue)}
+.tab .k{display:block;font-size:9px;color:var(--dim);letter-spacing:.5px;margin-top:2px}
+.tab .dot{position:absolute;right:8px;top:10px;width:8px;height:8px;border-radius:50%;background:transparent}
+.tab .dot.alarm{background:var(--red);box-shadow:0 0 6px var(--red);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.35}}
+.tabs .filler{flex:1}
+.tabs .legend{background:var(--panel);border:1px solid var(--edge);border-radius:6px;padding:8px;font-size:10px;color:var(--dim);line-height:1.6}
+.tabs .legend b{color:var(--ink);display:block;margin-bottom:3px;font-size:10px}
+.chip{display:inline-block;width:10px;height:6px;border-radius:2px;vertical-align:middle;margin-right:4px}
+/* ---- main schematic ---- */
+.main{grid-area:main;background:var(--panel);border:1px solid var(--edge);border-radius:6px;
+  position:relative;overflow:hidden}
+.main .title{position:absolute;top:8px;left:12px;font-size:11px;color:var(--dim);letter-spacing:1px;z-index:2}
+.main .phase{position:absolute;top:8px;right:12px;font-size:11px;z-index:2}
+svg.layer{width:100%;height:100%;display:none}
+svg.layer.on{display:block}
+.tp{cursor:crosshair}
+.tp:hover{filter:drop-shadow(0 0 4px var(--cyan))}
+text{font-family:var(--mono);fill:var(--ink)}
+.lbl{font-size:10px;fill:var(--dim)}
+.val{font-size:11px;fill:var(--cyan)}
+/* ---- instruments ---- */
+.instr{grid-area:instr;background:var(--panel);border:1px solid var(--edge);border-radius:6px;
+  display:flex;flex-direction:column;overflow:hidden}
+.instr h3{margin:0;padding:8px 10px;font-size:11px;color:var(--dim);letter-spacing:1px;border-bottom:1px solid var(--edge)}
+.itools{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:8px}
+.itool{background:var(--panel2);border:1px solid var(--edge);border-radius:5px;color:var(--dim);
+  padding:8px 4px;font-size:11px;font-weight:600;text-align:center}
+.itool.on{border-color:var(--cyan);color:var(--cyan);background:#12292b}
+.readout{margin:0 8px 8px;background:#05080b;border:1px solid var(--edge);border-radius:5px;
+  padding:10px;min-height:78px}
+.readout .big{font-size:26px;font-weight:700;color:var(--green);line-height:1}
+.readout .big.bad{color:var(--red)}.readout .big.warn{color:var(--amber)}
+.readout .u{font-size:13px;color:var(--dim)}
+.readout .tp-name{font-size:10px;color:var(--cyan);margin-bottom:6px}
+.readout .hint{font-size:10px;color:var(--dim);margin-top:6px;line-height:1.4}
+.probe-log{flex:1;overflow:auto;margin:0 8px 8px;font-size:10px}
+.probe-log div{padding:3px 5px;border-bottom:1px solid #1a232c;color:var(--dim)}
+.probe-log b{color:var(--ink)}
+.repair{padding:8px;border-top:1px solid var(--edge)}
+.repair select{width:100%;background:var(--panel2);color:var(--ink);border:1px solid var(--edge);
+  border-radius:4px;padding:6px;font-family:var(--mono);font-size:11px;margin-bottom:5px}
+/* ---- drawer ---- */
+.drawer{grid-area:drawer;background:var(--panel);border:1px solid var(--edge);border-radius:6px;
+  display:flex;flex-direction:column;overflow:hidden}
+.dtabs{display:flex;border-bottom:1px solid var(--edge)}
+.dtab{background:transparent;border:none;border-right:1px solid var(--edge);color:var(--dim);
+  padding:7px 14px;font-size:11px;font-weight:600;letter-spacing:.5px}
+.dtab.on{color:var(--amber);background:var(--panel2)}
+.dbody{flex:1;overflow:auto;padding:8px 10px}
+.dpane{display:none}.dpane.on{display:block}
+.alm{padding:5px 8px;border-left:3px solid var(--edge);margin-bottom:4px;background:#05080b;font-size:11px}
+.alm.active{border-left-color:var(--red);color:var(--red)}
+.alm.info{border-left-color:var(--amber);color:var(--amber)}
+.alm.ok{border-left-color:var(--green);color:var(--green)}
+.alm .t{color:var(--dim);font-size:9px}
+table.io{width:100%;border-collapse:collapse;font-size:11px}
+table.io td{padding:3px 6px;border-bottom:1px solid #1a232c}
+table.io .a{color:var(--dim);width:42%}
+.b1{display:inline-block;width:26px;text-align:center;border-radius:3px;font-weight:700}
+.b1.hi{background:#12351f;color:var(--green)}.b1.lo{background:#2a1717;color:#8a5555}
+.notes textarea{width:100%;height:120px;background:#05080b;color:var(--ink);border:1px solid var(--edge);
+  border-radius:4px;font-family:var(--mono);font-size:11px;padding:8px;resize:vertical}
+.help{color:var(--dim);font-size:10px;line-height:1.5;margin-top:6px}
+/* injector modal-ish */
+.injector{position:absolute;bottom:10px;right:10px;background:var(--panel2);border:1px solid var(--amber);
+  border-radius:6px;padding:10px;width:230px;z-index:9;box-shadow:0 6px 24px #000a}
+.injector h4{margin:0 0 6px;font-size:10px;color:var(--amber);letter-spacing:1px}
+.injector button{display:block;width:100%;text-align:left;background:var(--panel);border:1px solid var(--edge);
+  color:var(--ink);border-radius:4px;padding:6px 8px;font-size:10px;margin-bottom:4px}
+.injector button.armed{border-color:var(--red);color:var(--red)}
+.injector .x{position:absolute;top:6px;right:8px;color:var(--dim);background:none;border:none;font-size:14px;width:auto;padding:0}
+/* status pill */
+.pill{padding:3px 9px;border-radius:11px;font-size:11px;font-weight:700;letter-spacing:.5px}
+.pill.idle{background:#1b2530;color:var(--dim)}
+.pill.run{background:#12351f;color:var(--green)}
+.pill.fault{background:#3a1717;color:var(--red);animation:pulse 1s infinite}
+.pill.done{background:#16283a;color:var(--blue)}
+.wire{stroke:var(--edge);stroke-width:3;fill:none}
+.pipe{stroke:#3a4a58;stroke-width:6;fill:none;stroke-linecap:round}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ TOP STATUS BAR ============ -->
+  <div class="top">
+    <div class="wo">WO-4471 · PRESS-LINE 3<br><small>150-ton downstroke hydraulic press</small></div>
+    <div class="metric"><b id="m-state"><span class="pill idle">IDLE</span></b><span>machine</span></div>
+    <div class="metric"><b id="m-cycles">0</b><span>good / <span id="m-weak">0</span> weak</span></div>
+    <div class="metric"><b id="m-timer">0.0s</b><span>cycle time</span></div>
+    <div class="metric"><b id="m-cost" style="color:var(--red)">$0</b><span>downtime cost</span></div>
+    <div class="sp"></div>
+    <div class="ctrl">
+      <button class="btn go"    id="btn-cycle">▶ CYCLE</button>
+      <button class="btn go"    id="btn-auto">AUTO</button>
+      <button class="btn stop"  id="btn-estop">■ E-STOP</button>
+      <button class="btn reset" id="btn-reset">↻ RESET</button>
+      <button class="btn"       id="btn-inject">⚙ INSTRUCTOR</button>
+    </div>
+  </div>
+
+  <!-- ============ LAYER TABS ============ -->
+  <div class="tabs" id="tabs">
+    <button class="tab on" data-layer="hyd">Hydraulic<span class="k">P&amp;ID · fluid power</span><i class="dot" data-dot="hyd"></i></button>
+    <button class="tab" data-layer="elec">Electrical<span class="k">power · control</span><i class="dot" data-dot="elec"></i></button>
+    <button class="tab" data-layer="mech">Mechanical<span class="k">ram · tooling</span><i class="dot" data-dot="mech"></i></button>
+    <button class="tab" data-layer="plc">PLC Logic<span class="k">I/O · ladder</span><i class="dot" data-dot="plc"></i></button>
+    <button class="tab" data-layer="hmi">HMI<span class="k">operator panel</span><i class="dot" data-dot="hmi"></i></button>
+    <div class="filler"></div>
+    <div class="legend">
+      <b>PRESSURE</b>
+      <span class="chip" style="background:#3a4a58"></span>0 bar<br>
+      <span class="chip" style="background:var(--amber)"></span>~100 bar<br>
+      <span class="chip" style="background:var(--red)"></span>210 bar (relief)<br>
+      <b style="margin-top:6px">SIGNAL</b>
+      <span class="chip" style="background:var(--green)"></span>energized / TRUE<br>
+      <span class="chip" style="background:var(--edge)"></span>de-energized
+    </div>
+  </div>
+
+  <!-- ============ MAIN SCHEMATIC ============ -->
+  <div class="main" id="main">
+    <div class="title" id="layer-title">HYDRAULIC · P&amp;ID</div>
+    <div class="phase" id="layer-phase"></div>
+
+    <!-- HYDRAULIC -->
+    <svg class="layer on" data-layer="hyd" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
+      <!-- reservoir -->
+      <rect x="30" y="420" width="120" height="110" rx="4" fill="#0e1620" stroke="#3a4a58"/>
+      <rect x="34" y="470" width="112" height="56" fill="#14263a" opacity=".6"/>
+      <text class="lbl" x="42" y="440">RESERVOIR 250L</text>
+      <text class="lbl" x="42" y="522">ISO VG46 · 45°C</text>
+      <!-- suction -->
+      <path class="pipe" d="M90 420 L90 360 L150 360"/>
+      <rect x="150" y="345" width="46" height="30" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="STRAINER"/>
+      <text class="lbl" x="150" y="340">STRAINER</text>
+      <!-- pump + motor -->
+      <path class="pipe" d="M196 360 L245 360"/>
+      <circle cx="278" cy="360" r="32" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="PUMP"/>
+      <text class="lbl" x="252" y="364">PUMP</text>
+      <text class="lbl" x="248" y="410">P-101 60cc</text>
+      <circle cx="278" cy="290" r="26" fill="#182430" stroke="#3a4a58" class="tp" data-tp="MOTOR"/>
+      <text class="val" x="262" y="294" id="hv-motor">M</text>
+      <text class="lbl" x="250" y="256">MOTOR 30kW</text>
+      <line x1="278" y1="316" x2="278" y2="328" class="wire" id="hw-shaft"/>
+      <!-- pressure line to filter -->
+      <path class="pipe" id="pipe-supply" d="M310 360 L370 360"/>
+      <!-- filter -->
+      <rect x="370" y="335" width="40" height="50" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="FILTER"/>
+      <path d="M375 345 L405 375 M405 345 L375 375" stroke="#3a4a58" stroke-width="1.5"/>
+      <text class="lbl" x="360" y="330">FILTER FLT-201</text>
+      <circle cx="390" cy="322" r="6" fill="#2b3a2b" stroke="#3a4a58" id="hi-filterclog"/>
+      <text class="lbl" x="360" y="404" id="hv-filtdp">ΔP 0.3 bar</text>
+      <!-- post filter node -->
+      <path class="pipe" id="pipe-post" d="M410 360 L470 360"/>
+      <!-- relief + accumulator tee -->
+      <path class="pipe" d="M470 360 L470 300"/>
+      <rect x="450" y="255" width="40" height="46" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="RELIEF"/>
+      <text class="lbl" x="495" y="278">RELIEF RV-501</text>
+      <text class="lbl" x="495" y="292" id="hv-relief">set 210 bar</text>
+      <path class="pipe" d="M470 255 L470 220 L150 220 L150 345" stroke-dasharray="2 4"/>
+      <path class="pipe" d="M540 360 L540 305"/>
+      <path d="M525 260 a15 15 0 0 1 30 0 l0 45 l-30 0 z" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="ACCUM"/>
+      <text class="lbl" x="560" y="285">ACCUM</text>
+      <!-- to DCV -->
+      <path class="pipe" id="pipe-toDCV" d="M470 360 L620 360"/>
+      <!-- DCV 4/3 -->
+      <rect x="620" y="330" width="90" height="60" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="DCV"/>
+      <line x1="650" y1="330" x2="650" y2="390" stroke="#3a4a58"/>
+      <line x1="680" y1="330" x2="680" y2="390" stroke="#3a4a58"/>
+      <text class="lbl" x="622" y="345" id="hv-dcv">P T A B</text>
+      <text class="lbl" x="628" y="410">DCV DV-301 4/3</text>
+      <text class="lbl" x="600" y="325">A</text><text class="lbl" x="712" y="325">B</text>
+      <!-- solenoid indicators -->
+      <rect x="606" y="300" width="12" height="12" fill="#2b3a2b" stroke="#3a4a58" id="hi-solA"/>
+      <rect x="712" y="300" width="12" height="12" fill="#2b3a2b" stroke="#3a4a58" id="hi-solB"/>
+      <!-- A line to cap via check valve -->
+      <path class="pipe" id="pipe-A" d="M640 330 L640 150 L760 150"/>
+      <circle cx="700" cy="150" r="9" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="CHECK"/>
+      <text class="lbl" x="680" y="135">CHK</text>
+      <!-- B line to rod via flow control -->
+      <path class="pipe" id="pipe-B" d="M690 390 L690 470 L760 470"/>
+      <rect x="720" y="455" width="30" height="30" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="FLOWCTRL"/>
+      <text class="lbl" x="700" y="500">FLOW CTL</text>
+      <!-- cylinder -->
+      <rect x="760" y="120" width="90" height="380" rx="4" fill="#0e1620" stroke="#3a4a58"/>
+      <text class="lbl" x="762" y="115">CYL-401</text>
+      <rect id="hyd-piston" x="764" y="200" width="82" height="24" fill="#3a4a58"/>
+      <rect id="hyd-rod" x="800" y="224" width="10" height="270" fill="#2a3744"/>
+      <text class="lbl" x="856" y="150">cap</text>
+      <text class="lbl" x="856" y="470">rod</text>
+      <!-- test point dots -->
+      <circle cx="340" cy="360" r="6" fill="#233" stroke="var(--cyan)" class="tp" data-tp="PG101"/><text class="lbl" x="322" y="384">PG-101</text>
+      <circle cx="440" cy="360" r="6" fill="#233" stroke="var(--cyan)" class="tp" data-tp="PG102"/><text class="lbl" x="422" y="384">PG-102</text>
+      <circle cx="760" cy="150" r="6" fill="#233" stroke="var(--cyan)" class="tp" data-tp="PT110"/><text class="lbl" x="742" y="176">PT-110</text>
+      <circle cx="760" cy="470" r="6" fill="#233" stroke="var(--cyan)" class="tp" data-tp="RODLINE"/>
+    </svg>
+
+    <!-- ELECTRICAL -->
+    <svg class="layer" data-layer="elec" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
+      <text class="lbl" x="30" y="30">480VAC 3PH POWER</text>
+      <rect x="30" y="45" width="70" height="40" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="E480"/>
+      <text class="lbl" x="36" y="70">480V</text>
+      <line class="wire" id="ew-480" x1="100" y1="65" x2="160" y2="65"/>
+      <rect x="160" y="45" width="60" height="40" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="DISC"/>
+      <text class="lbl" x="164" y="70">DISC</text>
+      <line class="wire" id="ew-disc" x1="220" y1="65" x2="280" y2="65"/>
+      <rect x="280" y="45" width="60" height="40" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="K1"/>
+      <text class="lbl" x="290" y="70">K1</text>
+      <line class="wire" id="ew-k1" x1="340" y1="65" x2="400" y2="65"/>
+      <rect x="400" y="45" width="60" height="40" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="OL"/>
+      <text class="lbl" x="406" y="70">O/L</text>
+      <line class="wire" id="ew-ol" x1="460" y1="65" x2="520" y2="65"/>
+      <circle cx="555" cy="65" r="34" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="MOTORE"/>
+      <text class="val" x="545" y="70" id="ev-motor">M</text>
+      <text class="lbl" x="525" y="120">MOTOR 40A FLA</text>
+
+      <!-- 24V control -->
+      <text class="lbl" x="30" y="200">24VDC CONTROL</text>
+      <rect x="30" y="215" width="80" height="44" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="PSU"/>
+      <text class="lbl" x="36" y="242">24V PSU</text>
+      <line class="wire" id="ew-24" x1="110" y1="237" x2="180" y2="237"/>
+      <!-- estop chain -->
+      <rect x="180" y="215" width="70" height="44" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="ESTOP"/>
+      <text class="lbl" x="188" y="242">E-STOP</text>
+      <line class="wire" id="ew-estop" x1="250" y1="237" x2="330" y2="237"/>
+      <!-- K1 coil -->
+      <circle cx="360" cy="237" r="20" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="K1COIL"/>
+      <text class="lbl" x="346" y="241">K1c</text>
+      <line class="wire" id="ew-k1coil" x1="380" y1="237" x2="430" y2="237"/>
+      <text class="lbl" x="330" y="285">PLC Q0.0 gates coil</text>
+
+      <!-- solenoid coils -->
+      <line class="wire" id="ew-solA" x1="180" y1="340" x2="250" y2="340"/>
+      <rect x="250" y="322" width="60" height="36" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="SOLA"/>
+      <text class="lbl" x="256" y="344">SOL-A</text>
+      <rect x="150" y="322" width="24" height="36" fill="#2b3a2b" stroke="#3a4a58" id="ei-solA"/>
+      <line class="wire" id="ew-solB" x1="180" y1="410" x2="250" y2="410"/>
+      <rect x="250" y="392" width="60" height="36" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="SOLB"/>
+      <text class="lbl" x="256" y="414">SOL-B</text>
+      <rect x="150" y="392" width="24" height="36" fill="#2b3a2b" stroke="#3a4a58" id="ei-solB"/>
+      <text class="lbl" x="150" y="315">PLC Q0.1 / Q0.2 drive solenoids</text>
+
+      <!-- limit switch wiring -->
+      <text class="lbl" x="480" y="330">FIELD SENSOR WIRING</text>
+      <rect x="480" y="345" width="70" height="36" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="LSTOP"/>
+      <text class="lbl" x="486" y="367">LS-TOP</text>
+      <line class="wire" id="ew-lstop" x1="550" y1="363" x2="640" y2="363"/>
+      <rect x="480" y="410" width="70" height="36" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="LS402"/>
+      <text class="lbl" x="486" y="432">LS-402</text>
+      <!-- flex loop drawn with a kink to represent the fatigue point -->
+      <path class="wire" id="ew-ls402" d="M550 428 L590 428 L605 415 L620 441 L640 428"/>
+      <circle cx="612" cy="428" r="7" fill="#2b3a2b" stroke="var(--amber)" id="ei-flex"/>
+      <text class="lbl" x="560" y="470">flex loop @ platen (X4/TB-24)</text>
+      <rect x="640" y="345" width="90" height="110" rx="3" fill="#0e1620" stroke="#3a4a58"/>
+      <text class="lbl" x="648" y="365">PLC DI</text>
+      <text class="lbl" x="648" y="385" id="ev-i04">I0.4 —</text>
+      <text class="lbl" x="648" y="405" id="ev-i03">I0.3 —</text>
+      <circle cx="580" cy="150" r="6" fill="#233" stroke="var(--cyan)" class="tp" data-tp="TP24"/><text class="lbl" x="560" y="140">TP 24V+</text>
+    </svg>
+
+    <!-- MECHANICAL -->
+    <svg class="layer" data-layer="mech" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
+      <!-- frame -->
+      <rect x="250" y="40" width="400" height="30" fill="#1b2530" stroke="#3a4a58"/>
+      <rect x="270" y="70" width="30" height="420" fill="#182430" stroke="#3a4a58"/>
+      <rect x="600" y="70" width="30" height="420" fill="#182430" stroke="#3a4a58"/>
+      <text class="lbl" x="256" y="60">CROWN</text>
+      <text class="lbl" x="256" y="500">BED / BOLSTER</text>
+      <rect x="250" y="490" width="400" height="30" fill="#1b2530" stroke="#3a4a58"/>
+      <!-- cylinder -->
+      <rect x="410" y="70" width="80" height="70" fill="#0e1620" stroke="#3a4a58" class="tp" data-tp="CYLM"/>
+      <text class="lbl" x="414" y="60">CYL-401</text>
+      <!-- rod + platen (moves) -->
+      <rect id="mech-rod" x="443" y="140" width="14" height="120" fill="#2a3744"/>
+      <rect id="mech-platen" x="310" y="255" width="280" height="34" fill="#3a4a58" stroke="#4a5a68" class="tp" data-tp="PLATEN"/>
+      <text class="lbl" x="410" y="277" fill="#0d1117" id="mv-ram">RAM</text>
+      <!-- guide markers -->
+      <text class="lbl" x="636" y="200">guide</text><text class="lbl" x="636" y="215">pillars</text>
+      <!-- workpiece / die -->
+      <rect x="360" y="455" width="180" height="35" fill="#233042" stroke="#3a4a58" class="tp" data-tp="WORK"/>
+      <text class="lbl" x="410" y="478">WORKPIECE / DIE</text>
+      <!-- limit switch positions -->
+      <circle cx="640" cy="130" r="6" fill="#2b3a2b" stroke="#3a4a58" id="mi-lstop"/><text class="lbl" x="652" y="134">LS-TOP (home)</text>
+      <circle cx="640" cy="430" r="6" fill="#2b3a2b" stroke="#3a4a58" id="mi-lsbot"/><text class="lbl" x="652" y="434">LS-402 (bottom)</text>
+      <!-- readouts -->
+      <rect x="690" y="70" width="185" height="150" rx="4" fill="#05080b" stroke="#3a4a58"/>
+      <text class="lbl" x="700" y="92">RAM POSITION</text>
+      <text class="val" x="700" y="118" id="mv-pos" style="font-size:20px">0 mm</text>
+      <text class="lbl" x="700" y="150">RAM VELOCITY</text>
+      <text class="val" x="700" y="176" id="mv-vel" style="font-size:20px">0 mm/s</text>
+      <text class="lbl" x="700" y="205">FORMING FORCE (true)</text>
+      <text class="val" x="700" y="228" id="mv-force" style="font-size:20px">0 kN</text>
+    </svg>
+
+    <!-- PLC -->
+    <svg class="layer" data-layer="plc" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
+      <text class="lbl" x="30" y="28">SEQUENCER STATE</text>
+      <rect x="30" y="40" width="250" height="40" rx="4" fill="#05080b" stroke="#3a4a58"/>
+      <text class="val" x="42" y="66" id="pv-state" style="font-size:16px">IDLE</text>
+      <!-- timers -->
+      <text class="lbl" x="320" y="28">TIMERS</text>
+      <rect x="320" y="40" width="250" height="40" rx="4" fill="#05080b" stroke="#3a4a58"/>
+      <text class="lbl" x="330" y="58" id="pv-t101">T101 extend 0.0/6.0</text>
+      <text class="lbl" x="330" y="74" id="pv-t301">T301 press  0.0/4.0</text>
+      <!-- ladder rungs -->
+      <text class="lbl" x="30" y="120">LADDER (live)</text>
+      <g id="ladder"></g>
+    </svg>
+
+    <!-- HMI -->
+    <svg class="layer" data-layer="hmi" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
+      <rect x="120" y="30" width="660" height="500" rx="10" fill="#0a1017" stroke="#2a3744" stroke-width="2"/>
+      <rect x="140" y="50" width="620" height="60" rx="4" id="hmi-banner" fill="#12351f" stroke="#2c7a48"/>
+      <text x="160" y="88" id="hmi-bannertext" style="font-size:20px;font-weight:700" fill="#33d17a">SYSTEM READY</text>
+      <text class="lbl" x="160" y="150">STATION</text><text style="font-size:22px" x="160" y="182" fill="#c9d6e2">PRESS-LINE 3</text>
+      <!-- pressure gauge -->
+      <circle cx="300" cy="330" r="90" fill="#05080b" stroke="#3a4a58" stroke-width="3"/>
+      <text class="lbl" x="255" y="250">CAP PRESSURE (PLC)</text>
+      <text x="240" y="345" id="hmi-press" style="font-size:44px;font-weight:700" fill="#ffb020">0</text>
+      <text class="lbl" x="285" y="375" style="font-size:14px">bar</text>
+      <text class="lbl" x="240" y="440">SETPOINT 200 bar</text>
+      <!-- status lamps -->
+      <g id="hmi-lamps">
+        <circle cx="560" cy="200" r="14" id="lamp-run" fill="#2b3a2b" stroke="#3a4a58"/><text class="lbl" x="585" y="205">RUN</text>
+        <circle cx="560" cy="250" r="14" id="lamp-ok" fill="#2b3a2b" stroke="#3a4a58"/><text class="lbl" x="585" y="255">CYCLE OK</text>
+        <circle cx="560" cy="300" r="14" id="lamp-fault" fill="#2b3a2b" stroke="#3a4a58"/><text class="lbl" x="585" y="305">FAULT</text>
+        <circle cx="560" cy="350" r="14" id="lamp-estop" fill="#3a2b2b" stroke="#7a2c2c"/><text class="lbl" x="585" y="355">E-STOP OK</text>
+      </g>
+      <text class="lbl" x="160" y="500" id="hmi-hint">Press ▶ CYCLE (top bar) to run a press cycle.</text>
+    </svg>
+  </div>
+
+  <!-- ============ INSTRUMENT PANEL ============ -->
+  <div class="instr">
+    <h3>INSTRUMENTS</h3>
+    <div class="itools" id="itools">
+      <button class="itool on" data-i="none">✋ Select</button>
+      <button class="itool" data-i="dmm">🔌 Multimeter</button>
+      <button class="itool" data-i="press">🛢 Pressure</button>
+      <button class="itool" data-i="thermal">🌡 Thermal</button>
+    </div>
+    <div class="readout" id="readout">
+      <div class="tp-name" id="ro-tp">— no probe —</div>
+      <div><span class="big" id="ro-val">--</span> <span class="u" id="ro-unit"></span></div>
+      <div class="hint" id="ro-hint">Pick an instrument, then click a labelled test point on the schematic.</div>
+    </div>
+    <button class="btn" id="btn-deadhead" style="margin:0 8px 8px;font-size:11px">⚙ Dead-head pump test</button>
+    <div class="probe-log" id="probelog"></div>
+    <div class="repair">
+      <select id="repair-part">
+        <option value="">— select replacement part —</option>
+        <option value="FILTER">Replace filter element FLT-201</option>
+        <option value="PT110">Recalibrate/replace transducer PT-110</option>
+        <option value="LS402WIRE">Replace LS-402 flex cable / connector</option>
+        <option value="CYLSEAL">Reseal cylinder CYL-401 (piston seal)</option>
+      </select>
+      <button class="btn" id="btn-repair" style="width:100%">🔧 PERFORM REPAIR</button>
+    </div>
+  </div>
+
+  <!-- ============ BOTTOM DRAWER ============ -->
+  <div class="drawer">
+    <div class="dtabs">
+      <button class="dtab on" data-d="alarms">ALARM LOG</button>
+      <button class="dtab" data-d="io">I/O TABLE</button>
+      <button class="dtab" data-d="notes">HYPOTHESIS</button>
+      <button class="dtab" data-d="brief">BRIEF</button>
+    </div>
+    <div class="dbody">
+      <div class="dpane on" data-d="alarms" id="alarmlog"></div>
+      <div class="dpane" data-d="io">
+        <table class="io" id="iotable"></table>
+      </div>
+      <div class="dpane notes" data-d="notes">
+        <textarea id="notes" placeholder="Log your reasoning… e.g. 'PG-101 pinned at 210 but PG-102 sagging → 9 bar across filter → suspect FLT-201 clogged, NOT the DCV.'"></textarea>
+        <div class="help">The instrument log above is your evidence. Write your suspected root cause, then repair it and CYCLE to verify.</div>
+      </div>
+      <div class="dpane" data-d="brief">
+        <div class="help" id="briefbody"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="injector" id="injector" style="display:none">
+    <button class="x" id="inj-x">×</button>
+    <h4>⚙ INSTRUCTOR · INJECT FAULT</h4>
+    <button data-f="FILTER">① Clog pressure filter (HYD)</button>
+    <button data-f="PT110">② Transducer drift +20bar (SENSOR)</button>
+    <button data-f="LS402">③ Intermittent LS-402 wire (ELEC)</button>
+    <button data-f="CYLSEAL">④ Cylinder seal bypass (MECH)</button>
+    <button data-f="CLEAR" style="border-color:var(--green);color:var(--green)">✓ Clear all faults</button>
+    <div class="help" style="margin-top:6px">Each fault is a single data override on one component. Symptoms emerge from physics + the PLC scan — nothing is scripted.</div>
+  </div>
+
+</div>
+
+<script>
+"use strict";
+/* =========================================================================
+   PLANT ENGINE (reduced but genuinely emergent)
+   - Faults are DATA overrides on component params (effParam), never handlers.
+   - stepPhysics() advances hydraulics -> mechanics -> sensors.
+   - plcScan() runs an INDEPENDENT sequencer reading the sensor image.
+   - Every alarm/symptom below FALLS OUT of these two loops. No "if clogged
+     then timeout" branch exists anywhere.
+   ========================================================================= */
+
+// ---- seeded PRNG (deterministic intermittents) ----
+let _seed = 1337;
+function rnd(){ _seed = (_seed*1664525 + 1013904223) & 0x7fffffff; return _seed/0x7fffffff; }
+
+// ---- component params + fault overlay (the effParam chokepoint) ----
+const P = {
+  relief:   { crack: 210 },              // bar
+  pump:     { Q0: 30, volEff: 1.0 },     // L/min delivered
+  filter:   { R: 0.01 },                 // bar per (L/min)  -> healthy ΔP ~0.3 @30
+  cyl:      { Acap: 1.77, gLeak: 0.0 },  // kN per bar ; leak (L/s)/bar
+  pt110:    { offset: 0.0 },             // bar sensor offset
+  ls402:    { wiring: 1.0 },             // 1 = ok
+};
+const faults = {};   // e.g. faults['filter.R']={mode:'scale',value:2000}
+function eff(path){
+  const [c,k]=path.split('.'); let v=P[c][k]; const f=faults[path];
+  if(!f) return v;
+  if(f.mode==='scale')  return v*f.value;
+  if(f.mode==='offset') return v+f.value;
+  if(f.mode==='set')    return f.value;
+  return v;
+}
+
+// ---- machine geometry ----
+const STROKE=250, CONTACT=250, VFULL=83;   // mm ; mm/s free-run
+const SP=200, RELIEF_STANDBY=15;
+
+// ---- live state ----
+const S = {
+  running:true, estopOK:true, olOK:true, k1:false, motor:false,
+  pos:0, vel:0,                 // 0=home(top) .. 250=bottom
+  Pcap:0, Ppump:0, Ppost:0, filtDP:0, Qcyl:0,
+  solA:false, solB:false, motorCmd:false, alarmOut:false, okLamp:false,
+  Ibottom:0, Itop:1, IestopOK:1, IolOK:1, AIpress:0,
+  plc:{ state:'IDLE', t101:0, t301:0, tret:0, dwell:0, reached:false, reachPcap:0, faultCode:'', lastForce:0 },
+  cycleT:0, good:0, weak:0, cost:0, auto:false, deadhead:false,
+};
+const DT=0.02;                   // physics step (s)  (50 Hz, ample for a demo)
+const PLC_PERIOD=0.1; let plcAcc=0;
+
+// ------------------------------------------------------------------ physics
+function stepPhysics(dt){
+  // electrical résumé (algebraic): what is energized right now.
+  // Motor keeps running through a PROCESS fault (real behavior); only E-stop drops it.
+  S.k1     = S.estopOK && S.olOK && S.plc.state!=='ESTOP' && S.motorCmd;
+  S.motor  = S.k1;
+  const Q0 = S.motor ? eff('pump.Q0')*eff('pump.volEff') : 0;    // L/min available
+  const Rf = eff('filter.R');
+  const Pc = eff('relief.crack');
+
+  const valve = S.solA ? 'ext' : S.solB ? 'ret' : 'center';
+
+  if(S.deadhead){
+    // pump commanded against a blocked port: pressure rises to relief regardless
+    S.Ppump = Pc; S.Ppost = Pc - Rf*0; S.Qcyl=0; S.filtDP=0; S.vel=0;
+    return;
+  }
+
+  if(valve==='ext'){
+    if(S.pos < CONTACT-0.1){
+      // ---- APPROACH: fixed-flow pump pushes load through the filter.
+      // If the restriction is high, pump pins at relief and spills -> flow limited.
+      const Pload=40;
+      const Qmax = Math.max(0,(Pc - Pload)/Rf);        // most flow the relief ceiling can push through the filter
+      S.Qcyl = Math.min(Q0, Qmax);
+      const limited = S.Qcyl < Q0-0.05;
+      S.vel = VFULL*(S.Qcyl/Math.max(0.001,eff('pump.Q0')));
+      S.pos = Math.min(CONTACT, S.pos + S.vel*dt);
+      S.Pcap = Pload;
+      S.filtDP = Rf*S.Qcyl;
+      S.Ppump = limited ? Pc : (Pload + S.filtDP);
+      S.Ppost = S.Ppump - S.filtDP;
+    } else {
+      // ---- PRESSING: piston at workpiece, v=0. Pump flow builds cap pressure
+      //     against relief; internal seal leak bleeds it to tank.
+      S.vel=0; S.pos=CONTACT;
+      const inflow = Math.min(Q0, Math.max(0,(Pc - S.Pcap)/Rf))/60;   // L/s into cap
+      const leak   = eff('cyl.gLeak')*S.Pcap;                          // L/s to tank
+      const Ccap   = 0.006;                                            // L/bar (oil compliance)
+      S.Pcap = Math.max(0, Math.min(Pc, S.Pcap + (inflow-leak)/Ccap*dt));
+      S.filtDP = Rf*(inflow*60);
+      S.Ppump = Math.min(Pc, S.Pcap + S.filtDP);
+      S.Ppost = S.Ppump - S.filtDP;
+      S.Qcyl = inflow*60;
+    }
+  } else if(valve==='ret'){
+    S.Pcap = Math.max(0, S.Pcap - 400*dt);            // cap vents through check
+    S.vel = -VFULL*(Q0/Math.max(0.001,eff('pump.Q0')));
+    S.pos = Math.max(0, S.pos + S.vel*dt);
+    S.Ppump = S.motor?RELIEF_STANDBY:0; S.Ppost=S.Ppump; S.filtDP=0; S.Qcyl=0;
+  } else {
+    S.vel=0; S.Pcap=Math.max(0,S.Pcap-200*dt);
+    S.Ppump = S.motor?RELIEF_STANDBY:0; S.Ppost=S.Ppump; S.filtDP=0; S.Qcyl=0;
+  }
+
+  // ---- SENSOR SAMPLE (the only physics->PLC coupling) ----
+  S.AIpress = S.Pcap + eff('pt110.offset');                  // transducer lies if offset≠0
+  S.Itop    = S.pos<=2 ? 1:0;
+  // bottom limit: mechanically made at full stroke, gated by field wiring.
+  // Intermittent wire: on ~half of cycles it makes on arrival (enough for the PLC
+  // to enter PRESS) then OPENS under end-of-travel shock -> emergent no-retract.
+  const made = S.pos>=CONTACT-2;
+  const wireFaulted = eff('ls402.wiring')<1;
+  if(made){
+    if(!S._lsLatch){ S._lsLatch=true; S._lsBad = wireFaulted && (rnd()<0.5); S._lsT=0; }
+    S._lsT += dt;
+  } else if(S.pos<CONTACT-10){ S._lsLatch=false; S._lsBad=false; S._lsT=0; }
+  S.Ibottom = (made && !(S._lsBad && S._lsT>0.25)) ? 1:0;
+  S.IestopOK = S.estopOK?1:0; S.IolOK = S.olOK?1:0;
+}
+
+// ------------------------------------------------------------------ PLC scan
+function plcScan(){
+  const L=S.plc;
+  // safety first
+  if(!S.estopOK){ L.state='ESTOP'; S.solA=S.solB=S.motorCmd=false; L.faultCode='E-STOP'; return; }
+
+  switch(L.state){
+    case 'IDLE':
+      S.motorCmd=true; S.solA=false; S.solB=false;   // motor idles, valve centered
+      break;
+    case 'EXTEND':
+      S.motorCmd=true; S.solA=true; S.solB=false;
+      L.t101 += PLC_PERIOD;
+      if(S.Ibottom){ L.state='PRESS'; L.t301=0; L.dwell=0; }           // reached bottom -> press
+      else if(L.t101>=6.0){ fault('ALM-1102','EXTEND TIMEOUT · bottom not reached in 6.0s'); }
+      break;
+    case 'PRESS':
+      S.motorCmd=true; S.solB=false;
+      L.t301 += PLC_PERIOD;
+      if(!S.Ibottom){ fault('ALM-2205','RETRACT PERMIT LOST · bottom position unstable'); break; }
+      if(!L.reached){
+        S.solA=true;                                                  // build pressure
+        if(S.AIpress >= SP){ L.reached=true; L.reachPcap=S.Pcap; L.dwell=0; } // setpoint met PER THE SENSOR
+        else if(L.t301>=4.0){ fault('ALM-3300','TARGET PRESSURE NOT REACHED in 4.0s'); }
+      } else {
+        // pressure HOLD (bang-bang): the PLC throttles on the transducer, so a lying
+        // sensor holds TRUE pressure low -> weak part, with no machine alarm.
+        S.solA = S.AIpress < SP;
+        L.dwell += PLC_PERIOD;
+        if(L.dwell>=1.0){ L.lastForce=L.reachPcap*eff('cyl.Acap'); L.state='RETRACT'; L.tret=0; endPress(L.reachPcap); }
+      }
+      break;
+    case 'RETRACT':
+      S.motorCmd=true; S.solA=false; S.solB=true;
+      L.tret += PLC_PERIOD;
+      if(S.Itop){ L.state='IDLE'; S.good++; S.okLamp=true; log('alarm','ok','CYCLE COMPLETE · part '+(L.lastForce>=195*eff('cyl.Acap')?'OK':'WEAK')); if(S.auto){setTimeout(startCycle,600);} }
+      else if(L.tret>=6.0){ fault('ALM-2110','RETRACT TIMEOUT'); }
+      break;
+    case 'FAULTED': case 'ESTOP':
+      S.solA=false; S.solB=false; S.motorCmd = (L.state==='FAULTED');
+      break;
+  }
+  S.alarmOut = (L.state==='FAULTED'||L.state==='ESTOP');
+}
+function fault(code,msg){ S.plc.state='FAULTED'; S.plc.faultCode=code; S.okLamp=false;
+  log('alarm','active',code+' · '+msg); }
+function endPress(pcap){
+  const trueForce=pcap*eff('cyl.Acap');
+  if(pcap < 195){ S.weak++;
+    log('alarm','info','ALM-3400 (advisory) PRESS FORCE LOW · true '+trueForce.toFixed(0)+'kN @ '+pcap.toFixed(0)+'bar (HMI showed '+SP+')'); }
+}
+
+// ------------------------------------------------------------------ controls
+function startCycle(){
+  if(S.plc.state!=='IDLE'){ return; }
+  if(!S.estopOK){ return; }
+  S.plc.state='EXTEND'; S.plc.t101=0; S.plc.t301=0; S.plc.dwell=0; S.plc.reached=false; S.okLamp=false; S.cycleT=0;
+  log('alarm','','CYCLE START');
+}
+function doReset(){
+  if(S.plc.state==='ESTOP' && !S.estopOK) return;
+  S.plc.state='IDLE'; S.plc.faultCode=''; S.plc.t101=S.plc.t301=S.plc.tret=0;
+  S.plc.reached=false; S.plc.dwell=0; S.deadhead=false;
+  // press retracts to home on fault reset (safety recovery)
+  S.pos=0; S.vel=0; S.Pcap=0; S._lsLatch=false; S._lsBad=false; S._lsT=0;
+  log('alarm','','FAULT RESET · ram homed');
+}
+
+// ------------------------------------------------------------------ main loop
+let acc=0, last=performance.now();
+function loop(now){
+  let d=(now-last)/1000; last=now; if(d>0.25)d=0.25; acc+=d;
+  while(acc>=DT){
+    stepPhysics(DT);
+    plcAcc+=DT; if(plcAcc>=PLC_PERIOD){ plcAcc-=PLC_PERIOD; plcScan(); }
+    if(S.plc.state!=='IDLE'&&S.plc.state!=='FAULTED'&&S.plc.state!=='ESTOP') S.cycleT+=DT;
+    if(S.plc.state==='FAULTED'||S.plc.state==='ESTOP') S.cost+=DT*7;   // $7/s downtime
+    acc-=DT;
+  }
+  render();
+  requestAnimationFrame(loop);
+}
+
+/* =========================================================================
+   RENDERING  (binds live engine state -> DOM/SVG per active layer)
+   ========================================================================= */
+const $=id=>document.getElementById(id);
+let activeLayer='hyd', instrument='none';
+
+function pcol(bar){ // pressure -> colour
+  if(bar<5) return '#3a4a58';
+  const t=Math.min(1,bar/210);
+  if(t<0.5) return '#7a6a2c'; if(t<0.85) return 'var(--amber)'; return 'var(--red)';
+}
+function setPipe(id,bar,flow){ const el=$(id); if(!el)return;
+  el.style.stroke=pcol(bar); el.style.strokeWidth = flow>1? '7':'6';
+}
+function lamp(id,on,color){ const el=$(id); if(!el)return;
+  el.setAttribute('fill', on?(color||'#33d17a'):'#2b3a2b');
+  el.style.filter = on?`drop-shadow(0 0 5px ${color||'#33d17a'})`:'none'; }
+
+let renderTick=0;
+function render(){
+  renderTick++;
+  // top bar
+  const st=S.plc.state;
+  const pillCls = st==='FAULTED'||st==='ESTOP'?'fault': (st==='IDLE'?'idle': st==='RETRACT'&&false?'':'run');
+  $('m-state').innerHTML=`<span class="pill ${st==='IDLE'?'idle':(st==='FAULTED'||st==='ESTOP')?'fault':'run'}">${st}</span>`;
+  $('m-cycles').textContent=S.good; $('m-weak').textContent=S.weak;
+  $('m-timer').textContent=S.cycleT.toFixed(1)+'s';
+  $('m-cost').textContent='$'+S.cost.toFixed(0);
+
+  // layer dots (alarm indicators)
+  document.querySelectorAll('[data-dot]').forEach(d=>d.classList.remove('alarm'));
+  if(st==='FAULTED'){
+    const fc=S.plc.faultCode;
+    if(fc==='ALM-1102') mark('plc','hyd');
+    else if(fc==='ALM-3300') mark('plc','mech');
+    else if(fc==='ALM-2205') mark('plc','elec');
+    else mark('plc');
+  }
+  function mark(...ls){ ls.forEach(l=>{const e=document.querySelector(`[data-dot="${l}"]`); if(e)e.classList.add('alarm');}); }
+
+  if(activeLayer==='hyd') renderHyd();
+  else if(activeLayer==='elec') renderElec();
+  else if(activeLayer==='mech') renderMech();
+  else if(activeLayer==='plc') renderPLC();
+  else if(activeLayer==='hmi') renderHMI();
+
+  // phase readout
+  $('layer-phase').innerHTML = st==='FAULTED'
+    ? `<span style="color:var(--red)">⛔ ${S.plc.faultCode}</span>`
+    : `<span style="color:var(--dim)">phase:</span> <span style="color:var(--cyan)">${st}</span>`;
+}
+
+function renderHyd(){
+  setPipe('pipe-supply', S.Ppump, S.Qcyl);
+  setPipe('pipe-post', S.Ppost, S.Qcyl);
+  setPipe('pipe-toDCV', S.Ppost, S.Qcyl);
+  setPipe('pipe-A', S.solA?S.Pcap:0, S.solA?S.Qcyl:0);
+  setPipe('pipe-B', S.solB?RELIEF_STANDBY:0, S.solB?S.Qcyl:0);
+  $('hw-shaft').style.stroke = S.motor?'var(--green)':'var(--edge)';
+  $('hv-motor').textContent = S.motor?'⟳':'M';
+  $('hv-motor').style.fill = S.motor?'var(--green)':'var(--dim)';
+  $('hv-filtdp').textContent='ΔP '+S.filtDP.toFixed(1)+' bar';
+  $('hv-filtdp').style.fill = S.filtDP>3?'var(--red)':'var(--dim)';
+  const clog = !!faults['filter.R'];
+  $('hi-filterclog').setAttribute('fill', clog?'var(--red)':'#2b3a2b');
+  $('hi-filterclog').style.filter = clog?'drop-shadow(0 0 5px var(--red))':'none';
+  $('hi-solA').setAttribute('fill', S.solA?'var(--green)':'#2b3a2b');
+  $('hi-solB').setAttribute('fill', S.solB?'var(--green)':'#2b3a2b');
+  $('hv-dcv').textContent = S.solA?'P→A  B→T':S.solB?'P→B  A→T':'CENTER';
+  // piston position in cylinder (200..470 -> pos 0..250)
+  const y=200+(S.pos/STROKE)*270;
+  $('hyd-piston').setAttribute('y',y);
+  $('hyd-rod').setAttribute('y',y+24); $('hyd-rod').setAttribute('height',Math.max(4,270-(y-200)));
+}
+function renderElec(){
+  const en480=S.k1;   // 480 present through K1 to motor only when closed
+  $('ew-480').style.stroke='var(--green)'; $('ew-disc').style.stroke='var(--green)';
+  $('ew-k1').style.stroke=en480?'var(--green)':'var(--edge)';
+  $('ew-ol').style.stroke=en480?'var(--green)':'var(--edge)';
+  $('ev-motor').textContent=S.motor?'⟳ 40A':'M'; $('ev-motor').style.fill=S.motor?'var(--green)':'var(--dim)';
+  $('ew-24').style.stroke='var(--green)';
+  $('ew-estop').style.stroke=S.estopOK?'var(--green)':'var(--red)';
+  $('ew-k1coil').style.stroke=S.motorCmd&&S.estopOK?'var(--green)':'var(--edge)';
+  lamp('ei-solA',S.solA,'#33d17a'); lamp('ei-solB',S.solB,'#33d17a');
+  $('ew-solA').style.stroke=S.solA?'var(--green)':'var(--edge)';
+  $('ew-solB').style.stroke=S.solB?'var(--green)':'var(--edge)';
+  // limit switch wiring — the fault surface
+  const wOK = eff('ls402.wiring')>=1;
+  const i04 = S.Ibottom;
+  $('ew-ls402').style.stroke = i04?'var(--green)':(S.pos>=CONTACT-4 && !wOK?'var(--red)':'var(--edge)');
+  $('ei-flex').setAttribute('fill', !wOK?'var(--red)':'#2b3a2b');
+  $('ei-flex').setAttribute('stroke', !wOK?'var(--red)':'var(--amber)');
+  $('ew-lstop').style.stroke=S.Itop?'var(--green)':'var(--edge)';
+  $('ev-i04').textContent='I0.4 '+(i04?'●1 (bottom)':'○0');
+  $('ev-i04').style.fill=i04?'var(--green)':'var(--dim)';
+  $('ev-i03').textContent='I0.3 '+(S.Itop?'●1 (top)':'○0');
+  $('ev-i03').style.fill=S.Itop?'var(--green)':'var(--dim)';
+}
+function renderMech(){
+  const py=150+(S.pos/STROKE)*280;              // platen top, home=150 .. bottom=430
+  $('mech-platen').setAttribute('y',py);
+  $('mech-rod').setAttribute('y',140);
+  $('mech-rod').setAttribute('height',Math.max(4,py-140));
+  $('mv-ram').setAttribute('y',py+22);
+  lamp('mi-lstop',S.Itop,'#33d17a');
+  lamp('mi-lsbot',S.Ibottom,'#33d17a');
+  $('mv-pos').textContent=S.pos.toFixed(0)+' mm';
+  $('mv-vel').textContent=S.vel.toFixed(0)+' mm/s';
+  const force=S.Pcap*eff('cyl.Acap');
+  $('mv-force').textContent=force.toFixed(0)+' kN';
+  $('mv-force').style.fill = (S.plc.state==='PRESS'&&force<300)?'var(--amber)':'var(--cyan)';
+}
+function renderPLC(){
+  $('pv-state').textContent=S.plc.state; $('pv-state').style.fill = S.plc.state==='FAULTED'?'var(--red)':'var(--green)';
+  $('pv-t101').textContent=`T101 extend ${S.plc.t101.toFixed(1)}/6.0`;
+  $('pv-t301').textContent=`T301 press  ${S.plc.t301.toFixed(1)}/4.0`;
+  drawLadder();
+}
+function renderHMI(){
+  const p=Math.max(0,S.AIpress);
+  $('hmi-press').textContent=p.toFixed(0);
+  $('hmi-press').style.fill = S.plc.state==='FAULTED'?'var(--red)':(p>=SP?'var(--green)':'var(--amber)');
+  lamp('lamp-run',S.motor,'#33d17a'); lamp('lamp-ok',S.okLamp,'#4aa3ff');
+  lamp('lamp-fault',S.plc.state==='FAULTED','#ff5252'); lamp('lamp-estop',S.estopOK,'#33d17a');
+  const b=$('hmi-banner'), t=$('hmi-bannertext');
+  if(!S.estopOK){ b.setAttribute('fill','#3a1717'); b.setAttribute('stroke','#7a2c2c'); t.setAttribute('fill','#ff5252'); t.textContent='⛔ E-STOP ACTIVE'; }
+  else if(S.plc.state==='FAULTED'){ b.setAttribute('fill','#3a1717'); b.setAttribute('stroke','#7a2c2c'); t.setAttribute('fill','#ff5252'); t.textContent='⛔ '+S.plc.faultCode; }
+  else if(S.plc.state==='IDLE'){ b.setAttribute('fill','#12351f'); b.setAttribute('stroke','#2c7a48'); t.setAttribute('fill','#33d17a'); t.textContent='SYSTEM READY'; }
+  else { b.setAttribute('fill','#16283a'); b.setAttribute('stroke','#2c5a8a'); t.setAttribute('fill','#4aa3ff'); t.textContent='CYCLE RUNNING · '+S.plc.state; }
+}
+
+// ladder diagram (live rung states)
+function drawLadder(){
+  const rungs=[
+    {y:150, label:'MOTOR RUN (Q0.0)', on:S.motorCmd&&S.estopOK, conds:[['E-STOP OK',S.IestopOK],['O/L OK',S.IolOK],['RUN CMD',S.motorCmd]]},
+    {y:210, label:'EXTEND SOL (Q0.1)', on:S.solA, conds:[['STATE=EXT/PRESS',S.solA?1:0],['NOT FAULT',S.plc.state!=='FAULTED'?1:0]]},
+    {y:270, label:'PRESS DONE', on:S.AIpress>=SP, conds:[['PT-110 ≥ 200',S.AIpress>=SP?1:0]]},
+    {y:330, label:'RETRACT SOL (Q0.2)', on:S.solB, conds:[['STATE=RETRACT',S.solB?1:0]]},
+    {y:390, label:'T101 EXTEND TIMER', on:S.plc.t101>=6.0, conds:[['I0.4 BOTTOM',S.Ibottom],['T101.DN',S.plc.t101>=6.0?1:0]]},
+  ];
+  let svg='';
+  rungs.forEach(r=>{
+    let x=40; svg+=`<line x1="20" y1="${r.y}" x2="20" y2="${r.y}" />`;
+    svg+=`<line x1="20" y1="${r.y}" x2="${x}" y2="${r.y}" stroke="${r.on?'#33d17a':'#2a3744'}" stroke-width="2"/>`;
+    r.conds.forEach(c=>{
+      const on=c[1];
+      svg+=`<line x1="${x}" y1="${r.y}" x2="${x+20}" y2="${r.y}" stroke="${on?'#33d17a':'#2a3744'}" stroke-width="2"/>`;
+      svg+=`<line x1="${x+20}" y1="${r.y-10}" x2="${x+20}" y2="${r.y+10}" stroke="${on?'#33d17a':'#556'}" stroke-width="2"/>`;
+      svg+=`<line x1="${x+34}" y1="${r.y-10}" x2="${x+34}" y2="${r.y+10}" stroke="${on?'#33d17a':'#556'}" stroke-width="2"/>`;
+      svg+=`<text class="lbl" x="${x}" y="${r.y-16}" style="font-size:9px">${c[0]}</text>`;
+      x+=54;
+    });
+    svg+=`<line x1="${x}" y1="${r.y}" x2="620" y2="${r.y}" stroke="${r.on?'#33d17a':'#2a3744'}" stroke-width="2"/>`;
+    svg+=`<circle cx="640" cy="${r.y}" r="10" fill="none" stroke="${r.on?'#33d17a':'#556'}" stroke-width="2"/>`;
+    svg+=`<text class="lbl" x="660" y="${r.y+4}" style="font-size:11px;fill:${r.on?'#c9d6e2':'#7d8fa1'}">${r.label}</text>`;
+  });
+  $('ladder').innerHTML=svg;
+}
+
+/* =========================================================================
+   INSTRUMENTS  (select instrument -> click test point -> reading)
+   ========================================================================= */
+const TP = {
+  // hydraulic (pressure gauge)
+  PG101:{d:'press',name:'PG-101 pump outlet',get:()=>[S.Ppump,'bar',S.Ppump>200?'⚠ pinned at relief':'']},
+  PG102:{d:'press',name:'PG-102 post-filter',get:()=>[S.Ppost,'bar','']},
+  PT110:{d:'press',name:'PT-110 cap line (true)',get:()=>[S.Pcap,'bar', faults['pt110.offset']?'HMI reads '+S.AIpress.toFixed(0)+' — sensor high!':'']},
+  RODLINE:{d:'press',name:'rod-end return line',get:()=>[S.solB?RELIEF_STANDBY:2,'bar','']},
+  FILTER:{d:'press',name:'FLT-201 differential',get:()=>[S.filtDP,'bar ΔP',S.filtDP>3?'⚠ element restricted':'clean <1 bar']},
+  RELIEF:{d:'press',name:'RV-501 relief setting',get:()=>[eff('relief.crack'),'bar set','']},
+  STRAINER:{d:'press',name:'suction strainer',get:()=>[0.05,'bar','']},
+  ACCUM:{d:'press',name:'accumulator',get:()=>[S.Ppump,'bar','100 bar precharge']},
+  DCV:{d:'press',name:'DCV DV-301',get:()=>[S.Ppost,'bar P-port','']},
+  CHECK:{d:'press',name:'pilot check valve',get:()=>[S.solA?S.Pcap:0,'bar','']},
+  FLOWCTRL:{d:'press',name:'meter-out flow control',get:()=>[S.solB?RELIEF_STANDBY:0,'bar','']},
+  PUMP:{d:'press',name:'pump P-101',get:()=>[S.Ppump,'bar out',S.motor?'':'motor stopped']},
+  // electrical (multimeter)
+  E480:{d:'dmm',name:'480V supply',get:()=>[480,'VAC','']},
+  DISC:{d:'dmm',name:'main disconnect out',get:()=>[480,'VAC','']},
+  K1:{d:'dmm',name:'K1 load side',get:()=>[S.k1?480:0,'VAC',S.k1?'':'contactor open']},
+  OL:{d:'dmm',name:'overload out',get:()=>[S.k1?480:0,'VAC','']},
+  MOTORE:{d:'dmm',name:'motor terminals',get:()=>[S.motor?480:0,'VAC',S.motor?'40A draw':'0A']},
+  PSU:{d:'dmm',name:'24V PSU output',get:()=>[24,'VDC','']},
+  ESTOP:{d:'dmm',name:'E-stop chain out',get:()=>[S.estopOK?24:0,'VDC',S.estopOK?'':'⛔ chain open']},
+  K1COIL:{d:'dmm',name:'K1 coil A1',get:()=>[(S.motorCmd&&S.estopOK)?24:0,'VDC','']},
+  SOLA:{d:'dmm',name:'SOL-A coil',get:()=>[S.solA?24:0,'VDC',S.solA?'energized':'']},
+  SOLB:{d:'dmm',name:'SOL-B coil',get:()=>[S.solB?24:0,'VDC','']},
+  LSTOP:{d:'dmm',name:'LS-TOP signal',get:()=>[S.Itop?24:0,'VDC','']},
+  LS402:{d:'dmm',name:'LS-402 signal @ I0.4',get:()=>{
+      const made=S.pos>=CONTACT-2; const v=S.Ibottom?24:0;
+      let h=''; if(made&&!S.Ibottom) h='⚠ switch made but 0V — open in wiring!';
+      else if(faults['ls402.wiring']&&made) h='flickering at full stroke';
+      return [v,'VDC',h];}},
+  TP24:{d:'dmm',name:'24V+ rail',get:()=>[24,'VDC','']},
+  // thermal
+  MOTOR:{d:'thermal',name:'motor housing',get:()=>[S.motor?58:24,'°C','']},
+  RODLINE_T:{d:'thermal',name:'rod-return line',get:()=>[eff('cyl.gLeak')>0&&S.solA?72:38,'°C',eff('cyl.gLeak')>0?'⚠ hot — flow crossing piston':'']},
+};
+// thermal uses same dots on hyd layer; map RODLINE dot when thermal selected
+function probe(tp){
+  const def=TP[tp]; if(!def){ return; }
+  // instrument/domain match
+  const wantThermal = instrument==='thermal';
+  let d=def;
+  if(tp==='RODLINE' && wantThermal) d=TP.RODLINE_T;
+  if(d.d!==instrument){
+    setRead(def.name, '—', '', 'Wrong instrument for this point. '+
+      (def.d==='press'?'Use the Pressure gauge.':def.d==='dmm'?'Use the Multimeter.':'Use the Thermal camera.'));
+    return;
+  }
+  const [v,u,hint]=d.get();
+  const disp = (typeof v==='number')? (Math.abs(v)>=100?v.toFixed(0):v.toFixed(1)) : v;
+  setRead(d.name, disp, u, hint||'reading nominal');
+  logProbe(d.name, disp+' '+u);
+}
+function setRead(tp,val,unit,hint){
+  $('ro-tp').textContent=tp; $('ro-val').textContent=val; $('ro-unit').textContent=unit;
+  $('ro-hint').textContent=hint;
+  const bad=/⚠|⛔|open|high|hot|pinned|restrict/i.test(hint);
+  $('ro-val').className='big'+(bad?' warn':'');
+}
+let probeLog=[];
+function logProbe(tp,v){ probeLog.unshift(`<div><b>${v}</b> · ${tp}</div>`); probeLog=probeLog.slice(0,40);
+  $('probelog').innerHTML=probeLog.join(''); }
+
+/* =========================================================================
+   ALARM / IO / EVENT LOG
+   ========================================================================= */
+let alarms=[];
+function log(kind,cls,msg){
+  const t=new Date().toLocaleTimeString();
+  alarms.unshift(`<div class="alm ${cls}"><span class="t">${t}</span> ${msg}</div>`);
+  alarms=alarms.slice(0,60);
+  $('alarmlog').innerHTML=alarms.join('');
+}
+function renderIO(){
+  const rows=[
+    ['I0.3 LS-TOP (home)',S.Itop],['I0.4 LS-402 (bottom)',S.Ibottom],
+    ['I0.5 E-STOP OK',S.IestopOK],['I0.6 O/L OK',S.IolOK],
+    ['AI2 PT-110 (bar)',S.AIpress.toFixed(0)+' / true '+S.Pcap.toFixed(0)],
+    ['Q0.0 MOTOR RUN',S.motorCmd?1:0],['Q0.1 SOL-A EXTEND',S.solA?1:0],
+    ['Q0.2 SOL-B RETRACT',S.solB?1:0],['Q0.7 ALARM',S.alarmOut?1:0],
+  ];
+  $('iotable').innerHTML=rows.map(r=>{
+    let cell;
+    if(typeof r[1]==='number'&&(r[1]===0||r[1]===1)) cell=`<span class="b1 ${r[1]?'hi':'lo'}">${r[1]}</span>`;
+    else cell=`<span style="color:var(--cyan)">${r[1]}</span>`;
+    return `<tr><td class="a">${r[0]}</td><td>${cell}</td></tr>`;
+  }).join('');
+}
+setInterval(renderIO,150);
+
+/* =========================================================================
+   WIRING UP THE UI
+   ========================================================================= */
+// layer tabs
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  activeLayer=t.dataset.layer;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
+  document.querySelectorAll('svg.layer').forEach(s=>s.classList.toggle('on',s.dataset.layer===activeLayer));
+  const titles={hyd:'HYDRAULIC · P&ID',elec:'ELECTRICAL · POWER + CONTROL',mech:'MECHANICAL · RAM & TOOLING',plc:'PLC · I/O + LADDER',hmi:'HMI · OPERATOR PANEL'};
+  $('layer-title').innerHTML=titles[activeLayer];
+});
+// instrument selection
+document.querySelectorAll('.itool').forEach(b=>b.onclick=()=>{
+  instrument=b.dataset.i;
+  document.querySelectorAll('.itool').forEach(x=>x.classList.toggle('on',x===b));
+  $('ro-hint').textContent = instrument==='none'?'Click a component to inspect.':'Click a labelled test point on the schematic.';
+});
+// test point clicks (event delegation on main)
+$('main').addEventListener('click',e=>{
+  const el=e.target.closest('.tp'); if(!el)return;
+  const tp=el.dataset.tp;
+  if(instrument==='none'){ setRead(tp,'ℹ','','Component '+tp+'. Select an instrument to probe it.'); return; }
+  probe(tp);
+});
+// top controls
+$('btn-cycle').onclick=()=>{ if(S.plc.state==='IDLE') startCycle(); };
+$('btn-auto').onclick=()=>{ S.auto=!S.auto; $('btn-auto').style.borderColor=S.auto?'var(--green)':'var(--edge)'; if(S.auto&&S.plc.state==='IDLE')startCycle(); };
+$('btn-estop').onclick=()=>{ S.estopOK=!S.estopOK; $('btn-estop').textContent=S.estopOK?'■ E-STOP':'⟳ RELEASE E-STOP';
+  if(!S.estopOK){S.plc.state='ESTOP'; log('alarm','active','E-STOP PRESSED · machine safe state');} else {S.plc.state='IDLE'; log('alarm','','E-STOP RELEASED');} };
+$('btn-reset').onclick=doReset;
+$('btn-deadhead').onclick=()=>{ S.deadhead=!S.deadhead;
+  $('btn-deadhead').style.borderColor=S.deadhead?'var(--amber)':'var(--edge)';
+  log('alarm','info', S.deadhead?'DEAD-HEAD TEST: pump commanded against blocked port — read PG-101':'dead-head test ended'); };
+// instructor injector
+$('btn-inject').onclick=()=>{ const i=$('injector'); i.style.display = i.style.display==='none'?'block':'none'; };
+$('inj-x').onclick=()=>$('injector').style.display='none';
+document.querySelectorAll('.injector [data-f]').forEach(b=>b.onclick=()=>{
+  const f=b.dataset.f;
+  // clear visuals
+  document.querySelectorAll('.injector [data-f]').forEach(x=>x.classList.remove('armed'));
+  if(f==='CLEAR'){ for(const k in faults)delete faults[k]; log('alarm','ok','All faults cleared'); return; }
+  b.classList.add('armed');
+  if(f==='FILTER'){ faults['filter.R']={mode:'scale',value:2000}; log('alarm','info','INJECT ① filter.R ×2000 (clogged element)'); }
+  if(f==='PT110'){ faults['pt110.offset']={mode:'offset',value:20}; log('alarm','info','INJECT ② pt110.offset +20 bar (drift)'); }
+  if(f==='LS402'){ faults['ls402.wiring']={mode:'set',value:0.5}; log('alarm','info','INJECT ③ ls402.wiring intermittent at full stroke'); }
+  if(f==='CYLSEAL'){ faults['cyl.gLeak']={mode:'set',value:0.0032}; log('alarm','info','INJECT ④ cyl.gLeak seal bypass'); }
+});
+// repair
+$('btn-repair').onclick=()=>{
+  const p=$('repair-part').value; if(!p){ log('alarm','','Select a part first'); return; }
+  const map={FILTER:'filter.R',PT110:'pt110.offset',LS402WIRE:'ls402.wiring',CYLSEAL:'cyl.gLeak'};
+  const key=map[p];
+  if(faults[key]){ delete faults[key]; log('alarm','ok','REPAIR ✓ '+$('repair-part').selectedOptions[0].text+' — fault cleared. CYCLE to verify.'); }
+  else { log('alarm','info','Replaced '+p+' but it was NOT the fault. Parts cost incurred. Keep diagnosing.'); S.cost+=180; }
+  document.querySelectorAll('.injector [data-f]').forEach(x=>{ if(x.dataset.f && map[$('repair-part').value]===({FILTER:'filter.R',PT110:'pt110.offset',LS402:'ls402.wiring',CYLSEAL:'cyl.gLeak'})[x.dataset.f]) x.classList.remove('armed'); });
+};
+// drawer tabs
+document.querySelectorAll('.dtab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.dtab').forEach(x=>x.classList.toggle('on',x===t));
+  document.querySelectorAll('.dpane').forEach(p=>p.classList.toggle('on',p.dataset.d===t.dataset.d));
+});
+
+$('briefbody').innerHTML=`
+<b style="color:var(--ink)">HOW THIS PROTOTYPE WORKS</b><br>
+This is a live simulation, not a slideshow. The machine runs a real physics tick (hydraulics → mechanics → sensors)
+and an <i>independent</i> PLC scan that reads the sensor image and sequences idle→extend→press→retract.
+<br><br>
+Every fault is <b>one data override</b> on one component (see ⚙ INSTRUCTOR). Nothing is scripted — the alarm codes,
+slow strokes, weak parts and no-retracts all <i>emerge</i>.
+<br><br>
+<b style="color:var(--ink)">TRY THE INTRO FAULT</b><br>
+1. ⚙ INSTRUCTOR → ① Clog pressure filter.<br>
+2. ▶ CYCLE. Watch the ram crawl; at 6s the PLC latches <span style="color:var(--red)">ALM-1102 EXTEND TIMEOUT</span>.<br>
+3. Novice move (red herring): the extend solenoid IS energized → blame the valve. Don't.<br>
+4. Pressure gauge → click <b>PG-101</b> (pinned at 210) then <b>PG-102</b> (sagging) → <b>FLT-201 ΔP ≈ 9 bar</b>.<br>
+5. Repair → "Replace filter element" → RESET → CYCLE → clean cycle. Root-caused, not masked.
+<br><br>
+<b style="color:var(--ink)">THE OTHER THREE</b><br>
+② Transducer drift → no alarm, weak parts (HMI lies; probe PT-110 at zero).<br>
+③ LS-402 wire → random no-retract only at full stroke (watch I0.4 flicker; wiggle-probe LS-402).<br>
+④ Cylinder seal → looks like a weak pump, but the <b>Dead-head pump test</b> builds full 210 bar → pump is fine.`;
+
+// boot
+log('alarm','ok','Workstation online · PRESS-LINE 3 · press ▶ CYCLE to run');
+renderIO();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

@@ -261,35 +261,51 @@ REACHED**. It *looks exactly like a worn pump*.
 - **The discriminator (built into the prototype):** the **dead‑head pump test** blocks the actuator and commands the pump against the relief — pressure builds to a full 210 bar and holds → pump and relief are *fine*, so the loss is *across the piston*.
 - **Fix:** reseal the cylinder.
 
-A realistic full fault taxonomy (open/short/ground, drift/calibration,
+These four are the authored vertical slice; §6 adds four more (worn pump, air‑in‑oil,
+sticky spool, open coil) that emerge from the same solvers with no new code. A
+realistic full fault taxonomy (open/short/ground, drift/calibration,
 contamination, wear, binding, air‑in‑oil, PLC timing, EMI, intermittents)
-organized by *root* layer vs *symptom* layer is included in the design corpus;
-these four are the vertical slice.
+organized by *root* layer vs *symptom* layer is included in the design corpus.
 
 ---
 
-## 6. What the prototype implements vs. the full engine
+## 6. What the prototype implements
 
-The shipped HTML runs a faithful **reduced** version of this engine — enough to
-prove the thesis and feel the UX — with the same non‑negotiables intact:
+The shipped HTML now runs the **real lumped‑parameter solvers** from this spec —
+not a reduced stand‑in — behind the workstation UI, at 200 Hz physics / 10 Hz PLC:
 
-| Aspect | Prototype | Full engine (roadmap) |
-|---|---|---|
-| Faults are data via `effParam` | ✅ identical | ✅ |
-| Physics tick + **independent** PLC scan | ✅ (50 Hz / 10 Hz) | 1 kHz / 10 ms |
-| Emergent symptoms (no scripted alarms) | ✅ all 4 verified headless | ✅ |
-| Hydraulic solve | algebraic flow‑through‑restriction + relief spill + bang‑bang hold | backward‑Euler R‑C network with Picard convergence |
-| Electrical | boolean energization résumé | full MNA resistive network |
-| Mechanical | 1‑DOF ram with position clamp at workpiece | rigid‑body integrator, unilateral constraints, friction |
-| Determinism / replay / grading | seeded PRNG for intermittents | full fixed‑point option, state checksums |
+| Aspect | Prototype |
+|---|---|
+| Faults are data via `effParam` | ✅ one override per fault, no handlers anywhere |
+| Physics tick + **independent** PLC scan | ✅ 200 Hz physics, 10 Hz PLC with frozen I/O images |
+| Emergent symptoms (no scripted alarms) | ✅ 8 fault types verified headless |
+| **Hydraulic** | ✅ backward‑Euler R‑C network (4 nodes), Picard‑linearized relief (conductance to a node fixed *at* cracking pressure) + check/DCV; unconditionally stable |
+| **Electrical** | ✅ nodal analysis of the 24 VDC control circuit → real test‑point voltages; energization from **coil current** (so an open coil reads voltage‑present / no‑pull‑in) |
+| **Mechanical** | ✅ 1‑DOF rigid‑body integrator, variable cap/rod chamber volumes, unilateral end‑stops, viscous+coulomb friction |
+| Determinism | ✅ fixed dt, stable node ordering, seeded PRNG for intermittents |
+| Full‑engine roadmap | 1 kHz + SCC decomposition, 3‑phase electrical, fixed‑point option for cross‑machine bit‑exact replay |
+
+Because the solvers are real, **new fault classes emerge with no new code** — each
+is one `effParam` override:
+
+| Fault | Override | Emergent signature | Discriminator |
+|---|---|---|---|
+| ⑤ Worn pump | `pump.slip ↑` | pressure sags **under load**, `ALM‑3300` | dead‑head only reaches ~191 bar (pump can't make pressure) |
+| ⑥ Air in oil | `cyl.beta ↓` | spongy, **slow** pressure build → `ALM‑3300` | pressure eventually climbs given time; rate is the tell |
+| ⑦ Sticky spool | `valve.gMain ↓` | slow extend → `ALM‑1102` | filter ΔP **normal** (drop is across the valve, not FLT‑201) |
+| ⑧ Open SOL‑A coil | `coilA.R → ∞` | ram won't extend → `ALM‑1102` | multimeter: 24 V **commanded** at coil but no pull‑in |
 
 **Verification (headless Playwright, all pass with zero console errors):**
 ```
-HEALTHY  → IDLE, good part
-CLOG     → FAULTED ALM‑1102 at 143 mm (crawled, timed out)
-DRIFT    → completes, part flagged WEAK (true 333 kN @ 188 bar, HMI showed 200)
-CYL LEAK → FAULTED ALM‑3300; dead‑head test = 210 bar (pump proven good)
-LS WIRE  → 8 cycles → 4× ALM‑2205 no‑retract, 4× clean (realistic intermittent)
+HEALTHY     → IDLE, good part (press peak 210 bar)
+CLOG        → ALM‑1102 (crawls, PG‑101 pinned 210, high filter ΔP)
+DRIFT       → completes, part WEAK (no machine alarm; PT‑110 offset)
+CYL LEAK    → ALM‑3300 ; dead‑head = 214 bar  → pump exonerated
+WORN PUMP   → ALM‑3300 ; dead‑head = 191 bar  → pump condemned  (vs cyl‑leak!)
+STICKY SPOOL→ ALM‑1102 (slow extend, filter ΔP normal)
+OPEN COIL   → ALM‑1102 (ram won't move; coil voltage present, no current)
+AIR IN OIL  → ALM‑3300 (slow spongy build)
+LS WIRE     → 8 cycles → 4× ALM‑2205 no‑retract, 4× clean (intermittent)
 ```
 
 ---

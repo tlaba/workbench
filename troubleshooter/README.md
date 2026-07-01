@@ -5,8 +5,8 @@ not scripted**. This folder is the technical vertical slice.
 
 | File | What it is |
 |---|---|
-| [`hydraulic-press-troubleshooter.html`](./hydraulic-press-troubleshooter.html) | **Live, clickable diagnostic workstation.** Open in any browser — no build, no deps. Runs a real reduced physics engine + independent PLC scan for a 150-ton hydraulic press across 5 layers. |
-| [`SIMULATION_ENGINE.md`](./SIMULATION_ENGINE.md) | The engine spec (component/signal-propagation model, tick+scan loop, fault chokepoint) and the press worked end-to-end across all five layers with four fault scenarios. |
+| [`hydraulic-press-troubleshooter.html`](./hydraulic-press-troubleshooter.html) | **Live, clickable diagnostic workstation.** Open in any browser — no build, no deps. Runs the **real lumped-parameter solvers** (backward-Euler R-C hydraulics, nodal-analysis electrical, rigid-body ram) + an independent PLC scan for a 150-ton hydraulic press across 5 layers. **8 emergent fault types.** |
+| [`SIMULATION_ENGINE.md`](./SIMULATION_ENGINE.md) | The engine spec (component/signal-propagation model, tick+scan loop, fault chokepoint) and the press worked end-to-end across all five layers with the fault scenarios. |
 
 ## Try it in 30 seconds
 1. Open the HTML file in a browser.
@@ -18,10 +18,12 @@ not scripted**. This folder is the technical vertical slice.
    **PG-102** (sagging) → ~9 bar across the filter. That's your root cause.
 5. **Repair → Replace filter element → RESET → CYCLE.** Clean cycle. Solved.
 
-Then try the other three from the **BRIEF** tab: transducer drift (weak parts,
-no alarm), intermittent limit-switch wiring (random no-retract), and a cylinder
-seal leak that mimics a bad pump (use the **Dead-head pump test** to exonerate
-the pump).
+Then try the other seven from the **BRIEF** tab: transducer drift (weak parts,
+no alarm), intermittent limit-switch wiring (random no-retract), and — because
+the solvers are real — a cylinder seal leak vs. a worn pump that *both* look
+weak but split cleanly on the **Dead-head pump test** (seal → 214 bar, pump
+fine; worn pump → ~191 bar, pump condemned), plus air-in-oil, a sticky spool,
+and an open solenoid coil.
 
 ## Layers
 Left-hand tabs switch the same machine between **Hydraulic (P&ID)**,

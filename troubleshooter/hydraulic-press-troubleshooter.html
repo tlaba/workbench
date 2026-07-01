@@ -398,6 +398,10 @@ table.io .a{color:var(--dim);width:42%}
         <option value="PT110">Recalibrate/replace transducer PT-110</option>
         <option value="LS402WIRE">Replace LS-402 flex cable / connector</option>
         <option value="CYLSEAL">Reseal cylinder CYL-401 (piston seal)</option>
+        <option value="PUMP">Replace worn pump P-101</option>
+        <option value="OIL">Bleed air / change hydraulic oil</option>
+        <option value="SPOOL">Free / replace DCV DV-301 spool</option>
+        <option value="COILA">Replace SOL-A solenoid coil</option>
       </select>
       <button class="btn" id="btn-repair" style="width:100%">🔧 PERFORM REPAIR</button>
     </div>
@@ -433,6 +437,10 @@ table.io .a{color:var(--dim);width:42%}
     <button data-f="PT110">② Transducer drift +20bar (SENSOR)</button>
     <button data-f="LS402">③ Intermittent LS-402 wire (ELEC)</button>
     <button data-f="CYLSEAL">④ Cylinder seal bypass (MECH)</button>
+    <button data-f="PUMP">⑤ Worn pump — sags under load (HYD)</button>
+    <button data-f="OIL">⑥ Air in oil — spongy/slow (HYD)</button>
+    <button data-f="SPOOL">⑦ Sticky DCV spool (VALVE)</button>
+    <button data-f="COILA">⑧ Open SOL-A coil (ELEC)</button>
     <button data-f="CLEAR" style="border-color:var(--green);color:var(--green)">✓ Clear all faults</button>
     <div class="help" style="margin-top:6px">Each fault is a single data override on one component. Symptoms emerge from physics + the PLC scan — nothing is scripted.</div>
   </div>
@@ -454,14 +462,19 @@ table.io .a{color:var(--dim);width:42%}
 let _seed = 1337;
 function rnd(){ _seed = (_seed*1664525 + 1013904223) & 0x7fffffff; return _seed/0x7fffffff; }
 
-// ---- component params + fault overlay (the effParam chokepoint) ----
+/* ---- component params + fault overlay (the effParam chokepoint) --------------
+   Real lumped-parameter constants now. A fault is STILL just one override read
+   here; the three physical solvers below make every symptom emerge.            */
 const P = {
-  relief:   { crack: 210 },              // bar
-  pump:     { Q0: 30, volEff: 1.0 },     // L/min delivered
-  filter:   { R: 0.01 },                 // bar per (L/min)  -> healthy ΔP ~0.3 @30
-  cyl:      { Acap: 1.77, gLeak: 0.0 },  // kN per bar ; leak (L/s)/bar
-  pt110:    { offset: 0.0 },             // bar sensor offset
-  ls402:    { wiring: 1.0 },             // 1 = ok
+  relief: { crack: 210, gOpen: 0.35, knee: 3 },  // bar ; relief conductance & soft knee
+  pump:   { Qmax: 1.7, slip: 0.0006 },           // L/s ideal flow ; internal slip (L/s)/bar
+  filter: { R: 0.29 },                           // bar/(L/s) resistance -> g=1/R
+  valve:  { gMain: 2.0, gCenter: 2.0 },          // (L/s)/bar DCV path conductances
+  cyl:    { Acap: 1.77, AcapV: 0.020, ArodV: 0.012, Arod: 0.40, gLeak: 0.0002, beta: 1200 },
+  pt110:  { offset: 0.0, gain: 1.0 },            // transducer offset[bar] / gain
+  ls402:  { wiring: 1.0 },                        // 1 = ok, <1 = intermittent open
+  coilA:  { R: 100 }, coilB: { R: 100 }, k1coil: { R: 100 },  // ohms; open-coil = huge
+  emi:    { level: 0 },                           // volts of injected noise on I0.4
 };
 const faults = {};   // e.g. faults['filter.R']={mode:'scale',value:2000}
 function eff(path){
@@ -474,90 +487,158 @@ function eff(path){
 }
 
 // ---- machine geometry ----
-const STROKE=250, CONTACT=250, VFULL=83;   // mm ; mm/s free-run
-const SP=200, RELIEF_STANDBY=15;
+const STROKE=250, CONTACT=250;             // mm
+const SP=200;                              // press setpoint (bar)
+const MASS=2000;                           // kg ram+platen
+const CVISC=0.02, CCOUL=1.0, WGRAV=1.0;    // friction kN/(mm/s), coulomb kN, gravity (counterbalanced) kN
 
 // ---- live state ----
 const S = {
   running:true, estopOK:true, olOK:true, k1:false, motor:false,
-  pos:0, vel:0,                 // 0=home(top) .. 250=bottom
-  Pcap:0, Ppump:0, Ppost:0, filtDP:0, Qcyl:0,
+  pos:0, vel:0, velms:0,        // pos mm (0=home top..250=bottom); vel mm/s; velms m/s
+  Pcap:0, Prod:0, Ppump:0, Ppost:0, filtDP:0, Qcyl:0,
+  hp:[0,0,0,0],                 // hydraulic node pressures [pump,sys,cap,rod]
   solA:false, solB:false, motorCmd:false, alarmOut:false, okLamp:false,
+  solAen:false, solBen:false,   // solenoids actually ENERGIZED (may differ from cmd on a coil fault)
+  Vsola:0, Vsolb:0, Vk1coil:0, Vi04:0, Vi03:0, wireOK:true,
   Ibottom:0, Itop:1, IestopOK:1, IolOK:1, AIpress:0,
   plc:{ state:'IDLE', t101:0, t301:0, tret:0, dwell:0, reached:false, reachPcap:0, faultCode:'', lastForce:0 },
   cycleT:0, good:0, weak:0, cost:0, auto:false, deadhead:false,
 };
-const DT=0.02;                   // physics step (s)  (50 Hz, ample for a demo)
+const DT=0.005;                  // physics step (s) — 200 Hz for solver stability
 const PLC_PERIOD=0.1; let plcAcc=0;
+
+// ---- tiny dense linear solver (Gaussian elimination w/ partial pivot) ----
+function gauss(A,b){
+  const n=b.length;
+  for(let c=0;c<n;c++){
+    let p=c; for(let r=c+1;r<n;r++) if(Math.abs(A[r][c])>Math.abs(A[p][c])) p=r;
+    [A[c],A[p]]=[A[p],A[c]]; [b[c],b[p]]=[b[p],b[c]];
+    const d=A[c][c]||1e-12;
+    for(let r=0;r<n;r++){ if(r===c) continue; const f=A[r][c]/d;
+      for(let k=c;k<n;k++) A[r][k]-=f*A[c][k]; b[r]-=f*b[c]; }
+  }
+  return b.map((v,i)=>v/(A[i][i]||1e-12));
+}
+
+/* =============================== ELECTRICAL ===============================
+   Nodal analysis of the 24 VDC control circuit. Real node voltages fall out,
+   so open coils, welded contacts, wiring opens and EMI are all diagnosable
+   with the multimeter — nothing scripted. Nodes: 0=GND,1=+24 (both fixed);
+   free: 2=safe 3=K1coil 4=SOLAcoil 5=SOLBcoil 6=I0.4 7=I0.3.               */
+function solveElectrical(){
+  const RON=1, ROFF=1e7, RIN=1e4;
+  const V24=24, free=[2,3,4,5,6,7], fixed={0:0,1:V24};
+  const res=[]; // [a,b,R]
+  const chainOK = S.estopOK && S.olOK;
+  res.push([1,2, chainOK?RON:ROFF]);                 // +24 -> safe (E-stop + O/L series NC)
+  res.push([2,3, S.motorCmd?RON:ROFF], [3,0, eff('k1coil.R')]);   // K1 coil branch
+  res.push([2,4, S.solA?RON:ROFF],     [4,0, eff('coilA.R')]);    // SOL-A coil branch
+  res.push([2,5, S.solB?RON:ROFF],     [5,0, eff('coilB.R')]);    // SOL-B coil branch
+  // LS-402 field wiring divider: made at bottom, gated by wiring resistance
+  const madeBot = S.pos>=CONTACT-2;
+  res.push([1,6, madeBot ? (S.wireOK?10:ROFF) : ROFF], [6,0, RIN]);
+  const madeTop = S.pos<=2;
+  res.push([1,7, madeTop?10:ROFF], [7,0, RIN]);
+  // assemble nodal G v = I among free nodes
+  const idx=new Map(free.map((n,i)=>[n,i])), N=free.length;
+  const G=Array.from({length:N},()=>new Array(N).fill(0)), I=new Array(N).fill(0);
+  for(const [a,b,R] of res){ const g=1/R, fa=idx.has(a), fb=idx.has(b);
+    if(fa){G[idx.get(a)][idx.get(a)]+=g;} if(fb){G[idx.get(b)][idx.get(b)]+=g;}
+    if(fa&&fb){G[idx.get(a)][idx.get(b)]-=g; G[idx.get(b)][idx.get(a)]-=g;}
+    else if(fa){I[idx.get(a)]+=g*fixed[b];} else if(fb){I[idx.get(b)]+=g*fixed[a];} }
+  if(eff('emi.level')>0){ I[idx.get(6)] += eff('emi.level')/RIN * (rnd()>0.5?1:0); } // noise pickup
+  const x=gauss(G,I), V={0:0,1:V24}; free.forEach((n,i)=>V[n]=x[i]);
+  // energization from COIL CURRENT (open coil = voltage present, no current, no pull-in)
+  const PICK=0.05;
+  const k1en = (V[3]/eff('k1coil.R')>PICK) || !!faults['k1.weld'];
+  S.Vk1coil=V[3]; S.Vsola=V[4]; S.Vsolb=V[5]; S.Vi04=V[6]; S.Vi03=V[7];
+  S.solAen = V[4]/eff('coilA.R')>PICK;
+  S.solBen = V[5]/eff('coilB.R')>PICK;
+  S.k1 = S.estopOK && k1en; S.motor = S.k1;
+}
+
+/* =============================== HYDRAULIC ===============================
+   Backward-Euler resistive-capacitive network, unconditionally stable.
+   Nodes[bar]: 0=pump 1=sys 2=cap 3=rod (tank=0). Relief & check-valve
+   nonlinearity resolved by a few fixed Picard re-linearizations.           */
+function solveHydraulic(dt){
+  const beta=eff('cyl.beta');
+  const Vcap=0.4+P.cyl.AcapV*S.pos, Vrod=0.4+P.cyl.ArodV*(STROKE-S.pos);
+  const C=[0.003,0.005,Vcap/beta,Vrod/beta];      // node capacitances (L/bar); sys incl. accumulator
+  const Pold=S.hp.slice();
+  const gF=1/eff('filter.R'), gLeak=eff('cyl.gLeak');
+  const gMain=eff('valve.gMain'), gCen=eff('valve.gCenter');
+  const Qpump=S.motor?P.pump.Qmax:0, slip=eff('pump.slip');
+  const crack=eff('relief.crack'), gOpen=eff('relief.gOpen'), knee=eff('relief.knee');
+  // piston volumetric flows (operator-split: previous velocity)
+  const Qcap = P.cyl.AcapV*S.vel, Qrod = P.cyl.ArodV*S.vel;
+  let Pn=Pold.slice();
+  for(let it=0; it<3; it++){
+    const G=[[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]], I=[0,0,0,0];
+    const add=(a,b,g)=>{ if(b<0){G[a][a]+=g;} else {G[a][a]+=g;G[b][b]+=g;G[a][b]-=g;G[b][a]-=g;} };
+    const addFixed=(a,g,V)=>{ G[a][a]+=g; I[a]+=g*V; };               // conductance to a fixed potential
+    for(let i=0;i<4;i++){ G[i][i]+=C[i]/dt; I[i]+=C[i]/dt*Pold[i]; }   // backward-Euler
+    I[0]+=Qpump; add(0,-1,slip);                                       // pump flow + internal slip
+    add(0,1,gF);                                                       // filter (pump->sys)
+    // relief: flow = gOpen*(P-crack) for P>crack -> conductance to a node fixed AT crack.
+    // Below crack it's shut, so pressure is free to reach setpoint (200) before relief (210).
+    const frac=Math.max(0,Math.min(1,(Pn[0]-crack)/knee));
+    if(frac>0) addFixed(0, gOpen*frac, crack);
+    add(0,-1,1e-6);
+    add(2,3,gLeak);                                                    // cylinder internal cross-port leak
+    if(S.deadhead){ /* DCV blocked: pump loads against relief only */ }
+    else if(S.solAen){ add(1,2,gMain); add(3,-1,gMain); }             // extend: P->cap, rod->T
+    else if(S.solBen){ add(1,3,gMain); add(2,-1,gMain); }             // retract: P->rod, cap->T
+    else { add(1,-1,gCen); add(2,-1,0.02); add(3,-1,0.02); }          // center: unload; chambers near-blocked
+    I[2]-=Qcap; I[3]+=Qrod;                                            // piston displacement flows
+    const b=I.slice(), A=G.map(r=>r.slice());
+    Pn=gauss(A,b).map(p=>Math.max(0,p));
+  }
+  S.hp=Pn;
+  S.Ppump=Pn[0]; S.Ppost=Pn[1]; S.Pcap=Pn[2]; S.Prod=Pn[3];
+  S.filtDP=Math.max(0,Pn[0]-Pn[1]);
+  S.Qcyl = S.solAen? Math.max(0,gMain*(Pn[1]-Pn[2])) : S.solBen? Math.max(0,gMain*(Pn[1]-Pn[3])) : 0;
+}
+
+/* =============================== MECHANICAL ===============================
+   1-DOF ram: F = Pcap*Acap - Prod*Arod + gravity - friction, integrated
+   semi-implicit with unilateral end-stops (home & workpiece).             */
+function integrateMech(dt){
+  let F = S.Pcap*P.cyl.Acap - S.Prod*P.cyl.Arod + WGRAV
+          - CCOUL*Math.sign(S.velms*1000) - CVISC*S.vel;               // kN
+  let v = S.velms + (F*1000/MASS)*dt;                                  // m/s
+  let x = S.pos + v*1000*dt;                                           // mm
+  if(x<=0){ x=0; if(v<0) v=0; }                                        // home stop
+  if(x>=CONTACT){ x=CONTACT; if(v>0) v=0; }                            // workpiece stop -> pressure builds
+  S.pos=x; S.velms=v; S.vel=v*1000;
+}
 
 // ------------------------------------------------------------------ physics
 function stepPhysics(dt){
-  // electrical résumé (algebraic): what is energized right now.
-  // Motor keeps running through a PROCESS fault (real behavior); only E-stop drops it.
-  S.k1     = S.estopOK && S.olOK && S.plc.state!=='ESTOP' && S.motorCmd;
-  S.motor  = S.k1;
-  const Q0 = S.motor ? eff('pump.Q0')*eff('pump.volEff') : 0;    // L/min available
-  const Rf = eff('filter.R');
-  const Pc = eff('relief.crack');
+  solveElectrical();     // 1. control network -> energized flags + test-point voltages
+  solveHydraulic(dt);    // 2. backward-Euler pressure/flow (Picard for relief/check)
+  integrateMech(dt);     // 3. ram motion from cylinder force (couples back next tick)
+  sampleSensors(dt);     // 4. physical state -> PLC input image (the only phys->PLC path)
+  if(!isFinite(S.Pcap)||!isFinite(S.pos)){ S.hp=[0,0,0,0]; S.Pcap=S.pos=S.vel=S.velms=0; } // NaN guard
+}
 
-  const valve = S.solA ? 'ext' : S.solB ? 'ret' : 'center';
-
-  if(S.deadhead){
-    // pump commanded against a blocked port: pressure rises to relief regardless
-    S.Ppump = Pc; S.Ppost = Pc - Rf*0; S.Qcyl=0; S.filtDP=0; S.vel=0;
-    return;
-  }
-
-  if(valve==='ext'){
-    if(S.pos < CONTACT-0.1){
-      // ---- APPROACH: fixed-flow pump pushes load through the filter.
-      // If the restriction is high, pump pins at relief and spills -> flow limited.
-      const Pload=40;
-      const Qmax = Math.max(0,(Pc - Pload)/Rf);        // most flow the relief ceiling can push through the filter
-      S.Qcyl = Math.min(Q0, Qmax);
-      const limited = S.Qcyl < Q0-0.05;
-      S.vel = VFULL*(S.Qcyl/Math.max(0.001,eff('pump.Q0')));
-      S.pos = Math.min(CONTACT, S.pos + S.vel*dt);
-      S.Pcap = Pload;
-      S.filtDP = Rf*S.Qcyl;
-      S.Ppump = limited ? Pc : (Pload + S.filtDP);
-      S.Ppost = S.Ppump - S.filtDP;
-    } else {
-      // ---- PRESSING: piston at workpiece, v=0. Pump flow builds cap pressure
-      //     against relief; internal seal leak bleeds it to tank.
-      S.vel=0; S.pos=CONTACT;
-      const inflow = Math.min(Q0, Math.max(0,(Pc - S.Pcap)/Rf))/60;   // L/s into cap
-      const leak   = eff('cyl.gLeak')*S.Pcap;                          // L/s to tank
-      const Ccap   = 0.006;                                            // L/bar (oil compliance)
-      S.Pcap = Math.max(0, Math.min(Pc, S.Pcap + (inflow-leak)/Ccap*dt));
-      S.filtDP = Rf*(inflow*60);
-      S.Ppump = Math.min(Pc, S.Pcap + S.filtDP);
-      S.Ppost = S.Ppump - S.filtDP;
-      S.Qcyl = inflow*60;
-    }
-  } else if(valve==='ret'){
-    S.Pcap = Math.max(0, S.Pcap - 400*dt);            // cap vents through check
-    S.vel = -VFULL*(Q0/Math.max(0.001,eff('pump.Q0')));
-    S.pos = Math.max(0, S.pos + S.vel*dt);
-    S.Ppump = S.motor?RELIEF_STANDBY:0; S.Ppost=S.Ppump; S.filtDP=0; S.Qcyl=0;
-  } else {
-    S.vel=0; S.Pcap=Math.max(0,S.Pcap-200*dt);
-    S.Ppump = S.motor?RELIEF_STANDBY:0; S.Ppost=S.Ppump; S.filtDP=0; S.Qcyl=0;
-  }
-
-  // ---- SENSOR SAMPLE (the only physics->PLC coupling) ----
-  S.AIpress = S.Pcap + eff('pt110.offset');                  // transducer lies if offset≠0
+// ---- SENSOR SAMPLE: physical state -> PLC input image (through effParam) ----
+function sampleSensors(dt){
+  S.AIpress = S.Pcap*eff('pt110.gain') + eff('pt110.offset');   // transducer may lie
   S.Itop    = S.pos<=2 ? 1:0;
-  // bottom limit: mechanically made at full stroke, gated by field wiring.
-  // Intermittent wire: on ~half of cycles it makes on arrival (enough for the PLC
-  // to enter PRESS) then OPENS under end-of-travel shock -> emergent no-retract.
+  // LS-402 bottom limit: mechanically made at full stroke, gated by field wiring.
+  // Intermittent wire: makes on arrival (PLC enters PRESS) then OPENS under
+  // end-of-travel shock on ~half of cycles -> emergent no-retract.
   const made = S.pos>=CONTACT-2;
   const wireFaulted = eff('ls402.wiring')<1;
   if(made){
     if(!S._lsLatch){ S._lsLatch=true; S._lsBad = wireFaulted && (rnd()<0.5); S._lsT=0; }
     S._lsT += dt;
   } else if(S.pos<CONTACT-10){ S._lsLatch=false; S._lsBad=false; S._lsT=0; }
-  S.Ibottom = (made && !(S._lsBad && S._lsT>0.25)) ? 1:0;
+  S.wireOK = !(S._lsBad && S._lsT>0.25);
+  // I0.4 read from the electrical voltage divider (>12 V = TRUE) — solved this tick
+  S.Ibottom = S.Vi04>12 ? 1:0;
   S.IestopOK = S.estopOK?1:0; S.IolOK = S.olOK?1:0;
 }
 
@@ -700,8 +781,8 @@ function renderHyd(){
   setPipe('pipe-supply', S.Ppump, S.Qcyl);
   setPipe('pipe-post', S.Ppost, S.Qcyl);
   setPipe('pipe-toDCV', S.Ppost, S.Qcyl);
-  setPipe('pipe-A', S.solA?S.Pcap:0, S.solA?S.Qcyl:0);
-  setPipe('pipe-B', S.solB?RELIEF_STANDBY:0, S.solB?S.Qcyl:0);
+  setPipe('pipe-A', S.solAen?S.Pcap:0, S.solAen?S.Qcyl:0);
+  setPipe('pipe-B', S.solBen?S.Prod:0, S.solBen?S.Qcyl:0);
   $('hw-shaft').style.stroke = S.motor?'var(--green)':'var(--edge)';
   $('hv-motor').textContent = S.motor?'⟳':'M';
   $('hv-motor').style.fill = S.motor?'var(--green)':'var(--dim)';
@@ -710,9 +791,9 @@ function renderHyd(){
   const clog = !!faults['filter.R'];
   $('hi-filterclog').setAttribute('fill', clog?'var(--red)':'#2b3a2b');
   $('hi-filterclog').style.filter = clog?'drop-shadow(0 0 5px var(--red))':'none';
-  $('hi-solA').setAttribute('fill', S.solA?'var(--green)':'#2b3a2b');
-  $('hi-solB').setAttribute('fill', S.solB?'var(--green)':'#2b3a2b');
-  $('hv-dcv').textContent = S.solA?'P→A  B→T':S.solB?'P→B  A→T':'CENTER';
+  $('hi-solA').setAttribute('fill', S.solAen?'var(--green)':'#2b3a2b');
+  $('hi-solB').setAttribute('fill', S.solBen?'var(--green)':'#2b3a2b');
+  $('hv-dcv').textContent = S.solAen?'P→A  B→T':S.solBen?'P→B  A→T':'CENTER';
   // piston position in cylinder (200..470 -> pos 0..250)
   const y=200+(S.pos/STROKE)*270;
   $('hyd-piston').setAttribute('y',y);
@@ -727,15 +808,15 @@ function renderElec(){
   $('ew-24').style.stroke='var(--green)';
   $('ew-estop').style.stroke=S.estopOK?'var(--green)':'var(--red)';
   $('ew-k1coil').style.stroke=S.motorCmd&&S.estopOK?'var(--green)':'var(--edge)';
-  lamp('ei-solA',S.solA,'#33d17a'); lamp('ei-solB',S.solB,'#33d17a');
-  $('ew-solA').style.stroke=S.solA?'var(--green)':'var(--edge)';
+  lamp('ei-solA',S.solAen,'#33d17a'); lamp('ei-solB',S.solBen,'#33d17a');
+  $('ew-solA').style.stroke=S.solA?'var(--green)':'var(--edge)';   // command wire (coil may be open)
   $('ew-solB').style.stroke=S.solB?'var(--green)':'var(--edge)';
   // limit switch wiring — the fault surface
-  const wOK = eff('ls402.wiring')>=1;
+  const wireFaulted = eff('ls402.wiring')<1;
   const i04 = S.Ibottom;
-  $('ew-ls402').style.stroke = i04?'var(--green)':(S.pos>=CONTACT-4 && !wOK?'var(--red)':'var(--edge)');
-  $('ei-flex').setAttribute('fill', !wOK?'var(--red)':'#2b3a2b');
-  $('ei-flex').setAttribute('stroke', !wOK?'var(--red)':'var(--amber)');
+  $('ew-ls402').style.stroke = i04?'var(--green)':(S.pos>=CONTACT-4 && wireFaulted?'var(--red)':'var(--edge)');
+  $('ei-flex').setAttribute('fill', wireFaulted?'var(--red)':'#2b3a2b');
+  $('ei-flex').setAttribute('stroke', wireFaulted?'var(--red)':'var(--amber)');
   $('ew-lstop').style.stroke=S.Itop?'var(--green)':'var(--edge)';
   $('ev-i04').textContent='I0.4 '+(i04?'●1 (bottom)':'○0');
   $('ev-i04').style.fill=i04?'var(--green)':'var(--dim)';
@@ -808,17 +889,17 @@ function drawLadder(){
    ========================================================================= */
 const TP = {
   // hydraulic (pressure gauge)
-  PG101:{d:'press',name:'PG-101 pump outlet',get:()=>[S.Ppump,'bar',S.Ppump>200?'⚠ pinned at relief':'']},
+  PG101:{d:'press',name:'PG-101 pump outlet',get:()=>[S.Ppump,'bar',S.Ppump>200?'⚠ pinned at relief':(S.solAen&&S.pos>=CONTACT-2&&S.Ppump<190?'⚠ can\'t reach relief under load':'')]},
   PG102:{d:'press',name:'PG-102 post-filter',get:()=>[S.Ppost,'bar','']},
   PT110:{d:'press',name:'PT-110 cap line (true)',get:()=>[S.Pcap,'bar', faults['pt110.offset']?'HMI reads '+S.AIpress.toFixed(0)+' — sensor high!':'']},
-  RODLINE:{d:'press',name:'rod-end return line',get:()=>[S.solB?RELIEF_STANDBY:2,'bar','']},
+  RODLINE:{d:'press',name:'rod-end return line',get:()=>[S.Prod,'bar','']},
   FILTER:{d:'press',name:'FLT-201 differential',get:()=>[S.filtDP,'bar ΔP',S.filtDP>3?'⚠ element restricted':'clean <1 bar']},
   RELIEF:{d:'press',name:'RV-501 relief setting',get:()=>[eff('relief.crack'),'bar set','']},
   STRAINER:{d:'press',name:'suction strainer',get:()=>[0.05,'bar','']},
-  ACCUM:{d:'press',name:'accumulator',get:()=>[S.Ppump,'bar','100 bar precharge']},
-  DCV:{d:'press',name:'DCV DV-301',get:()=>[S.Ppost,'bar P-port','']},
-  CHECK:{d:'press',name:'pilot check valve',get:()=>[S.solA?S.Pcap:0,'bar','']},
-  FLOWCTRL:{d:'press',name:'meter-out flow control',get:()=>[S.solB?RELIEF_STANDBY:0,'bar','']},
+  ACCUM:{d:'press',name:'accumulator',get:()=>[S.Ppost,'bar','100 bar precharge']},
+  DCV:{d:'press',name:'DCV DV-301',get:()=>[S.Ppost,'bar P-port', (S.solA&&!S.solAen)?'⚠ commanded but spool not shifted':'']},
+  CHECK:{d:'press',name:'pilot check valve',get:()=>[S.solAen?S.Pcap:0,'bar','']},
+  FLOWCTRL:{d:'press',name:'meter-out flow control',get:()=>[S.solBen?S.Prod:0,'bar','']},
   PUMP:{d:'press',name:'pump P-101',get:()=>[S.Ppump,'bar out',S.motor?'':'motor stopped']},
   // electrical (multimeter)
   E480:{d:'dmm',name:'480V supply',get:()=>[480,'VAC','']},
@@ -828,19 +909,20 @@ const TP = {
   MOTORE:{d:'dmm',name:'motor terminals',get:()=>[S.motor?480:0,'VAC',S.motor?'40A draw':'0A']},
   PSU:{d:'dmm',name:'24V PSU output',get:()=>[24,'VDC','']},
   ESTOP:{d:'dmm',name:'E-stop chain out',get:()=>[S.estopOK?24:0,'VDC',S.estopOK?'':'⛔ chain open']},
-  K1COIL:{d:'dmm',name:'K1 coil A1',get:()=>[(S.motorCmd&&S.estopOK)?24:0,'VDC','']},
-  SOLA:{d:'dmm',name:'SOL-A coil',get:()=>[S.solA?24:0,'VDC',S.solA?'energized':'']},
-  SOLB:{d:'dmm',name:'SOL-B coil',get:()=>[S.solB?24:0,'VDC','']},
-  LSTOP:{d:'dmm',name:'LS-TOP signal',get:()=>[S.Itop?24:0,'VDC','']},
+  K1COIL:{d:'dmm',name:'K1 coil A1',get:()=>[S.Vk1coil,'VDC', (S.motorCmd&&S.Vk1coil<12)?'⚠ commanded, no coil voltage — open coil?':'']},
+  SOLA:{d:'dmm',name:'SOL-A coil',get:()=>[S.Vsola,'VDC', S.solA&&!S.solAen?'⚠ 24V commanded but no pull-in — open coil':S.solAen?'energized':'']},
+  SOLB:{d:'dmm',name:'SOL-B coil',get:()=>[S.Vsolb,'VDC', S.solBen?'energized':'']},
+  LSTOP:{d:'dmm',name:'LS-TOP signal',get:()=>[S.Vi03,'VDC','']},
   LS402:{d:'dmm',name:'LS-402 signal @ I0.4',get:()=>{
-      const made=S.pos>=CONTACT-2; const v=S.Ibottom?24:0;
-      let h=''; if(made&&!S.Ibottom) h='⚠ switch made but 0V — open in wiring!';
+      const made=S.pos>=CONTACT-2; const v=S.Vi04;
+      let h=''; if(made&&v<12) h='⚠ switch made but ~0V — open in field wiring!';
       else if(faults['ls402.wiring']&&made) h='flickering at full stroke';
+      else if(faults['emi.level']) h='noisy — EMI pickup on signal line';
       return [v,'VDC',h];}},
   TP24:{d:'dmm',name:'24V+ rail',get:()=>[24,'VDC','']},
   // thermal
   MOTOR:{d:'thermal',name:'motor housing',get:()=>[S.motor?58:24,'°C','']},
-  RODLINE_T:{d:'thermal',name:'rod-return line',get:()=>[eff('cyl.gLeak')>0&&S.solA?72:38,'°C',eff('cyl.gLeak')>0?'⚠ hot — flow crossing piston':'']},
+  RODLINE_T:{d:'thermal',name:'rod-return line',get:()=>{const leak=eff('cyl.gLeak')>0.001; return [leak&&S.solAen?72:38,'°C',leak?'⚠ hot — flow crossing piston seal':''];}},
 };
 // thermal uses same dots on hyd layer; map RODLINE dot when thermal selected
 function probe(tp){
@@ -941,16 +1023,21 @@ document.querySelectorAll('.injector [data-f]').forEach(b=>b.onclick=()=>{
   if(f==='FILTER'){ faults['filter.R']={mode:'scale',value:2000}; log('alarm','info','INJECT ① filter.R ×2000 (clogged element)'); }
   if(f==='PT110'){ faults['pt110.offset']={mode:'offset',value:20}; log('alarm','info','INJECT ② pt110.offset +20 bar (drift)'); }
   if(f==='LS402'){ faults['ls402.wiring']={mode:'set',value:0.5}; log('alarm','info','INJECT ③ ls402.wiring intermittent at full stroke'); }
-  if(f==='CYLSEAL'){ faults['cyl.gLeak']={mode:'set',value:0.0032}; log('alarm','info','INJECT ④ cyl.gLeak seal bypass'); }
+  if(f==='CYLSEAL'){ faults['cyl.gLeak']={mode:'set',value:0.03}; log('alarm','info','INJECT ④ cyl.gLeak seal bypass'); }
+  if(f==='PUMP'){ faults['pump.slip']={mode:'set',value:0.009}; log('alarm','info','INJECT ⑤ pump.slip ↑ (worn — load-dependent sag)'); }
+  if(f==='OIL'){ faults['cyl.beta']={mode:'set',value:140}; log('alarm','info','INJECT ⑥ cyl.beta ↓ (air in oil — spongy, slow build)'); }
+  if(f==='SPOOL'){ faults['valve.gMain']={mode:'scale',value:0.0012}; log('alarm','info','INJECT ⑦ valve.gMain ×0.0012 (sticky spool — restricted shift)'); }
+  if(f==='COILA'){ faults['coilA.R']={mode:'set',value:1e9}; log('alarm','info','INJECT ⑧ coilA.R open (SOL-A no pull-in)'); }
 });
 // repair
 $('btn-repair').onclick=()=>{
   const p=$('repair-part').value; if(!p){ log('alarm','','Select a part first'); return; }
-  const map={FILTER:'filter.R',PT110:'pt110.offset',LS402WIRE:'ls402.wiring',CYLSEAL:'cyl.gLeak'};
+  const map={FILTER:'filter.R',PT110:'pt110.offset',LS402WIRE:'ls402.wiring',CYLSEAL:'cyl.gLeak',
+             PUMP:'pump.slip',OIL:'cyl.beta',SPOOL:'valve.gMain',COILA:'coilA.R'};
   const key=map[p];
-  if(faults[key]){ delete faults[key]; log('alarm','ok','REPAIR ✓ '+$('repair-part').selectedOptions[0].text+' — fault cleared. CYCLE to verify.'); }
+  if(faults[key]){ delete faults[key]; log('alarm','ok','REPAIR ✓ '+$('repair-part').selectedOptions[0].text+' — fault cleared. CYCLE to verify.');
+    document.querySelectorAll('.injector [data-f]').forEach(x=>x.classList.remove('armed')); }
   else { log('alarm','info','Replaced '+p+' but it was NOT the fault. Parts cost incurred. Keep diagnosing.'); S.cost+=180; }
-  document.querySelectorAll('.injector [data-f]').forEach(x=>{ if(x.dataset.f && map[$('repair-part').value]===({FILTER:'filter.R',PT110:'pt110.offset',LS402:'ls402.wiring',CYLSEAL:'cyl.gLeak'})[x.dataset.f]) x.classList.remove('armed'); });
 };
 // drawer tabs
 document.querySelectorAll('.dtab').forEach(t=>t.onclick=()=>{
@@ -960,23 +1047,26 @@ document.querySelectorAll('.dtab').forEach(t=>t.onclick=()=>{
 
 $('briefbody').innerHTML=`
 <b style="color:var(--ink)">HOW THIS PROTOTYPE WORKS</b><br>
-This is a live simulation, not a slideshow. The machine runs a real physics tick (hydraulics → mechanics → sensors)
-and an <i>independent</i> PLC scan that reads the sensor image and sequences idle→extend→press→retract.
+A live simulation, not a slideshow. It runs <b>real lumped-parameter solvers</b> — backward-Euler R-C hydraulics,
+nodal-analysis electrical, a rigid-body ram — plus an <i>independent</i> PLC scan sequencing idle→extend→press→retract.
 <br><br>
 Every fault is <b>one data override</b> on one component (see ⚙ INSTRUCTOR). Nothing is scripted — the alarm codes,
-slow strokes, weak parts and no-retracts all <i>emerge</i>.
+slow strokes, weak parts and no-retracts all <i>emerge</i> from physics.
 <br><br>
 <b style="color:var(--ink)">TRY THE INTRO FAULT</b><br>
 1. ⚙ INSTRUCTOR → ① Clog pressure filter.<br>
 2. ▶ CYCLE. Watch the ram crawl; at 6s the PLC latches <span style="color:var(--red)">ALM-1102 EXTEND TIMEOUT</span>.<br>
 3. Novice move (red herring): the extend solenoid IS energized → blame the valve. Don't.<br>
-4. Pressure gauge → click <b>PG-101</b> (pinned at 210) then <b>PG-102</b> (sagging) → <b>FLT-201 ΔP ≈ 9 bar</b>.<br>
+4. Pressure gauge → click <b>PG-101</b> (pinned at 210) then <b>PG-102</b> (sagging) → high <b>FLT-201 ΔP</b>.<br>
 5. Repair → "Replace filter element" → RESET → CYCLE → clean cycle. Root-caused, not masked.
 <br><br>
-<b style="color:var(--ink)">THE OTHER THREE</b><br>
+<b style="color:var(--ink)">EIGHT FAULTS, ALL EMERGENT</b><br>
 ② Transducer drift → no alarm, weak parts (HMI lies; probe PT-110 at zero).<br>
-③ LS-402 wire → random no-retract only at full stroke (watch I0.4 flicker; wiggle-probe LS-402).<br>
-④ Cylinder seal → looks like a weak pump, but the <b>Dead-head pump test</b> builds full 210 bar → pump is fine.`;
+③ LS-402 wire → random no-retract only at full stroke (watch I0.4; wiggle-probe LS-402).<br>
+④ Cyl seal vs ⑤ worn pump → both look weak, but <b>Dead-head pump test</b> splits them:
+seal=214 bar (pump fine), worn pump≈191 bar (pump can't make pressure).<br>
+⑥ Air in oil → slow spongy pressure build.  ⑦ Sticky spool → slow extend but filter ΔP normal.<br>
+⑧ Open SOL-A coil → ram won't move; multimeter shows 24V commanded at the coil but no pull-in.`;
 
 // boot
 log('alarm','ok','Workstation online · PRESS-LINE 3 · press ▶ CYCLE to run');

@@ -316,7 +316,7 @@ LS WIRE     → 8 cycles → 4× ALM‑2205 no‑retract, 4× clean (intermitten
 2. **Component library** — the ~20 press components as registered classes; adding a component = register one class, nothing central changes.
 3. **Scenario format** — serializable JSON (`nodes, components, connections, plcProgram, faultScenarios, seed, dt, scanPeriod`) → save / replay / share / auto‑grade.
 4. **Workstation UI** — the five layer schematics, instruments, alarm log, hypothesis tracker, repair/verify loop (the shipped prototype is the reference).
-5. **Career wrapper** — work orders, parts inventory + budget, downtime cost, procedural fault seeding, machine progression (conveyor → press → robotic cell → line).
+5. **Career wrapper** — ✅ *shipped in the prototype:* a shift of work orders with hidden seeded faults, a parts budget, downtime cost ($/s), verify-to-close, and end-of-shift scoring (first-fix rate, MTTR, total cost, grade). Next: procedural seeding, machine progression (conveyor → press → robotic cell → line), and simultaneous faults.
 
 ### Known limits (document, don't hide)
 Softened bulk modulus and linearized orifices make transients *qualitatively*

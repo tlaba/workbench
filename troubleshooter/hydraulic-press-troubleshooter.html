@@ -227,219 +227,1721 @@ svg text{transition:fill .18s ease}
 
     <!-- HYDRAULIC -->
     <svg class="layer on" data-layer="hyd" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
-      <!-- reservoir -->
-      <rect x="30" y="420" width="120" height="110" rx="4" fill="#0e1620" stroke="#3a4a58"/>
-      <rect x="34" y="470" width="112" height="56" fill="#14263a" opacity=".6"/>
-      <text class="lbl" x="42" y="440">RESERVOIR 250L</text>
-      <text class="lbl" x="42" y="522">ISO VG46 · 45°C</text>
-      <!-- suction -->
-      <path class="pipe" d="M90 420 L90 360 L150 360"/>
-      <rect x="150" y="345" width="46" height="30" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="STRAINER"/>
-      <text class="lbl" x="150" y="340">STRAINER</text>
-      <!-- pump + motor -->
-      <path class="pipe" d="M196 360 L245 360"/>
-      <circle cx="278" cy="360" r="32" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="PUMP"/>
-      <text class="lbl" x="252" y="364">PUMP</text>
-      <text class="lbl" x="248" y="410">P-101 60cc</text>
-      <circle cx="278" cy="290" r="26" fill="#182430" stroke="#3a4a58" class="tp" data-tp="MOTOR"/>
-      <text class="val" x="262" y="294" id="hv-motor">M</text>
-      <text class="lbl" x="250" y="256">MOTOR 30kW</text>
-      <line x1="278" y1="316" x2="278" y2="328" class="wire" id="hw-shaft"/>
-      <!-- pressure line to filter -->
-      <path class="pipe" id="pipe-supply" d="M310 360 L370 360"/>
-      <!-- filter -->
-      <rect x="370" y="335" width="40" height="50" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="FILTER"/>
-      <path d="M375 345 L405 375 M405 345 L375 375" stroke="#3a4a58" stroke-width="1.5"/>
-      <text class="lbl" x="352" y="326">FILTER FLT-201</text>
-      <circle cx="446" cy="323" r="6" fill="#2b3a2b" stroke="#3a4a58" id="hi-filterclog"/>
-      <text class="lbl" x="358" y="404" id="hv-filtdp">ΔP 0.3 bar</text>
-      <!-- post filter node -->
-      <path class="pipe" id="pipe-post" d="M410 360 L470 360"/>
-      <!-- relief tee down from the post-filter node -->
-      <path class="pipe" d="M470 360 L470 302"/>
-      <rect x="452" y="256" width="36" height="46" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="RELIEF"/>
-      <text class="lbl" x="398" y="266">RELIEF</text>
-      <text class="lbl" x="398" y="279">RV-501</text>
-      <text class="lbl" x="398" y="292" id="hv-relief">210 bar</text>
-      <!-- relief return to reservoir (dashed) -->
-      <path class="pipe" d="M470 256 L470 205 L150 205 L150 345" stroke-dasharray="2 4"/>
-      <!-- accumulator tees on the run to the DCV -->
-      <path class="pipe" d="M585 360 L585 300"/>
-      <path d="M570 256 a15 15 0 0 1 30 0 l0 44 l-30 0 z" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="ACCUM"/>
-      <text class="lbl" x="568" y="248">ACCUM</text>
-      <!-- to DCV -->
-      <path class="pipe" id="pipe-toDCV" d="M470 360 L620 360"/>
-      <!-- DCV 4/3 -->
-      <rect x="620" y="330" width="90" height="60" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="DCV"/>
-      <line x1="650" y1="330" x2="650" y2="390" stroke="#3a4a58"/>
-      <line x1="680" y1="330" x2="680" y2="390" stroke="#3a4a58"/>
-      <text class="lbl" x="622" y="345" id="hv-dcv">P T A B</text>
-      <text class="lbl" x="628" y="410">DCV DV-301 4/3</text>
-      <text class="lbl" x="600" y="325">A</text><text class="lbl" x="712" y="325">B</text>
-      <!-- solenoid indicators -->
-      <rect x="606" y="300" width="12" height="12" fill="#2b3a2b" stroke="#3a4a58" id="hi-solA"/>
-      <rect x="712" y="300" width="12" height="12" fill="#2b3a2b" stroke="#3a4a58" id="hi-solB"/>
-      <!-- A line to cap via check valve -->
-      <path class="pipe" id="pipe-A" d="M640 330 L640 150 L760 150"/>
-      <circle cx="700" cy="150" r="9" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="CHECK"/>
-      <text class="lbl" x="680" y="135">CHK</text>
-      <!-- B line to rod via flow control -->
-      <path class="pipe" id="pipe-B" d="M690 390 L690 470 L760 470"/>
-      <rect x="720" y="455" width="30" height="30" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="FLOWCTRL"/>
-      <text class="lbl" x="700" y="500">FLOW CTL</text>
-      <!-- cylinder -->
-      <rect x="760" y="120" width="90" height="380" rx="4" fill="#0e1620" stroke="#3a4a58"/>
-      <text class="lbl" x="762" y="115">CYL-401</text>
-      <rect id="hyd-piston" x="764" y="200" width="82" height="24" fill="#3a4a58"/>
-      <rect id="hyd-rod" x="800" y="224" width="10" height="270" fill="#2a3744"/>
-      <text class="lbl" x="856" y="150">cap</text>
-      <text class="lbl" x="856" y="470">rod</text>
-      <!-- test point dots -->
-      <circle cx="340" cy="360" r="6" fill="#233" stroke="var(--cyan)" class="tp" data-tp="PG101"/><text class="lbl" x="322" y="384">PG-101</text>
-      <circle cx="440" cy="360" r="6" fill="#233" stroke="var(--cyan)" class="tp" data-tp="PG102"/><text class="lbl" x="422" y="384">PG-102</text>
-      <circle cx="760" cy="150" r="6" fill="#233" stroke="var(--cyan)" class="tp" data-tp="PT110"/><text class="lbl" x="742" y="176">PT-110</text>
-      <circle cx="760" cy="470" r="6" fill="#233" stroke="var(--cyan)" class="tp" data-tp="RODLINE"/>
-    </svg>
+  <defs>
+    <linearGradient id="hy-steelV" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8a97a5"/><stop offset=".55" stop-color="#4a5866"/><stop offset="1" stop-color="#2c3844"/>
+    </linearGradient>
+    <linearGradient id="hy-steelH" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#95a2b0"/><stop offset=".5" stop-color="#5a6875"/><stop offset="1" stop-color="#313d49"/>
+    </linearGradient>
+    <linearGradient id="hy-ironV" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d4754"/><stop offset="1" stop-color="#242c36"/>
+    </linearGradient>
+    <linearGradient id="hy-blueV" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1f5f8b"/><stop offset="1" stop-color="#14456b"/>
+    </linearGradient>
+    <linearGradient id="hy-blueH" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2e77a8"/><stop offset=".45" stop-color="#1f5f8b"/><stop offset="1" stop-color="#123c5e"/>
+    </linearGradient>
+    <linearGradient id="hy-yellow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8b93c"/><stop offset="1" stop-color="#b8862a"/>
+    </linearGradient>
+    <linearGradient id="hy-brass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c9a35a"/><stop offset="1" stop-color="#8a6d35"/>
+    </linearGradient>
+    <linearGradient id="hy-can" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#454f5b"/><stop offset=".5" stop-color="#2b323c"/><stop offset="1" stop-color="#20262e"/>
+    </linearGradient>
+    <linearGradient id="hy-oil" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c98f2e"/><stop offset="1" stop-color="#7a541a"/>
+    </linearGradient>
+    <linearGradient id="hy-rod" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5a6874"/><stop offset=".25" stop-color="#cfd9e0"/><stop offset=".45" stop-color="#eef3f6"/><stop offset=".7" stop-color="#8b98a4"/><stop offset="1" stop-color="#414e5a"/>
+    </linearGradient>
+    <linearGradient id="hy-piston" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a3b0bd"/><stop offset=".08" stop-color="#77848f"/>
+      <stop offset=".14" stop-color="#141a21"/><stop offset=".26" stop-color="#141a21"/>
+      <stop offset=".34" stop-color="#94a1ae"/><stop offset=".55" stop-color="#7d8a97"/>
+      <stop offset=".64" stop-color="#141a21"/><stop offset=".76" stop-color="#141a21"/>
+      <stop offset=".84" stop-color="#6b7885"/><stop offset="1" stop-color="#4a5763"/>
+    </linearGradient>
+    <radialGradient id="hy-dial" cx=".38" cy=".32" r=".9">
+      <stop offset="0" stop-color="#f2f5f7"/><stop offset="1" stop-color="#b9c2cb"/>
+    </radialGradient>
+    <radialGradient id="hy-bolt" cx=".35" cy=".3" r=".9">
+      <stop offset="0" stop-color="#cfd8df"/><stop offset=".6" stop-color="#566470"/><stop offset="1" stop-color="#232b34"/>
+    </radialGradient>
+    <linearGradient id="hy-tank" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1e5a84"/><stop offset=".7" stop-color="#153f61"/><stop offset="1" stop-color="#0f3350"/>
+    </linearGradient>
+    <filter id="hy-ds" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="3" dy="4" stdDeviation="3" flood-color="#000" flood-opacity=".45"/>
+    </filter>
+  </defs>
+
+  <!-- ======================= floor ======================= -->
+  <rect x="0" y="548" width="900" height="12" fill="#0c1117"/>
+  <line x1="0" y1="548" x2="900" y2="548" stroke="#1f2933" stroke-width="2"/>
+
+  <!-- ======================= wall data plate + conduit (top-left) ======================= -->
+  <rect x="34" y="84" width="158" height="70" rx="4" fill="#0b1016" stroke="rgba(255,255,255,.10)"/>
+  <line x1="38" y1="87.5" x2="188" y2="87.5" stroke="rgba(255,255,255,.06)"/>
+  <circle cx="42" cy="92" r="1.8" fill="url(#hy-bolt)"/><circle cx="184" cy="92" r="1.8" fill="url(#hy-bolt)"/>
+  <circle cx="42" cy="146" r="1.8" fill="url(#hy-bolt)"/><circle cx="184" cy="146" r="1.8" fill="url(#hy-bolt)"/>
+  <text class="lbl" x="48" y="100">HPU-100 POWER UNIT</text>
+  <rect x="48" y="104" width="130" height="2" fill="url(#hy-yellow)" opacity=".45"/>
+  <text class="lbl" x="48" y="118">PMAX 210 bar</text>
+  <text class="lbl" x="48" y="131">FLOW 60 L/min</text>
+  <text class="lbl" x="48" y="144">FLUID ISO VG46</text>
+  <!-- motor tag (relocated up onto frame wall) -->
+  <rect x="34" y="162" width="110" height="14" rx="2" fill="#0b1016" stroke="rgba(255,255,255,.1)"/>
+  <text class="lbl" x="40" y="172">MOTOR M-100 30kW</text>
+  <!-- electrical conduit down to motor junction box -->
+  <circle cx="94" cy="184" r="4.5" fill="url(#hy-ironV)" stroke="#2a333e"/>
+  <line x1="94" y1="188" x2="94" y2="306" stroke="#252d37" stroke-width="4"/>
+  <line x1="92.8" y1="188" x2="92.8" y2="306" stroke="rgba(255,255,255,.10)" stroke-width="1"/>
+  <rect x="88" y="218" width="12" height="7" rx="1" fill="url(#hy-steelV)" stroke="#131a21" stroke-width=".8"/>
+  <rect x="88" y="266" width="12" height="7" rx="1" fill="url(#hy-steelV)" stroke="#131a21" stroke-width=".8"/>
+
+  <!-- ======================= tank return lines (dashed, behind tank) ======================= -->
+  <path d="M460 384 L460 452" fill="none" stroke="#33424f" stroke-width="4" stroke-dasharray="3 6"/>
+  <path d="M612 404 L612 452" fill="none" stroke="#33424f" stroke-width="4" stroke-dasharray="3 6"/>
+  <path d="M612 452 L240 452" fill="none" stroke="#33424f" stroke-width="4" stroke-dasharray="3 6"/>
+  <text x="330" y="446" font-size="9" fill="#4a5a68" font-family="monospace">RETURN&#8594;TANK</text>
+
+  <!-- ======================= reservoir ======================= -->
+  <g filter="url(#hy-ds)">
+    <rect x="30" y="536" width="30" height="12" fill="#181f27"/>
+    <rect x="218" y="536" width="30" height="12" fill="#181f27"/>
+    <rect x="28" y="410" width="222" height="128" rx="5" fill="url(#hy-tank)" stroke="#0d2436"/>
+    <line x1="34" y1="500" x2="244" y2="500" stroke="#0d2c44" stroke-width="1.5"/>
+    <rect x="24" y="400" width="230" height="14" rx="3" fill="url(#hy-steelV)" stroke="#131a21"/>
+    <line x1="26" y1="401.5" x2="252" y2="401.5" stroke="rgba(255,255,255,.16)" stroke-width="1"/>
+  </g>
+  <!-- lid bolts -->
+  <circle cx="40" cy="407" r="2.4" fill="url(#hy-bolt)"/><circle cx="98" cy="407" r="2.4" fill="url(#hy-bolt)"/>
+  <circle cx="146" cy="407" r="2.4" fill="url(#hy-bolt)"/><circle cx="240" cy="407" r="2.4" fill="url(#hy-bolt)"/>
+  <!-- sight glass -->
+  <rect x="48" y="434" width="18" height="92" rx="4" fill="#0a1017" stroke="#2a3744"/>
+  <rect x="52" y="438" width="10" height="84" rx="3" fill="#05080b"/>
+  <rect x="52" y="470" width="10" height="52" rx="2" fill="url(#hy-oil)"/>
+  <line x1="54.5" y1="440" x2="54.5" y2="520" stroke="rgba(255,255,255,.22)" stroke-width="1.2"/>
+  <circle cx="57" cy="430" r="3" fill="url(#hy-bolt)"/><circle cx="57" cy="530" r="3" fill="url(#hy-bolt)"/>
+  <line x1="68" y1="466" x2="74" y2="466" stroke="#8fa0ae" stroke-width="1"/><text x="76" y="469" font-size="6.5" fill="#8fa0ae" font-family="monospace">MAX</text>
+  <line x1="68" y1="514" x2="74" y2="514" stroke="#8fa0ae" stroke-width="1"/><text x="76" y="517" font-size="6.5" fill="#8fa0ae" font-family="monospace">MIN</text>
+  <!-- tank tag plate -->
+  <rect x="94" y="474" width="96" height="30" rx="3" fill="#0b1016" stroke="rgba(255,255,255,.1)"/>
+  <text class="lbl" x="100" y="486">RESERVOIR 250L</text>
+  <text class="lbl" x="100" y="498">ISO VG46 &#183; 45&#176;C</text>
+  <!-- filler / breather -->
+  <rect x="158" y="392" width="16" height="10" fill="url(#hy-steelV)" stroke="#131a21"/>
+  <path d="M154 392 h24 a3 3 0 0 0 -3 -6 h-18 a3 3 0 0 0 -3 6 z" fill="url(#hy-brass)" stroke="#4a3a18"/>
+  <line x1="158" y1="389" x2="174" y2="389" stroke="rgba(0,0,0,.4)" stroke-width="1"/>
+  <!-- drain plug -->
+  <rect x="226" y="530" width="12" height="8" rx="1" fill="url(#hy-brass)" stroke="#4a3a18"/>
+  <!-- strainer cutaway -->
+  <rect x="188" y="434" width="56" height="62" rx="4" fill="#0a1520" stroke="#2a4258" stroke-dasharray="4 3"/>
+  <g class="tp" data-tp="STRAINER">
+    <path d="M222 394 L222 458" fill="none" stroke="#3a4a58" stroke-width="6" stroke-dasharray="6 4"/>
+    <rect x="200" y="458" width="36" height="26" rx="4" fill="url(#hy-steelV)" stroke="#131a21"/>
+    <path d="M204 462 l8 18 M212 462 l8 18 M220 462 l8 18 M228 462 l6 14" stroke="#1b2530" stroke-width="1.2"/>
+    <circle cx="218" cy="490" r="5.5" fill="#0d2226" stroke="#37d6cd" stroke-width="1.5"/><circle cx="218" cy="490" r="1.8" fill="#37d6cd"/>
+  </g>
+  <text class="lbl" x="252" y="472">SUCTION</text>
+  <text class="lbl" x="252" y="483">STRAINER</text>
+
+  <!-- ======================= motor + bell housing + pump ======================= -->
+  <g filter="url(#hy-ds)">
+    <rect x="52" y="394" width="18" height="8" fill="#181f27"/>
+    <rect x="122" y="394" width="18" height="8" fill="#181f27"/>
+    <rect x="42" y="330" width="110" height="64" rx="9" fill="url(#hy-blueV)" stroke="#0d2436"/>
+  </g>
+  <line x1="46" y1="333" x2="148" y2="333" stroke="rgba(255,255,255,.16)" stroke-width="1.2"/>
+  <!-- cooling fins -->
+  <g stroke="rgba(0,0,0,.35)" stroke-width="1.4">
+    <line x1="56" y1="334" x2="56" y2="390"/><line x1="63" y1="334" x2="63" y2="390"/>
+    <line x1="70" y1="334" x2="70" y2="390"/><line x1="77" y1="334" x2="77" y2="390"/>
+    <line x1="117" y1="334" x2="117" y2="390"/><line x1="124" y1="334" x2="124" y2="390"/>
+    <line x1="131" y1="334" x2="131" y2="390"/><line x1="138" y1="334" x2="138" y2="390"/>
+  </g>
+  <!-- fan cowl -->
+  <rect x="34" y="336" width="10" height="52" rx="4" fill="url(#hy-ironV)" stroke="#131a21"/>
+  <line x1="36" y1="344" x2="42" y2="344" stroke="#0c1117" stroke-width="1.4"/>
+  <line x1="36" y1="352" x2="42" y2="352" stroke="#0c1117" stroke-width="1.4"/>
+  <line x1="36" y1="360" x2="42" y2="360" stroke="#0c1117" stroke-width="1.4"/>
+  <line x1="36" y1="368" x2="42" y2="368" stroke="#0c1117" stroke-width="1.4"/>
+  <line x1="36" y1="376" x2="42" y2="376" stroke="#0c1117" stroke-width="1.4"/>
+  <!-- junction box + eyebolt -->
+  <rect x="64" y="308" width="38" height="22" rx="2" fill="url(#hy-ironV)" stroke="#131a21"/>
+  <line x1="66" y1="309.5" x2="100" y2="309.5" stroke="rgba(255,255,255,.14)"/>
+  <circle cx="70" cy="313" r="1.6" fill="url(#hy-bolt)"/><circle cx="96" cy="313" r="1.6" fill="url(#hy-bolt)"/>
+  <path d="M102 319 q10 -2 12 6" fill="none" stroke="#12161c" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="124" cy="306" r="6" fill="none" stroke="url(#hy-brass)" stroke-width="3.5"/>
+  <rect x="121" y="311" width="6" height="8" fill="url(#hy-brass)"/>
+  <!-- motor state badge -->
+  <g class="tp" data-tp="MOTOR">
+    <rect x="80" y="336" width="34" height="52" rx="4" fill="url(#hy-blueV)" opacity=".01"/>
+    <circle cx="97" cy="362" r="13.5" fill="#0b1016" stroke="rgba(255,255,255,.18)" stroke-width="1.2"/>
+    <text class="val" id="hv-motor" x="97" y="367" text-anchor="middle" font-size="13">M</text>
+    <circle cx="49" cy="386" r="5.5" fill="#0d2226" stroke="#37d6cd" stroke-width="1.5"/><circle cx="49" cy="386" r="1.8" fill="#37d6cd"/>
+  </g>
+  <!-- bell housing (guarded coupling, safety yellow) -->
+  <path d="M152 336 L196 344 L196 382 L152 390 z" fill="url(#hy-yellow)" stroke="#6e5117"/>
+  <line x1="153" y1="338" x2="195" y2="345.5" stroke="rgba(255,255,255,.25)" stroke-width="1"/>
+  <rect x="158" y="354" width="34" height="16" rx="6" fill="#05080b" stroke="#3a3013"/>
+  <line id="hw-shaft" class="wire" x1="154" y1="362" x2="197" y2="362" style="stroke-width:4.5"/>
+  <circle cx="157" cy="342" r="2" fill="url(#hy-bolt)"/><circle cx="157" cy="384" r="2" fill="url(#hy-bolt)"/>
+  <circle cx="191" cy="348" r="2" fill="url(#hy-bolt)"/><circle cx="191" cy="378" r="2" fill="url(#hy-bolt)"/>
+  <!-- gear pump -->
+  <g class="tp" data-tp="PUMP">
+    <rect x="196" y="338" width="54" height="52" rx="4" fill="url(#hy-steelV)" stroke="#131a21" filter="url(#hy-ds)"/>
+    <line x1="198" y1="340" x2="248" y2="340" stroke="rgba(255,255,255,.16)"/>
+    <circle cx="223" cy="364" r="17" fill="url(#hy-ironV)" stroke="#131a21"/>
+    <circle cx="223" cy="364" r="7" fill="url(#hy-steelV)" stroke="#131a21"/>
+    <circle cx="205" cy="346" r="2.2" fill="url(#hy-bolt)"/><circle cx="241" cy="346" r="2.2" fill="url(#hy-bolt)"/>
+    <circle cx="205" cy="382" r="2.2" fill="url(#hy-bolt)"/><circle cx="241" cy="382" r="2.2" fill="url(#hy-bolt)"/>
+    <rect x="215" y="330" width="16" height="10" fill="url(#hy-brass)" stroke="#4a3a18"/>
+    <!-- suction flange: pump underside to tank lid -->
+    <rect x="213" y="388" width="18" height="14" rx="1" fill="url(#hy-steelV)" stroke="#131a21"/>
+    <circle cx="217" cy="395" r="1.6" fill="url(#hy-bolt)"/><circle cx="227" cy="395" r="1.6" fill="url(#hy-bolt)"/>
+    <circle cx="243" cy="364" r="5.5" fill="#0d2226" stroke="#37d6cd" stroke-width="1.5"/><circle cx="243" cy="364" r="1.8" fill="#37d6cd"/>
+  </g>
+  <rect x="160" y="416" width="92" height="14" rx="2" fill="#0b1016" stroke="rgba(255,255,255,.1)"/>
+  <text class="lbl" x="166" y="426">P-101 GEAR 60cc</text>
+
+  <!-- ======================= pipe underlays ======================= -->
+  <g fill="none" stroke="#0a0e13" stroke-width="9" stroke-linecap="round" opacity=".85">
+    <path d="M222 342 L222 300 L326 300"/>
+    <path d="M364 300 L460 300"/>
+    <path d="M460 300 L520 300 L520 394 L578 394"/>
+    <path d="M754 384 L754 188"/>
+    <path d="M656 404 L656 480 L776 480"/>
+    <path d="M460 300 L460 340"/>
+    <path d="M508 300 L508 262"/>
+  </g>
+  <!-- decorative tees -->
+  <path d="M460 300 L460 340" fill="none" stroke="#3a4a58" stroke-width="6" stroke-linecap="round"/>
+  <path d="M508 300 L508 262" fill="none" stroke="#3a4a58" stroke-width="6" stroke-linecap="round"/>
+
+  <!-- ======================= functional pipes ======================= -->
+  <path class="pipe" id="pipe-supply" d="M222 342 L222 300 L326 300"/>
+  <path class="pipe" id="pipe-post" d="M364 300 L460 300"/>
+  <path class="pipe" id="pipe-toDCV" d="M460 300 L520 300 L520 394 L578 394"/>
+  <path class="pipe" id="pipe-A" d="M754 384 L754 188"/>
+  <path class="pipe" id="pipe-B" d="M656 404 L656 480 L776 480"/>
+
+  <!-- JIC fittings + tube clamps -->
+  <g fill="url(#hy-brass)" stroke="#4a3a18" stroke-width=".8">
+    <rect x="217" y="316" width="10" height="9"/>
+    <rect x="306" y="295.5" width="9" height="9"/>
+    <rect x="376" y="295.5" width="9" height="9"/>
+    <rect x="651" y="416" width="10" height="9"/>
+    <rect x="766" y="474" width="10" height="12"/>
+  </g>
+  <g fill="url(#hy-steelV)" stroke="#131a21">
+    <rect x="420" y="293" width="9" height="14" rx="2"/>
+    <rect x="747" y="236" width="14" height="9" rx="2"/>
+  </g>
+  <circle cx="424.5" cy="296" r="1.5" fill="url(#hy-bolt)"/>
+  <circle cx="754" cy="240.5" r="1.5" fill="url(#hy-bolt)"/>
+
+  <!-- ======================= gauges PG-101 / PG-102 ======================= -->
+  <g class="tp" data-tp="PG101">
+    <rect x="269" y="270" width="6" height="30" fill="url(#hy-brass)" stroke="#4a3a18" stroke-width=".8"/>
+    <rect x="265" y="286" width="14" height="8" rx="1" fill="url(#hy-brass)" stroke="#4a3a18" stroke-width=".8"/>
+    <circle cx="272" cy="246" r="27" fill="url(#hy-steelV)" stroke="#131a21" filter="url(#hy-ds)"/>
+    <circle cx="272" cy="246" r="22" fill="url(#hy-dial)" stroke="#39424b"/>
+    <g stroke="#2c343d" stroke-width="1.3">
+      <line x1="272" y1="226" x2="272" y2="231" transform="rotate(-120 272 246)"/>
+      <line x1="272" y1="226" x2="272" y2="231" transform="rotate(-96 272 246)"/>
+      <line x1="272" y1="226" x2="272" y2="231" transform="rotate(-72 272 246)"/>
+      <line x1="272" y1="226" x2="272" y2="231" transform="rotate(-48 272 246)"/>
+      <line x1="272" y1="226" x2="272" y2="231" transform="rotate(-24 272 246)"/>
+      <line x1="272" y1="226" x2="272" y2="231"/>
+      <line x1="272" y1="226" x2="272" y2="231" transform="rotate(24 272 246)"/>
+      <line x1="272" y1="226" x2="272" y2="231" transform="rotate(48 272 246)"/>
+      <line x1="272" y1="226" x2="272" y2="231" transform="rotate(72 272 246)"/>
+      <line x1="272" y1="226" x2="272" y2="231" transform="rotate(96 272 246)"/>
+      <line x1="272" y1="226" x2="272" y2="231" transform="rotate(120 272 246)"/>
+    </g>
+    <path d="M289.1 240.4 A18 18 0 0 1 287.6 255" fill="none" stroke="#c0392b" stroke-width="3"/>
+    <text x="258" y="262" font-size="6" fill="#39424b" font-family="monospace">0</text>
+    <text x="278" y="262" font-size="6" fill="#39424b" font-family="monospace">250</text>
+    <text x="272" y="240" font-size="6" fill="#39424b" font-family="monospace" text-anchor="middle">bar</text>
+    <g id="pg101-needle" data-cx="272" data-cy="246" transform="rotate(-120 272 246)">
+      <line x1="272" y1="246.5" x2="272" y2="229" stroke="#1c232b" stroke-width="2"/>
+      <line x1="272" y1="246" x2="272" y2="251.5" stroke="#1c232b" stroke-width="2.8"/>
+    </g>
+    <circle cx="272" cy="246" r="2.6" fill="#1c232b"/>
+    <circle cx="272" cy="300" r="5.5" fill="#0d2226" stroke="#37d6cd" stroke-width="1.5"/><circle cx="272" cy="300" r="1.8" fill="#37d6cd"/>
+  </g>
+  <rect x="248" y="204" width="48" height="14" rx="2" fill="#0b1016" stroke="rgba(255,255,255,.1)"/>
+  <text class="lbl" x="254" y="214">PG-101</text>
+
+  <g class="tp" data-tp="PG102">
+    <rect x="411" y="270" width="6" height="30" fill="url(#hy-brass)" stroke="#4a3a18" stroke-width=".8"/>
+    <rect x="407" y="286" width="14" height="8" rx="1" fill="url(#hy-brass)" stroke="#4a3a18" stroke-width=".8"/>
+    <circle cx="414" cy="246" r="27" fill="url(#hy-steelV)" stroke="#131a21" filter="url(#hy-ds)"/>
+    <circle cx="414" cy="246" r="22" fill="url(#hy-dial)" stroke="#39424b"/>
+    <g stroke="#2c343d" stroke-width="1.3">
+      <line x1="414" y1="226" x2="414" y2="231" transform="rotate(-120 414 246)"/>
+      <line x1="414" y1="226" x2="414" y2="231" transform="rotate(-96 414 246)"/>
+      <line x1="414" y1="226" x2="414" y2="231" transform="rotate(-72 414 246)"/>
+      <line x1="414" y1="226" x2="414" y2="231" transform="rotate(-48 414 246)"/>
+      <line x1="414" y1="226" x2="414" y2="231" transform="rotate(-24 414 246)"/>
+      <line x1="414" y1="226" x2="414" y2="231"/>
+      <line x1="414" y1="226" x2="414" y2="231" transform="rotate(24 414 246)"/>
+      <line x1="414" y1="226" x2="414" y2="231" transform="rotate(48 414 246)"/>
+      <line x1="414" y1="226" x2="414" y2="231" transform="rotate(72 414 246)"/>
+      <line x1="414" y1="226" x2="414" y2="231" transform="rotate(96 414 246)"/>
+      <line x1="414" y1="226" x2="414" y2="231" transform="rotate(120 414 246)"/>
+    </g>
+    <path d="M431.1 240.4 A18 18 0 0 1 429.6 255" fill="none" stroke="#c0392b" stroke-width="3"/>
+    <text x="400" y="262" font-size="6" fill="#39424b" font-family="monospace">0</text>
+    <text x="420" y="262" font-size="6" fill="#39424b" font-family="monospace">250</text>
+    <text x="414" y="240" font-size="6" fill="#39424b" font-family="monospace" text-anchor="middle">bar</text>
+    <g id="pg102-needle" data-cx="414" data-cy="246" transform="rotate(-120 414 246)">
+      <line x1="414" y1="246.5" x2="414" y2="229" stroke="#1c232b" stroke-width="2"/>
+      <line x1="414" y1="246" x2="414" y2="251.5" stroke="#1c232b" stroke-width="2.8"/>
+    </g>
+    <circle cx="414" cy="246" r="2.6" fill="#1c232b"/>
+    <circle cx="414" cy="300" r="5.5" fill="#0d2226" stroke="#37d6cd" stroke-width="1.5"/><circle cx="414" cy="300" r="1.8" fill="#37d6cd"/>
+  </g>
+  <rect x="390" y="204" width="48" height="14" rx="2" fill="#0b1016" stroke="rgba(255,255,255,.1)"/>
+  <text class="lbl" x="396" y="214">PG-102</text>
+
+  <!-- ======================= pressure filter ======================= -->
+  <g class="tp" data-tp="FILTER">
+    <rect x="318" y="284" width="54" height="28" rx="3" fill="url(#hy-steelV)" stroke="#131a21" filter="url(#hy-ds)"/>
+    <line x1="320" y1="286" x2="370" y2="286" stroke="rgba(255,255,255,.16)"/>
+    <circle cx="326" cy="290" r="1.8" fill="url(#hy-bolt)"/><circle cx="364" cy="290" r="1.8" fill="url(#hy-bolt)"/>
+    <rect x="327" y="312" width="36" height="72" rx="9" fill="url(#hy-blueH)" stroke="#0d2436"/>
+    <line x1="331" y1="314.5" x2="359" y2="314.5" stroke="rgba(255,255,255,.18)"/>
+    <line x1="329" y1="330" x2="361" y2="330" stroke="rgba(0,0,0,.3)"/>
+    <line x1="329" y1="342" x2="361" y2="342" stroke="rgba(0,0,0,.3)"/>
+    <line x1="329" y1="354" x2="361" y2="354" stroke="rgba(0,0,0,.3)"/>
+    <rect x="334" y="358" width="22" height="16" rx="1" fill="#d8dee3"/>
+    <text x="345" y="366" font-size="5.5" fill="#1a222b" font-family="monospace" text-anchor="middle">HF-620</text>
+    <text x="345" y="372" font-size="5.5" fill="#1a222b" font-family="monospace" text-anchor="middle">10&#181;m</text>
+    <!-- clog indicator pop-up -->
+    <rect x="350" y="272" width="13" height="12" rx="2" fill="url(#hy-brass)" stroke="#4a3a18"/>
+    <circle id="hi-filterclog" cx="356.5" cy="268" r="6" fill="#2b3a2b" stroke="#3a4a58"/>
+    <circle cx="373" cy="350" r="5.5" fill="#0d2226" stroke="#37d6cd" stroke-width="1.5"/><circle cx="373" cy="350" r="1.8" fill="#37d6cd"/>
+  </g>
+  <rect x="306" y="392" width="82" height="28" rx="3" fill="#0b1016" stroke="rgba(255,255,255,.1)"/>
+  <text class="lbl" x="312" y="403">FILTER FLT-201</text>
+  <text class="lbl" id="hv-filtdp" x="312" y="415">&#916;P 0.3 bar</text>
+
+  <!-- ======================= relief valve ======================= -->
+  <g class="tp" data-tp="RELIEF">
+    <rect x="436" y="340" width="48" height="44" rx="3" fill="url(#hy-steelV)" stroke="#131a21" filter="url(#hy-ds)"/>
+    <line x1="438" y1="342" x2="482" y2="342" stroke="rgba(255,255,255,.16)"/>
+    <circle cx="443" cy="347" r="2" fill="url(#hy-bolt)"/><circle cx="477" cy="347" r="2" fill="url(#hy-bolt)"/>
+    <circle cx="443" cy="377" r="2" fill="url(#hy-bolt)"/><circle cx="477" cy="377" r="2" fill="url(#hy-bolt)"/>
+    <!-- adjustment: locknut + knurled knob -->
+    <rect x="484" y="355" width="8" height="14" fill="url(#hy-brass)" stroke="#4a3a18"/>
+    <rect x="492" y="352" width="16" height="20" rx="3" fill="url(#hy-ironV)" stroke="#131a21"/>
+    <line x1="495" y1="353" x2="495" y2="371" stroke="#0c1117" stroke-width="1"/>
+    <line x1="499" y1="353" x2="499" y2="371" stroke="#0c1117" stroke-width="1"/>
+    <line x1="503" y1="353" x2="503" y2="371" stroke="#0c1117" stroke-width="1"/>
+    <circle cx="448" cy="392" r="5.5" fill="#0d2226" stroke="#37d6cd" stroke-width="1.5"/><circle cx="448" cy="392" r="1.8" fill="#37d6cd"/>
+  </g>
+  <rect x="420" y="402" width="88" height="16" rx="2" fill="#0b1016" stroke="rgba(255,255,255,.1)"/>
+  <text class="lbl" x="426" y="413">RV-501 </text>
+  <text class="lbl" id="hv-relief" x="470" y="413">210 bar</text>
+
+  <!-- ======================= accumulator ======================= -->
+  <g class="tp" data-tp="ACCUM">
+    <rect x="486" y="124" width="44" height="138" rx="21" fill="url(#hy-blueH)" stroke="#0d2436" filter="url(#hy-ds)"/>
+    <line x1="491" y1="128" x2="491" y2="256" stroke="rgba(255,255,255,.14)" stroke-width="1.5"/>
+    <line x1="488" y1="152" x2="528" y2="152" stroke="rgba(0,0,0,.3)"/>
+    <line x1="488" y1="232" x2="528" y2="232" stroke="rgba(0,0,0,.3)"/>
+    <!-- gas valve -->
+    <rect x="501" y="112" width="14" height="12" rx="2" fill="url(#hy-steelV)" stroke="#131a21"/>
+    <rect x="504" y="106" width="8" height="6" rx="1" fill="url(#hy-brass)" stroke="#4a3a18"/>
+    <!-- clamp band -->
+    <rect x="482" y="182" width="52" height="13" rx="2" fill="url(#hy-steelV)" stroke="#131a21"/>
+    <rect x="534" y="184" width="8" height="9" fill="url(#hy-ironV)" stroke="#131a21"/>
+    <circle cx="538" cy="188.5" r="1.8" fill="url(#hy-bolt)"/>
+    <!-- decal -->
+    <rect x="491" y="204" width="34" height="12" rx="1" fill="#d8dee3"/>
+    <text x="508" y="212.5" font-size="6" fill="#1a222b" font-family="monospace" text-anchor="middle">N2 90 bar</text>
+    <circle cx="508" cy="140" r="5.5" fill="#0d2226" stroke="#37d6cd" stroke-width="1.5"/><circle cx="508" cy="140" r="1.8" fill="#37d6cd"/>
+  </g>
+  <rect x="422" y="84" width="82" height="14" rx="2" fill="#0b1016" stroke="rgba(255,255,255,.1)"/>
+  <text class="lbl" x="428" y="94">ACC-601 BLADDER</text>
+
+  <!-- ======================= DCV D03 4/3 ======================= -->
+  <g class="tp" data-tp="DCV">
+    <!-- manifold subplate -->
+    <rect x="572" y="384" width="188" height="20" rx="2" fill="url(#hy-ironV)" stroke="#131a21" filter="url(#hy-ds)"/>
+    <circle cx="580" cy="394" r="2.4" fill="url(#hy-bolt)"/><circle cx="736" cy="394" r="2.4" fill="url(#hy-bolt)"/>
+    <!-- A work-port boss on subplate top -->
+    <rect x="746" y="370" width="16" height="14" rx="1" fill="url(#hy-brass)" stroke="#4a3a18"/>
+    <!-- valve body -->
+    <rect x="580" y="344" width="108" height="40" rx="2" fill="url(#hy-steelV)" stroke="#131a21"/>
+    <line x1="582" y1="346" x2="686" y2="346" stroke="rgba(255,255,255,.16)"/>
+    <rect x="580" y="358" width="108" height="12" fill="#232c36" opacity=".8"/>
+    <circle cx="590" cy="352" r="2.2" fill="url(#hy-bolt)"/><circle cx="678" cy="352" r="2.2" fill="url(#hy-bolt)"/>
+    <circle cx="590" cy="377" r="2.2" fill="url(#hy-bolt)"/><circle cx="678" cy="377" r="2.2" fill="url(#hy-bolt)"/>
+    <!-- solenoid can A -->
+    <rect x="536" y="348" width="44" height="32" rx="4" fill="url(#hy-can)" stroke="#10161d"/>
+    <line x1="538" y1="350" x2="578" y2="350" stroke="rgba(255,255,255,.12)"/>
+    <rect x="530" y="352" width="8" height="24" rx="2" fill="url(#hy-ironV)" stroke="#10161d"/>
+    <rect x="546" y="332" width="22" height="16" rx="2" fill="url(#hy-ironV)" stroke="#10161d"/>
+    <path d="M557 332 q0 -10 10 -12" fill="none" stroke="#12161c" stroke-width="3.4" stroke-linecap="round"/>
+    <circle cx="557" cy="340" r="7" fill="#10161d"/>
+    <circle id="hi-solA" cx="557" cy="340" r="5" fill="#2b3a2b" stroke="#10161d"/>
+    <!-- solenoid can B -->
+    <rect x="688" y="348" width="44" height="32" rx="4" fill="url(#hy-can)" stroke="#10161d"/>
+    <line x1="690" y1="350" x2="730" y2="350" stroke="rgba(255,255,255,.12)"/>
+    <rect x="730" y="352" width="8" height="24" rx="2" fill="url(#hy-ironV)" stroke="#10161d"/>
+    <rect x="700" y="332" width="22" height="16" rx="2" fill="url(#hy-ironV)" stroke="#10161d"/>
+    <path d="M711 332 q0 -10 -10 -12" fill="none" stroke="#12161c" stroke-width="3.4" stroke-linecap="round"/>
+    <circle cx="711" cy="340" r="7" fill="#10161d"/>
+    <circle id="hi-solB" cx="711" cy="340" r="5" fill="#2b3a2b" stroke="#10161d"/>
+    <text x="535" y="324" font-size="9" fill="#8fa0ae" font-family="monospace">SOL A</text>
+    <text x="686" y="326" font-size="9" fill="#8fa0ae" font-family="monospace">SOL B</text>
+    <text x="741" y="380" font-size="7" fill="#9fb0bd" font-family="monospace" text-anchor="end">A</text>
+    <text x="663" y="416" font-size="7" fill="#9fb0bd" font-family="monospace">B</text>
+    <text x="602" y="416" font-size="7" fill="#9fb0bd" font-family="monospace">T</text>
+    <text x="586" y="399" font-size="7" fill="#9fb0bd" font-family="monospace">P</text>
+    <circle cx="634" cy="364" r="5.5" fill="#0d2226" stroke="#37d6cd" stroke-width="1.5"/><circle cx="634" cy="364" r="1.8" fill="#37d6cd"/>
+  </g>
+  <!-- DCV nameplate -->
+  <rect x="520" y="412" width="88" height="32" rx="3" fill="#0b1016" stroke="rgba(255,255,255,.1)"/>
+  <text class="lbl" x="526" y="424">DV-301 D03 4/3</text>
+  <text class="val" id="hv-dcv" x="526" y="438">CENTER</text>
+
+  <!-- ======================= PT-110 transducer (on cap/A riser) ======================= -->
+  <g class="tp" data-tp="PT110">
+    <rect x="744" y="293" width="14" height="14" fill="url(#hy-brass)" stroke="#4a3a18"/>
+    <rect x="720" y="291" width="24" height="18" rx="3" fill="url(#hy-steelV)" stroke="#131a21"/>
+    <line x1="726" y1="292" x2="726" y2="308" stroke="rgba(0,0,0,.3)"/>
+    <line x1="732" y1="292" x2="732" y2="308" stroke="rgba(0,0,0,.3)"/>
+    <path d="M720 296 q-12 0 -14 -10" fill="none" stroke="#12161c" stroke-width="3.4" stroke-linecap="round"/>
+    <circle cx="700" cy="298" r="5.5" fill="#0d2226" stroke="#37d6cd" stroke-width="1.5"/><circle cx="700" cy="298" r="1.8" fill="#37d6cd"/>
+  </g>
+  <rect x="664" y="262" width="52" height="14" rx="2" fill="#0b1016" stroke="rgba(255,255,255,.1)"/>
+  <text class="lbl" x="670" y="272">PT-110</text>
+
+  <!-- ======================= pilot check (flange-mounted at cap port, A line) ======================= -->
+  <g class="tp" data-tp="CHECK">
+    <rect x="724" y="152" width="38" height="36" rx="3" fill="url(#hy-steelV)" stroke="#131a21" filter="url(#hy-ds)"/>
+    <line x1="726" y1="154" x2="760" y2="154" stroke="rgba(255,255,255,.16)"/>
+    <circle cx="730" cy="158" r="1.8" fill="url(#hy-bolt)"/><circle cx="756" cy="158" r="1.8" fill="url(#hy-bolt)"/>
+    <circle cx="730" cy="182" r="1.8" fill="url(#hy-bolt)"/><circle cx="756" cy="182" r="1.8" fill="url(#hy-bolt)"/>
+    <path d="M747 178 l7 -12 l7 12 z" fill="#1c232b"/>
+    <line x1="745" y1="163" x2="763" y2="163" stroke="#1c232b" stroke-width="2"/>
+    <!-- pilot port + line, terminated on capped boss -->
+    <rect x="716" y="164" width="10" height="9" fill="url(#hy-brass)" stroke="#4a3a18" stroke-width=".8"/>
+    <path d="M716 168 L700 168 L700 188" fill="none" stroke="#33424f" stroke-width="2" stroke-dasharray="3 3"/>
+    <rect x="694" y="188" width="12" height="9" rx="1" fill="url(#hy-brass)" stroke="#4a3a18" stroke-width=".8"/>
+    <text x="710" y="196" font-size="6" fill="#4a5a68" font-family="monospace">X-PIL</text>
+    <circle cx="734" cy="142" r="5.5" fill="#0d2226" stroke="#37d6cd" stroke-width="1.5"/><circle cx="734" cy="142" r="1.8" fill="#37d6cd"/>
+  </g>
+  <rect x="652" y="126" width="64" height="14" rx="2" fill="#0b1016" stroke="rgba(255,255,255,.1)"/>
+  <text class="lbl" x="658" y="136">PO-CHECK</text>
+
+  <!-- ======================= flow control (B line, meter-out) ======================= -->
+  <g class="tp" data-tp="FLOWCTRL">
+    <rect x="706" y="466" width="32" height="28" rx="3" fill="url(#hy-steelV)" stroke="#131a21" filter="url(#hy-ds)"/>
+    <line x1="708" y1="468" x2="736" y2="468" stroke="rgba(255,255,255,.16)"/>
+    <rect x="715" y="452" width="14" height="14" rx="2" fill="url(#hy-ironV)" stroke="#131a21"/>
+    <line x1="718" y1="453" x2="718" y2="465" stroke="#0c1117"/>
+    <line x1="722" y1="453" x2="722" y2="465" stroke="#0c1117"/>
+    <line x1="726" y1="453" x2="726" y2="465" stroke="#0c1117"/>
+    <path d="M712 486 l8 -6 l8 6" fill="none" stroke="#1c232b" stroke-width="1.6"/>
+    <circle cx="722" cy="500" r="5.5" fill="#0d2226" stroke="#37d6cd" stroke-width="1.5"/><circle cx="722" cy="500" r="1.8" fill="#37d6cd"/>
+  </g>
+  <rect x="688" y="510" width="64" height="14" rx="2" fill="#0b1016" stroke="rgba(255,255,255,.1)"/>
+  <text class="lbl" x="694" y="520">FC-701 M/O</text>
+
+  <!-- ======================= rod-line tap ======================= -->
+  <g class="tp" data-tp="RODLINE">
+    <rect x="752" y="470" width="12" height="20" rx="2" fill="url(#hy-steelV)" stroke="#131a21"/>
+    <circle cx="758" cy="460" r="5.5" fill="#0d2226" stroke="#37d6cd" stroke-width="1.5"/><circle cx="758" cy="460" r="1.8" fill="#37d6cd"/>
+  </g>
+
+  <!-- ======================= press cylinder ======================= -->
+  <g filter="url(#hy-ds)">
+    <rect x="762" y="146" width="106" height="48" rx="4" fill="url(#hy-ironV)" stroke="#131a21"/>
+  </g>
+  <line x1="765" y1="148" x2="865" y2="148" stroke="rgba(255,255,255,.16)"/>
+  <!-- tie rods -->
+  <rect x="767" y="150" width="7" height="384" fill="url(#hy-steelH)" stroke="#131a21" stroke-width=".8"/>
+  <rect x="856" y="150" width="7" height="384" fill="url(#hy-steelH)" stroke="#131a21" stroke-width=".8"/>
+  <rect x="764" y="136" width="13" height="12" rx="2" fill="url(#hy-steelV)" stroke="#131a21"/>
+  <rect x="853" y="136" width="13" height="12" rx="2" fill="url(#hy-steelV)" stroke="#131a21"/>
+  <rect x="764" y="528" width="13" height="12" rx="2" fill="url(#hy-steelV)" stroke="#131a21"/>
+  <rect x="853" y="528" width="13" height="12" rx="2" fill="url(#hy-steelV)" stroke="#131a21"/>
+  <!-- tube (cutaway) -->
+  <rect x="778" y="194" width="74" height="310" fill="url(#hy-steelH)" stroke="#131a21"/>
+  <rect x="784" y="198" width="62" height="300" fill="#0a0f15" stroke="rgba(255,255,255,.06)"/>
+  <line x1="786" y1="200" x2="786" y2="496" stroke="rgba(255,255,255,.05)" stroke-width="1.5"/>
+  <!-- piston + rod (JS-driven) -->
+  <rect id="hyd-piston" x="785" y="200" width="60" height="24" fill="url(#hy-piston)" stroke="#0d1319" stroke-width=".8"/>
+  <rect id="hyd-rod" x="808" y="224" width="14" height="270" fill="url(#hy-rod)"/>
+  <!-- static rod bridge behind gland (JS rod bottom is fixed at y=494) -->
+  <rect x="808" y="488" width="14" height="18" fill="url(#hy-rod)"/>
+  <!-- gland -->
+  <rect x="772" y="502" width="86" height="26" rx="3" fill="url(#hy-ironV)" stroke="#131a21"/>
+  <line x1="774" y1="504" x2="856" y2="504" stroke="rgba(255,255,255,.14)"/>
+  <circle cx="781" cy="515" r="2.2" fill="url(#hy-bolt)"/><circle cx="849" cy="515" r="2.2" fill="url(#hy-bolt)"/>
+  <rect x="808" y="528" width="14" height="24" fill="url(#hy-rod)"/>
+  <!-- cap port + labels -->
+  <text x="826" y="132" font-size="8" fill="#4a5a68" font-family="monospace">CAP</text>
+  <rect x="780" y="158" width="60" height="14" rx="2" fill="#0b1016" stroke="rgba(255,255,255,.1)"/>
+  <text class="lbl" x="786" y="168">CYL-401</text>
+  <text x="732" y="446" font-size="8" fill="#4a5a68" font-family="monospace">ROD</text>
+
+  <!-- title plate -->
+  <rect x="270" y="524" width="240" height="18" rx="3" fill="#0b1016" stroke="rgba(255,255,255,.08)"/>
+  <text class="lbl" x="278" y="536">HPU-100 &#183; HYDRAULIC POWER UNIT &#183; ELEV.</text>
+</svg>
 
     <!-- ELECTRICAL -->
     <svg class="layer" data-layer="elec" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
-      <text class="lbl" x="30" y="30">480VAC 3PH POWER</text>
-      <rect x="30" y="45" width="70" height="40" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="E480"/>
-      <text class="lbl" x="36" y="70">480V</text>
-      <line class="wire" id="ew-480" x1="100" y1="65" x2="160" y2="65"/>
-      <rect x="160" y="45" width="60" height="40" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="DISC"/>
-      <text class="lbl" x="164" y="70">DISC</text>
-      <line class="wire" id="ew-disc" x1="220" y1="65" x2="280" y2="65"/>
-      <rect x="280" y="45" width="60" height="40" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="K1"/>
-      <text class="lbl" x="290" y="70">K1</text>
-      <line class="wire" id="ew-k1" x1="340" y1="65" x2="400" y2="65"/>
-      <rect x="400" y="45" width="60" height="40" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="OL"/>
-      <text class="lbl" x="406" y="70">O/L</text>
-      <line class="wire" id="ew-ol" x1="460" y1="65" x2="520" y2="65"/>
-      <circle cx="555" cy="65" r="34" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="MOTORE"/>
-      <text class="val" x="545" y="70" id="ev-motor">M</text>
-      <text class="lbl" x="525" y="120">MOTOR 40A FLA</text>
+  <defs>
+    <linearGradient id="el-cab" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#48535f"/><stop offset=".55" stop-color="#2b333d"/><stop offset="1" stop-color="#1e252d"/>
+    </linearGradient>
+    <linearGradient id="el-plate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8d98a4"/><stop offset=".5" stop-color="#707c88"/><stop offset="1" stop-color="#5a6570"/>
+    </linearGradient>
+    <linearGradient id="el-duct" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5b656e"/><stop offset="1" stop-color="#3d454e"/>
+    </linearGradient>
+    <linearGradient id="el-dark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#39424d"/><stop offset="1" stop-color="#1f262e"/>
+    </linearGradient>
+    <linearGradient id="el-face" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a5560"/><stop offset="1" stop-color="#2c353f"/>
+    </linearGradient>
+    <linearGradient id="el-yellow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f0c445"/><stop offset="1" stop-color="#b8862a"/>
+    </linearGradient>
+    <radialGradient id="el-mush" cx=".38" cy=".32" r=".9">
+      <stop offset="0" stop-color="#ff7a6b"/><stop offset=".55" stop-color="#c62b1d"/><stop offset="1" stop-color="#7e150c"/>
+    </radialGradient>
+    <linearGradient id="el-brass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d4ad62"/><stop offset="1" stop-color="#8a6d35"/>
+    </linearGradient>
+    <linearGradient id="el-steel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8a97a5"/><stop offset=".5" stop-color="#4a5866"/><stop offset="1" stop-color="#2c3844"/>
+    </linearGradient>
+    <linearGradient id="el-motorblue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3b83bb"/><stop offset=".45" stop-color="#1f5f8b"/><stop offset="1" stop-color="#123a5c"/>
+    </linearGradient>
+    <radialGradient id="el-bolt" cx=".35" cy=".3" r=".95">
+      <stop offset="0" stop-color="#d6dee5"/><stop offset=".45" stop-color="#9aa5b0"/><stop offset="1" stop-color="#4a5560"/>
+    </radialGradient>
+    <linearGradient id="el-psu" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b9c2cb"/><stop offset="1" stop-color="#848e98"/>
+    </linearGradient>
+    <linearGradient id="el-slab" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5f6c79"/><stop offset=".18" stop-color="#48545f"/><stop offset="1" stop-color="#242c36"/>
+    </linearGradient>
+    <filter id="el-ds" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="1.5" dy="2.5" stdDeviation="2" flood-color="#000" flood-opacity="0.45"/>
+    </filter>
+  </defs>
 
-      <!-- 24V control -->
-      <text class="lbl" x="30" y="200">24VDC CONTROL</text>
-      <rect x="30" y="215" width="80" height="44" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="PSU"/>
-      <text class="lbl" x="36" y="242">24V PSU</text>
-      <line class="wire" id="ew-24" x1="110" y1="237" x2="180" y2="237"/>
-      <!-- estop chain -->
-      <rect x="180" y="215" width="70" height="44" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="ESTOP"/>
-      <text class="lbl" x="188" y="242">E-STOP</text>
-      <line class="wire" id="ew-estop" x1="250" y1="237" x2="330" y2="237"/>
-      <!-- K1 coil -->
-      <circle cx="360" cy="237" r="20" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="K1COIL"/>
-      <text class="lbl" x="346" y="241">K1c</text>
-      <line class="wire" id="ew-k1coil" x1="380" y1="237" x2="430" y2="237"/>
-      <text class="lbl" x="330" y="285">PLC Q0.0 gates coil</text>
+  <!-- ======================= ENCLOSURE ======================= -->
+  <text class="lbl" x="150" y="10">CONTROL ENCLOSURE MCC-3 — DOOR OPEN</text>
+  <rect x="16" y="14" width="544" height="534" rx="6" fill="url(#el-cab)" stroke="#0a0e13" stroke-width="1.5" filter="url(#el-ds)"/>
+  <path d="M22 17 H554" stroke="rgba(255,255,255,.14)" stroke-width="1.5" fill="none"/>
+  <rect x="30" y="28" width="516" height="506" rx="3" fill="#11171e" stroke="#0a0e13"/>
+  <!-- mounting plate -->
+  <rect x="44" y="42" width="488" height="480" fill="url(#el-plate)" stroke="#39434d"/>
+  <path d="M46 43.5 H530" stroke="rgba(255,255,255,.18)" stroke-width="1" fill="none"/>
+  <circle cx="56" cy="54" r="4" fill="url(#el-bolt)" stroke="#232a31"/><circle cx="520" cy="54" r="4" fill="url(#el-bolt)" stroke="#232a31"/>
+  <circle cx="56" cy="510" r="4" fill="url(#el-bolt)" stroke="#232a31"/><circle cx="520" cy="510" r="4" fill="url(#el-bolt)" stroke="#232a31"/>
+  <!-- flange screws -->
+  <circle cx="23" cy="21" r="2.5" fill="url(#el-bolt)"/><circle cx="553" cy="21" r="2.5" fill="url(#el-bolt)"/>
+  <circle cx="23" cy="541" r="2.5" fill="url(#el-bolt)"/><circle cx="553" cy="541" r="2.5" fill="url(#el-bolt)"/>
+  <!-- hinge knuckles on left -->
+  <rect x="12" y="120" width="8" height="26" rx="3" fill="url(#el-steel)" stroke="#141a20"/>
+  <rect x="12" y="300" width="8" height="26" rx="3" fill="url(#el-steel)" stroke="#141a20"/>
+  <rect x="12" y="450" width="8" height="26" rx="3" fill="url(#el-steel)" stroke="#141a20"/>
+  <!-- cabinet nameplate -->
+  <rect x="200" y="531" width="184" height="13" rx="2" fill="#0d1319" stroke="#2c3844"/>
+  <text x="208" y="541" style="font-size:8px" fill="#8fa1b3">MCC-3 · PRESS LINE 3 · 480V</text>
 
-      <!-- solenoid coils -->
-      <line class="wire" id="ew-solA" x1="180" y1="340" x2="250" y2="340"/>
-      <rect x="250" y="322" width="60" height="36" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="SOLA"/>
-      <text class="lbl" x="256" y="344">SOL-A</text>
-      <rect x="150" y="322" width="24" height="36" fill="#2b3a2b" stroke="#3a4a58" id="ei-solA"/>
-      <line class="wire" id="ew-solB" x1="180" y1="410" x2="250" y2="410"/>
-      <rect x="250" y="392" width="60" height="36" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="SOLB"/>
-      <text class="lbl" x="256" y="414">SOL-B</text>
-      <rect x="150" y="392" width="24" height="36" fill="#2b3a2b" stroke="#3a4a58" id="ei-solB"/>
-      <text class="lbl" x="150" y="315">PLC Q0.1 / Q0.2 drive solenoids</text>
+  <!-- incoming gland (top wall) -->
+  <rect x="60" y="3" width="20" height="13" rx="2" fill="url(#el-brass)" stroke="#4d3c1a"/>
+  <rect x="63" y="16" width="14" height="5" fill="url(#el-brass)" stroke="#4d3c1a"/>
+  <text class="lbl" x="90" y="26" style="font-size:9px">480V 3Ø SUPPLY IN</text>
 
-      <!-- limit switch wiring -->
-      <text class="lbl" x="480" y="330">FIELD SENSOR WIRING</text>
-      <rect x="480" y="345" width="70" height="36" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="LSTOP"/>
-      <text class="lbl" x="486" y="367">LS-TOP</text>
-      <line class="wire" id="ew-lstop" x1="550" y1="363" x2="640" y2="363"/>
-      <rect x="480" y="410" width="70" height="36" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="LS402"/>
-      <text class="lbl" x="486" y="432">LS-402</text>
-      <!-- flex loop drawn with a kink to represent the fatigue point -->
-      <path class="wire" id="ew-ls402" d="M550 428 L590 428 L605 415 L620 441 L640 428"/>
-      <circle cx="612" cy="428" r="7" fill="#2b3a2b" stroke="var(--amber)" id="ei-flex"/>
-      <text class="lbl" x="560" y="470">flex loop @ platen (X4/TB-24)</text>
-      <rect x="640" y="345" width="90" height="110" rx="3" fill="#0e1620" stroke="#3a4a58"/>
-      <text class="lbl" x="648" y="365">PLC DI</text>
-      <text class="lbl" x="648" y="385" id="ev-i04">I0.4 —</text>
-      <text class="lbl" x="648" y="405" id="ev-i03">I0.3 —</text>
-      <circle cx="580" cy="150" r="6" fill="#233" stroke="var(--cyan)" class="tp" data-tp="TP24"/><text class="lbl" x="560" y="140">TP 24V+</text>
-    </svg>
+  <!-- wire ducts (covers partially fitted) -->
+  <rect x="50" y="166" width="478" height="26" fill="url(#el-duct)" stroke="#20262e"/>
+  <line x1="56" y1="184" x2="524" y2="184" stroke="#262d35" stroke-width="12" stroke-dasharray="4 9"/>
+  <rect x="50" y="166" width="478" height="9" fill="#6a747d" stroke="#20262e"/>
+  <path d="M52 167.5 H526" stroke="rgba(255,255,255,.2)" stroke-width="1" fill="none"/>
+  <!-- lower duct: cover snapped on -->
+  <rect x="50" y="396" width="478" height="26" fill="url(#el-duct)" stroke="#20262e"/>
+  <rect x="48" y="394" width="482" height="28" rx="2" fill="url(#el-duct)" stroke="#20262e"/>
+  <path d="M50 395.8 H528" stroke="rgba(255,255,255,.22)" stroke-width="1.2" fill="none"/>
+  <path d="M50 420 H528" stroke="rgba(0,0,0,.35)" stroke-width="1" fill="none"/>
+  <rect x="150" y="394" width="5" height="28" fill="#4b555f" stroke="#2a323b" stroke-width=".6"/>
+  <rect x="352" y="394" width="5" height="28" fill="#4b555f" stroke="#2a323b" stroke-width=".6"/>
+  <text x="468" y="412" style="font-size:6px" fill="#7f8996">40×40</text>
+
+  <!-- ======================= DISCONNECT ======================= -->
+  <rect x="54" y="56" width="80" height="92" rx="3" fill="url(#el-dark)" stroke="#12181e" filter="url(#el-ds)"/>
+  <path d="M56 57.5 H132" stroke="rgba(255,255,255,.14)" stroke-width="1" fill="none"/>
+  <rect x="62" y="62" width="64" height="44" rx="4" fill="url(#el-yellow)" stroke="#6e5417"/>
+  <g transform="rotate(38 94 84)">
+    <rect x="88" y="63" width="12" height="42" rx="4" fill="#c1272d" stroke="#5e0f10"/>
+    <rect x="90" y="66" width="3" height="36" rx="1.5" fill="rgba(255,255,255,.25)"/>
+  </g>
+  <circle cx="94" cy="84" r="3.5" fill="url(#el-bolt)" stroke="#232a31"/>
+  <!-- fuse holders -->
+  <rect x="62" y="112" width="16" height="28" rx="2" fill="#1c232c" stroke="#0e1319"/>
+  <rect x="86" y="112" width="16" height="28" rx="2" fill="#1c232c" stroke="#0e1319"/>
+  <rect x="110" y="112" width="16" height="28" rx="2" fill="#1c232c" stroke="#0e1319"/>
+  <rect x="64" y="114" width="12" height="5" fill="url(#el-brass)"/><rect x="88" y="114" width="12" height="5" fill="url(#el-brass)"/><rect x="112" y="114" width="12" height="5" fill="url(#el-brass)"/>
+  <rect x="64" y="133" width="12" height="5" fill="url(#el-brass)"/><rect x="88" y="133" width="12" height="5" fill="url(#el-brass)"/><rect x="112" y="133" width="12" height="5" fill="url(#el-brass)"/>
+  <rect x="54" y="152" width="80" height="13" rx="2" fill="#0d1319" stroke="#2c3844"/>
+  <text x="60" y="162" style="font-size:8px" fill="#9fb0c0">DISC-1 · 60A FUSED</text>
+
+  <!-- ======================= CONTACTOR K1 ======================= -->
+  <rect x="186" y="56" width="72" height="92" rx="3" fill="url(#el-dark)" stroke="#12181e" filter="url(#el-ds)"/>
+  <path d="M188 57.5 H256" stroke="rgba(255,255,255,.14)" stroke-width="1" fill="none"/>
+  <rect x="192" y="76" width="60" height="52" rx="2" fill="url(#el-face)" stroke="#161c23"/>
+  <!-- line/load terminal screws -->
+  <circle cx="200" cy="66" r="4" fill="url(#el-brass)" stroke="#3f3115"/><circle cx="222" cy="66" r="4" fill="url(#el-brass)" stroke="#3f3115"/><circle cx="244" cy="66" r="4" fill="url(#el-brass)" stroke="#3f3115"/>
+  <line x1="197" y1="63" x2="203" y2="69" stroke="#2a2110" stroke-width="1"/><line x1="219" y1="63" x2="225" y2="69" stroke="#2a2110" stroke-width="1"/><line x1="241" y1="63" x2="247" y2="69" stroke="#2a2110" stroke-width="1"/>
+  <circle cx="200" cy="138" r="4" fill="url(#el-brass)" stroke="#3f3115"/><circle cx="222" cy="138" r="4" fill="url(#el-brass)" stroke="#3f3115"/><circle cx="244" cy="138" r="4" fill="url(#el-brass)" stroke="#3f3115"/>
+  <!-- armature window -->
+  <rect x="212" y="86" width="20" height="30" rx="2" fill="#10151b" stroke="#0a0e13"/>
+  <rect x="216" y="92" width="12" height="18" rx="1" fill="#2b343e"/>
+  <text x="196" y="90" style="font-size:7px" fill="#8fa1b3">K1</text>
+  <!-- coil terminals A1 / A2 on left flank -->
+  <circle cx="184" cy="118" r="3.2" fill="url(#el-brass)" stroke="#3f3115"/>
+  <circle cx="184" cy="133" r="3.2" fill="url(#el-brass)" stroke="#3f3115"/>
+  <text x="190" y="121" style="font-size:6px" fill="#e3ebf2">A1</text>
+  <text x="190" y="136" style="font-size:6px" fill="#e3ebf2">A2</text>
+  <rect x="186" y="152" width="72" height="13" rx="2" fill="#0d1319" stroke="#2c3844"/>
+  <text x="198" y="162" style="font-size:8px" fill="#9fb0c0">K1 · 3RT20</text>
+
+  <!-- ======================= OVERLOAD OL ======================= -->
+  <rect x="306" y="56" width="72" height="92" rx="3" fill="url(#el-dark)" stroke="#12181e" filter="url(#el-ds)"/>
+  <path d="M308 57.5 H376" stroke="rgba(255,255,255,.14)" stroke-width="1" fill="none"/>
+  <circle cx="320" cy="66" r="4" fill="url(#el-brass)" stroke="#3f3115"/><circle cx="342" cy="66" r="4" fill="url(#el-brass)" stroke="#3f3115"/><circle cx="364" cy="66" r="4" fill="url(#el-brass)" stroke="#3f3115"/>
+  <circle cx="320" cy="138" r="4" fill="url(#el-brass)" stroke="#3f3115"/><circle cx="342" cy="138" r="4" fill="url(#el-brass)" stroke="#3f3115"/><circle cx="364" cy="138" r="4" fill="url(#el-brass)" stroke="#3f3115"/>
+  <!-- amp dial -->
+  <circle cx="342" cy="94" r="12" fill="#d8dde2" stroke="#20262e" stroke-width="1.5"/>
+  <line x1="342" y1="94" x2="349" y2="86" stroke="#c1272d" stroke-width="2"/>
+  <circle cx="342" cy="94" r="2" fill="#20262e"/>
+  <text x="313" y="98" style="font-size:6px" fill="#c9d6e2">32</text>
+  <text x="360" y="98" style="font-size:6px" fill="#c9d6e2">40</text>
+  <!-- reset + test buttons -->
+  <rect x="314" y="114" width="20" height="11" rx="2" fill="#2470b3" stroke="#123a5c"/>
+  <text x="315" y="132" style="font-size:6px" fill="#8fa1b3">RESET</text>
+  <rect x="352" y="114" width="14" height="11" rx="2" fill="#c1272d" stroke="#5e0f10"/>
+  <rect x="306" y="152" width="72" height="13" rx="2" fill="#0d1319" stroke="#2c3844"/>
+  <text x="312" y="162" style="font-size:8px" fill="#9fb0c0">OL-1 · 32-40A</text>
+
+  <!-- ======================= 24VDC PSU ======================= -->
+  <rect x="54" y="204" width="88" height="110" rx="3" fill="url(#el-psu)" stroke="#333c45" filter="url(#el-ds)"/>
+  <path d="M56 205.5 H140" stroke="rgba(255,255,255,.35)" stroke-width="1" fill="none"/>
+  <line x1="62" y1="216" x2="134" y2="216" stroke="rgba(0,0,0,.25)" stroke-width="14" stroke-dasharray="5 5"/>
+  <rect x="62" y="238" width="62" height="32" rx="2" fill="#dde3e8" stroke="#8a949e"/>
+  <text x="66" y="250" style="font-size:7px" fill="#333c45">PS-1 SITOP</text>
+  <text x="66" y="262" style="font-size:7px" fill="#333c45">24VDC · 10A</text>
+  <circle cx="132" cy="244" r="3" fill="#33d17a"/>
+  <text x="126" y="258" style="font-size:5.5px" fill="#333c45">DC OK</text>
+  <!-- output terminals -->
+  <circle cx="66" cy="302" r="3.5" fill="url(#el-brass)" stroke="#3f3115"/><circle cx="82" cy="302" r="3.5" fill="url(#el-brass)" stroke="#3f3115"/>
+  <circle cx="102" cy="302" r="3.5" fill="url(#el-brass)" stroke="#3f3115"/><circle cx="118" cy="302" r="3.5" fill="url(#el-brass)" stroke="#3f3115"/>
+  <text x="62" y="295" style="font-size:7px" fill="#1f262e">+  +  −  −</text>
+  <rect x="76" y="318" width="66" height="13" rx="2" fill="#0d1319" stroke="#2c3844"/>
+  <text x="84" y="328" style="font-size:8px" fill="#9fb0c0">PSU 24VDC</text>
+
+  <!-- ======================= E-STOP ======================= -->
+  <rect x="196" y="204" width="84" height="110" rx="6" fill="url(#el-yellow)" stroke="#7a6420" filter="url(#el-ds)"/>
+  <path d="M200 206.5 H276" stroke="rgba(255,255,255,.3)" stroke-width="1" fill="none"/>
+  <circle cx="238" cy="250" r="25" fill="url(#el-steel)" stroke="#20262e"/>
+  <circle cx="238" cy="247" r="19" fill="url(#el-mush)" stroke="#5e0f10"/>
+  <ellipse cx="232" cy="240" rx="8" ry="4.5" fill="rgba(255,255,255,.35)"/>
+  <text x="238" y="292" text-anchor="middle" style="font-size:7px;font-weight:700" fill="#4a3a10">EMERGENCY STOP</text>
+  <circle cx="220" cy="306" r="3" fill="url(#el-brass)" stroke="#3f3115"/>
+  <circle cx="256" cy="306" r="3" fill="url(#el-brass)" stroke="#3f3115"/>
+  <circle cx="204" cy="212" r="2.5" fill="url(#el-bolt)"/><circle cx="272" cy="212" r="2.5" fill="url(#el-bolt)"/>
+
+  <!-- ======================= PLC RACK CARD ======================= -->
+  <rect x="346" y="198" width="164" height="192" rx="4" fill="#151c24" stroke="#3a4a58" filter="url(#el-ds)"/>
+  <rect x="346" y="198" width="164" height="22" rx="4" fill="#1f2831"/>
+  <text x="354" y="213" style="font-size:9px" fill="#8fa1b3">PLC-3 · DI16/DO8</text>
+  <rect x="464" y="204" width="9" height="9" rx="1" fill="#33d17a"/>
+  <rect x="480" y="204" width="9" height="9" rx="1" fill="#2b3a2b" stroke="#1a2027"/>
+  <text x="462" y="229" style="font-size:5.5px" fill="#55657a">RUN ERR</text>
+  <!-- input LED column -->
+  <rect x="356" y="240" width="9" height="9" rx="1" fill="#2b3a2b" stroke="#1a2027"/>
+  <rect x="356" y="258" width="9" height="9" rx="1" fill="#2b3a2b" stroke="#1a2027"/>
+  <rect x="356" y="276" width="9" height="9" rx="1" fill="#2b3a2b" stroke="#1a2027"/>
+  <rect x="356" y="294" width="9" height="9" rx="1" fill="#2b3a2b" stroke="#1a2027"/>
+  <rect x="356" y="312" width="9" height="9" rx="1" fill="#2b3a2b" stroke="#1a2027"/>
+  <rect x="356" y="330" width="9" height="9" rx="1" fill="#2b3a2b" stroke="#1a2027"/>
+  <text x="372" y="248" style="font-size:9px" fill="#55657a">I0.0 ○0</text>
+  <text x="372" y="266" style="font-size:9px" fill="#55657a">I0.1 ○0</text>
+  <text x="372" y="284" style="font-size:9px" fill="#55657a">I0.2 ○0</text>
+  <text class="lbl" x="372" y="302" id="ev-i03">I0.3 —</text>
+  <text class="lbl" x="372" y="320" id="ev-i04">I0.4 —</text>
+  <text x="372" y="338" style="font-size:9px" fill="#55657a">I0.5 ○0</text>
+  <line x1="352" y1="346" x2="492" y2="346" stroke="#2a3744" stroke-width="1"/>
+  <!-- output LED column -->
+  <rect x="356" y="352" width="9" height="9" rx="1" fill="#2b3a2b" stroke="#1a2027"/>
+  <rect x="356" y="368" width="9" height="9" rx="1" fill="#2b3a2b" stroke="#1a2027"/>
+  <text x="372" y="360" style="font-size:9px" fill="#55657a">Q0.0 K1 · Q0.1 SOL-A</text>
+  <text x="372" y="376" style="font-size:9px" fill="#55657a">Q0.2 SOL-B</text>
+  <!-- field terminal strip -->
+  <rect x="494" y="226" width="14" height="158" rx="2" fill="#2d5a37" stroke="#183220"/>
+  <circle cx="501" cy="238" r="1.8" fill="#d4ad62"/><circle cx="501" cy="254" r="1.8" fill="#d4ad62"/>
+  <circle cx="501" cy="270" r="1.8" fill="#d4ad62"/><circle cx="501" cy="286" r="1.8" fill="#d4ad62"/>
+  <circle cx="501" cy="302" r="1.8" fill="#d4ad62"/><circle cx="501" cy="318" r="1.8" fill="#d4ad62"/>
+  <circle cx="501" cy="334" r="1.8" fill="#d4ad62"/><circle cx="501" cy="350" r="1.8" fill="#d4ad62"/>
+
+  <!-- ======================= TERMINAL BLOCKS TB-24 ======================= -->
+  <rect x="54" y="436" width="240" height="12" fill="url(#el-steel)" stroke="#20262e"/>
+  <rect x="58" y="424" width="17" height="36" rx="1" fill="#3d4854" stroke="#232a31"/>
+  <rect x="77" y="424" width="17" height="36" rx="1" fill="#434e5a" stroke="#232a31"/>
+  <rect x="96" y="424" width="17" height="36" rx="1" fill="#3d4854" stroke="#232a31"/>
+  <rect x="115" y="424" width="17" height="36" rx="1" fill="#434e5a" stroke="#232a31"/>
+  <rect x="134" y="424" width="17" height="36" rx="1" fill="#3d4854" stroke="#232a31"/>
+  <rect x="153" y="424" width="17" height="36" rx="1" fill="#434e5a" stroke="#232a31"/>
+  <rect x="172" y="424" width="17" height="36" rx="1" fill="#3d4854" stroke="#232a31"/>
+  <rect x="191" y="424" width="17" height="36" rx="1" fill="#434e5a" stroke="#232a31"/>
+  <rect x="210" y="424" width="17" height="36" rx="1" fill="#3d4854" stroke="#232a31"/>
+  <rect x="229" y="424" width="17" height="36" rx="1" fill="#434e5a" stroke="#232a31"/>
+  <rect x="248" y="424" width="17" height="36" rx="1" fill="#3d4854" stroke="#232a31"/>
+  <rect x="267" y="424" width="17" height="36" rx="1" fill="#434e5a" stroke="#232a31"/>
+  <line x1="58" y1="442" x2="284" y2="442" stroke="#1b2127" stroke-width="3" stroke-dasharray="4 15"/>
+  <rect x="58" y="412" width="228" height="10" fill="#d8dee3" stroke="#8a949e"/>
+  <text x="64" y="420" style="font-size:7.5px" fill="#333c45">TB-24 · 24VDC FIELD</text>
+  <text x="66" y="435" text-anchor="middle" style="font-size:7px" fill="#cfd9e2">1</text>
+  <text x="104" y="435" text-anchor="middle" style="font-size:7px" fill="#cfd9e2">3</text>
+  <text x="142" y="435" text-anchor="middle" style="font-size:7px" fill="#cfd9e2">5</text>
+  <text x="180" y="435" text-anchor="middle" style="font-size:7px" fill="#cfd9e2">7</text>
+  <text x="218" y="435" text-anchor="middle" style="font-size:7px" fill="#cfd9e2">9</text>
+  <text x="256" y="435" text-anchor="middle" style="font-size:7px" fill="#cfd9e2">11</text>
+  <text x="72" y="474" style="font-size:7px" fill="#dbe4ec">24V+</text>
+  <!-- ground bar -->
+  <rect x="312" y="430" width="130" height="12" rx="2" fill="url(#el-brass)" stroke="#4d3c1a"/>
+  <circle cx="326" cy="436" r="2" fill="#5a4517"/><circle cx="352" cy="436" r="2" fill="#5a4517"/><circle cx="378" cy="436" r="2" fill="#5a4517"/><circle cx="404" cy="436" r="2" fill="#5a4517"/><circle cx="430" cy="436" r="2" fill="#5a4517"/>
+  <text x="446" y="440" style="font-size:8px" fill="#9fb0c0">PE</text>
+  <line x1="330" y1="442" x2="330" y2="480" stroke="#2f9e44" stroke-width="5"/>
+  <line x1="330" y1="442" x2="330" y2="480" stroke="#e8c93c" stroke-width="5" stroke-dasharray="6 6"/>
+  <!-- ground stud lug bolted to mounting plate -->
+  <rect x="314" y="478" width="32" height="14" rx="2" fill="url(#el-steel)" stroke="#141a20"/>
+  <path d="M316 479.5 H344" stroke="rgba(255,255,255,.18)" stroke-width="1" fill="none"/>
+  <circle cx="319" cy="485" r="1.6" fill="url(#el-bolt)"/><circle cx="341" cy="485" r="1.6" fill="url(#el-bolt)"/>
+  <circle cx="330" cy="485" r="4.2" fill="url(#el-bolt)" stroke="#232a31"/>
+  <line x1="327" y1="482" x2="333" y2="488" stroke="#2a3138" stroke-width="1.2"/>
+  <line x1="330" y1="492" x2="330" y2="496" stroke="#8fa1b3" stroke-width="2"/>
+  <line x1="322" y1="497" x2="338" y2="497" stroke="#8fa1b3" stroke-width="2"/>
+  <line x1="325" y1="501" x2="335" y2="501" stroke="#8fa1b3" stroke-width="2"/>
+  <line x1="328" y1="505" x2="332" y2="505" stroke="#8fa1b3" stroke-width="2"/>
+
+  <!-- cable glands right wall -->
+  <rect x="546" y="92" width="22" height="16" rx="3" fill="url(#el-brass)" stroke="#4d3c1a"/>
+  <rect x="546" y="238" width="22" height="16" rx="3" fill="url(#el-brass)" stroke="#4d3c1a"/>
+  <rect x="546" y="292" width="22" height="16" rx="3" fill="url(#el-brass)" stroke="#4d3c1a"/>
+  <rect x="546" y="364" width="22" height="16" rx="3" fill="url(#el-brass)" stroke="#4d3c1a"/>
+  <rect x="546" y="440" width="22" height="16" rx="3" fill="url(#el-brass)" stroke="#4d3c1a"/>
+
+  <!-- ======================= MOTOR (TEFC, field) ======================= -->
+  <rect x="618" y="100" width="22" height="14" fill="url(#el-steel)" stroke="#141a20"/>
+  <rect x="638" y="66" width="22" height="84" rx="4" fill="url(#el-face)" stroke="#12181e"/>
+  <rect x="652" y="60" width="168" height="96" rx="10" fill="url(#el-motorblue)" stroke="#0d2740" filter="url(#el-ds)"/>
+  <path d="M658 63 H814" stroke="rgba(255,255,255,.18)" stroke-width="2" fill="none"/>
+  <line x1="672" y1="64" x2="672" y2="152" stroke="rgba(0,0,0,.3)" stroke-width="3"/>
+  <line x1="688" y1="64" x2="688" y2="152" stroke="rgba(0,0,0,.3)" stroke-width="3"/>
+  <line x1="704" y1="64" x2="704" y2="152" stroke="rgba(0,0,0,.3)" stroke-width="3"/>
+  <line x1="720" y1="64" x2="720" y2="152" stroke="rgba(0,0,0,.3)" stroke-width="3"/>
+  <line x1="736" y1="64" x2="736" y2="152" stroke="rgba(0,0,0,.3)" stroke-width="3"/>
+  <line x1="752" y1="64" x2="752" y2="152" stroke="rgba(0,0,0,.3)" stroke-width="3"/>
+  <line x1="768" y1="64" x2="768" y2="152" stroke="rgba(0,0,0,.3)" stroke-width="3"/>
+  <line x1="784" y1="64" x2="784" y2="152" stroke="rgba(0,0,0,.3)" stroke-width="3"/>
+  <line x1="800" y1="64" x2="800" y2="152" stroke="rgba(0,0,0,.3)" stroke-width="3"/>
+  <!-- fan cowl -->
+  <rect x="818" y="58" width="38" height="100" rx="8" fill="url(#el-steel)" stroke="#141a20"/>
+  <line x1="824" y1="74" x2="850" y2="74" stroke="#20262e" stroke-width="3"/>
+  <line x1="824" y1="90" x2="850" y2="90" stroke="#20262e" stroke-width="3"/>
+  <line x1="824" y1="106" x2="850" y2="106" stroke="#20262e" stroke-width="3"/>
+  <line x1="824" y1="122" x2="850" y2="122" stroke="#20262e" stroke-width="3"/>
+  <line x1="824" y1="138" x2="850" y2="138" stroke="#20262e" stroke-width="3"/>
+  <!-- feet -->
+  <rect x="662" y="154" width="36" height="12" fill="url(#el-dark)" stroke="#12181e"/>
+  <rect x="774" y="154" width="36" height="12" fill="url(#el-dark)" stroke="#12181e"/>
+  <circle cx="672" cy="162" r="2.5" fill="url(#el-bolt)"/><circle cx="800" cy="162" r="2.5" fill="url(#el-bolt)"/>
+  <!-- terminal box -->
+  <rect x="698" y="24" width="58" height="40" rx="3" fill="url(#el-dark)" stroke="#12181e"/>
+  <line x1="698" y1="34" x2="756" y2="34" stroke="#12181e" stroke-width="1"/>
+  <circle cx="706" cy="30" r="2" fill="url(#el-bolt)"/><circle cx="748" cy="30" r="2" fill="url(#el-bolt)"/>
+  <rect x="688" y="40" width="12" height="9" rx="2" fill="url(#el-brass)" stroke="#4d3c1a"/>
+  <!-- nameplate -->
+  <rect x="732" y="112" width="60" height="26" rx="2" fill="#aab4be" stroke="#333c45"/>
+  <line x1="737" y1="119" x2="787" y2="119" stroke="#55606a" stroke-width="1.5"/>
+  <line x1="737" y1="125" x2="787" y2="125" stroke="#55606a" stroke-width="1.5"/>
+  <line x1="737" y1="131" x2="775" y2="131" stroke="#55606a" stroke-width="1.5"/>
+  <!-- readout + tag -->
+  <rect x="686" y="178" width="112" height="20" rx="3" fill="#0d1319" stroke="#2c3844"/>
+  <text class="val" x="742" y="192" text-anchor="middle" id="ev-motor">M · 0A</text>
+  <text class="lbl" x="686" y="214">M-1 · 480V · 40A FLA</text>
+
+  <!-- ======================= LS-TOP PROX (field) ======================= -->
+  <rect x="618" y="230" width="30" height="8" fill="url(#el-face)" stroke="#12181e"/>
+  <rect x="604" y="214" width="56" height="16" rx="2" fill="url(#el-brass)" stroke="#4d3c1a"/>
+  <line x1="608" y1="222" x2="656" y2="222" stroke="rgba(0,0,0,.25)" stroke-width="12" stroke-dasharray="2 3"/>
+  <rect x="612" y="210" width="10" height="24" rx="1" fill="url(#el-steel)" stroke="#141a20"/>
+  <rect x="634" y="210" width="10" height="24" rx="1" fill="url(#el-steel)" stroke="#141a20"/>
+  <rect x="656" y="215" width="7" height="14" rx="2" fill="#d8a13c" stroke="#7a5a16"/>
+  <text class="lbl" x="602" y="254">LS-TOP · PROX</text>
+
+  <!-- ======================= SOLENOID PLUGS (field, on manifold) ======================= -->
+  <rect x="586" y="268" width="66" height="148" rx="4" fill="url(#el-slab)" stroke="#161d24" filter="url(#el-ds)"/>
+  <path d="M589 270 H649" stroke="rgba(255,255,255,.14)" stroke-width="1" fill="none"/>
+  <!-- SOL-A: coil + DIN 43650 plug -->
+  <rect x="594" y="296" width="48" height="30" rx="3" fill="url(#el-dark)" stroke="#12181e"/>
+  <rect x="600" y="272" width="36" height="26" rx="2" fill="url(#el-face)" stroke="#12181e"/>
+  <rect x="586" y="279" width="14" height="10" rx="2" fill="#20262e" stroke="#0c0f14"/>
+  <circle cx="618" cy="292" r="2" fill="url(#el-bolt)"/>
+  <rect x="612" y="276" width="12" height="12" rx="2" id="ei-solA" fill="#2b3a2b" stroke="#1a2027"/>
+  <rect x="594" y="330" width="48" height="12" rx="2" fill="#0d1319" stroke="#2c3844"/>
+  <text x="602" y="339" style="font-size:8px" fill="#9fb0c0">SOL-A</text>
+  <!-- SOL-B -->
+  <rect x="594" y="370" width="48" height="30" rx="3" fill="url(#el-dark)" stroke="#12181e"/>
+  <rect x="600" y="346" width="36" height="26" rx="2" fill="url(#el-face)" stroke="#12181e"/>
+  <rect x="586" y="353" width="14" height="10" rx="2" fill="#20262e" stroke="#0c0f14"/>
+  <circle cx="618" cy="366" r="2" fill="url(#el-bolt)"/>
+  <rect x="612" y="350" width="12" height="12" rx="2" id="ei-solB" fill="#2b3a2b" stroke="#1a2027"/>
+  <rect x="594" y="404" width="48" height="12" rx="2" fill="#0d1319" stroke="#2c3844"/>
+  <text x="602" y="413" style="font-size:8px" fill="#9fb0c0">SOL-B</text>
+
+  <!-- ======================= PLATEN ZONE / X4 / LS-402 (field) ======================= -->
+  <rect x="656" y="492" width="236" height="56" fill="url(#el-slab)" stroke="#161d24" filter="url(#el-ds)"/>
+  <path d="M658 494 H890" stroke="rgba(255,255,255,.2)" stroke-width="1.5" fill="none"/>
+  <text class="lbl" x="796" y="540">PLATEN</text>
+  <!-- X4 junction box -->
+  <rect x="688" y="452" width="44" height="34" rx="3" fill="url(#el-dark)" stroke="#12181e" filter="url(#el-ds)"/>
+  <circle cx="695" cy="458" r="2" fill="url(#el-bolt)"/><circle cx="725" cy="458" r="2" fill="url(#el-bolt)"/>
+  <text x="702" y="474" style="font-size:8px" fill="#dbe4ec">X4</text>
+  <!-- LS-402 limit switch on bracket -->
+  <rect x="746" y="446" width="34" height="40" rx="3" fill="url(#el-motorblue)" stroke="#0d2740" filter="url(#el-ds)"/>
+  <line x1="763" y1="446" x2="750" y2="424" stroke="url(#el-steel)" stroke-width="4"/>
+  <circle cx="748" cy="421" r="6" fill="url(#el-steel)" stroke="#141a20"/>
+  <circle cx="763" cy="452" r="3" fill="url(#el-bolt)"/>
+  <path d="M732 468 H746" stroke="#0c0f14" stroke-width="5" fill="none"/>
+  <rect x="740" y="492" width="48" height="12" rx="2" fill="#0d1319" stroke="#2c3844"/>
+  <text x="746" y="501" style="font-size:8px" fill="#9fb0c0">LS-402</text>
+  <!-- chafe bracket under flex loop -->
+  <rect x="592" y="524" width="42" height="9" fill="url(#el-steel)" stroke="#141a20"/>
+  <rect x="606" y="533" width="12" height="15" fill="url(#el-face)" stroke="#12181e"/>
+  <text x="576" y="558" style="font-size:8px" fill="#7d8fa1">FLEX LOOP · service slack</text>
+
+  <!-- ======================= CABLES (decorative under-layers) ======================= -->
+  <!-- 480V power run: black + red conductors -->
+  <path d="M70 2 V56" stroke="#101418" stroke-width="8" fill="none" stroke-linecap="round"/>
+  <path d="M136 100 H184" stroke="#101418" stroke-width="7" fill="none"/>
+  <path d="M260 100 H304" stroke="#101418" stroke-width="7" fill="none"/>
+  <path d="M380 100 H600 V44 H696" stroke="#101418" stroke-width="8" fill="none" stroke-linejoin="round"/>
+  <path d="M380 105 H595 V49 H696" stroke="#7e2320" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
+  <!-- 24V control: blue -->
+  <path d="M66 306 V336 H220 V310" stroke="#1d4f80" stroke-width="6" fill="none" stroke-linejoin="round"/>
+  <path d="M256 310 V372 H344" stroke="#1d4f80" stroke-width="6" fill="none" stroke-linejoin="round"/>
+  <path d="M346 214 H336 V198 H172 V118 H182" stroke="#1d4f80" stroke-width="6" fill="none" stroke-linejoin="round"/>
+  <path d="M508 301 H570 V284 H590" stroke="#1d4f80" stroke-width="6" fill="none" stroke-linejoin="round"/>
+  <path d="M508 334 H524 V372 H570 V358 H590" stroke="#1d4f80" stroke-width="6" fill="none" stroke-linejoin="round"/>
+  <path d="M508 246 H576 V222 H604" stroke="#1d4f80" stroke-width="6" fill="none" stroke-linejoin="round"/>
+  <!-- LS-402 rubber multicore with sag -->
+  <path d="M508 268 H536 V444 H552 C576 444 584 522 610 524 C638 526 646 470 670 466 H690" stroke="#0c0f14" stroke-width="8" fill="none" stroke-linejoin="round"/>
+
+  <!-- ======================= DYNAMIC WIRES (contract) ======================= -->
+  <path class="wire" id="ew-480"    d="M70 4 V56"/>
+  <path class="wire" id="ew-disc"   d="M136 100 H184"/>
+  <path class="wire" id="ew-k1"     d="M260 100 H304"/>
+  <path class="wire" id="ew-ol"     d="M380 100 H600 V44 H696"/>
+  <path class="wire" id="ew-24"     d="M66 306 V336 H220 V310"/>
+  <path class="wire" id="ew-estop"  d="M256 310 V372 H344"/>
+  <path class="wire" id="ew-k1coil" d="M346 214 H336 V198 H172 V118 H182"/>
+  <path class="wire" id="ew-solA"   d="M508 301 H570 V284 H590"/>
+  <path class="wire" id="ew-solB"   d="M508 334 H524 V372 H570 V358 H590"/>
+  <path class="wire" id="ew-lstop"  d="M508 246 H576 V222 H604"/>
+  <path class="wire" id="ew-ls402"  d="M508 268 H536 V444 H552 C576 444 584 522 610 524 C638 526 646 470 670 466 H690"/>
+  <!-- chafe point marker on the flex loop -->
+  <circle cx="610" cy="523" r="7" fill="#2b3a2b" stroke="#ffb020" id="ei-flex"/>
+
+  <!-- ======================= TEST POINTS ======================= -->
+  <g class="tp" data-tp="E480"><circle cx="70" cy="34" r="7" fill="#0c1319" stroke="#33d1c9" stroke-width="1.6"/><circle cx="70" cy="34" r="2.4" fill="#33d1c9"/></g>
+  <g class="tp" data-tp="DISC"><circle cx="94" cy="128" r="7" fill="#0c1319" stroke="#33d1c9" stroke-width="1.6"/><circle cx="94" cy="128" r="2.4" fill="#33d1c9"/></g>
+  <g class="tp" data-tp="K1"><circle cx="222" cy="107" r="7" fill="#0c1319" stroke="#33d1c9" stroke-width="1.6"/><circle cx="222" cy="107" r="2.4" fill="#33d1c9"/></g>
+  <g class="tp" data-tp="OL"><circle cx="342" cy="128" r="7" fill="#0c1319" stroke="#33d1c9" stroke-width="1.6"/><circle cx="342" cy="128" r="2.4" fill="#33d1c9"/></g>
+  <g class="tp" data-tp="MOTORE"><circle cx="782" cy="88" r="7" fill="#0c1319" stroke="#33d1c9" stroke-width="1.6"/><circle cx="782" cy="88" r="2.4" fill="#33d1c9"/></g>
+  <g class="tp" data-tp="PSU"><circle cx="98" cy="284" r="7" fill="#0c1319" stroke="#33d1c9" stroke-width="1.6"/><circle cx="98" cy="284" r="2.4" fill="#33d1c9"/></g>
+  <g class="tp" data-tp="ESTOP"><circle cx="212" cy="222" r="7" fill="#0c1319" stroke="#33d1c9" stroke-width="1.6"/><circle cx="212" cy="222" r="2.4" fill="#33d1c9"/></g>
+  <g class="tp" data-tp="K1COIL"><circle cx="172" cy="148" r="7" fill="#0c1319" stroke="#33d1c9" stroke-width="1.6"/><circle cx="172" cy="148" r="2.4" fill="#33d1c9"/></g>
+  <g class="tp" data-tp="SOLA"><circle cx="658" cy="302" r="7" fill="#0c1319" stroke="#33d1c9" stroke-width="1.6"/><circle cx="658" cy="302" r="2.4" fill="#33d1c9"/></g>
+  <g class="tp" data-tp="SOLB"><circle cx="658" cy="376" r="7" fill="#0c1319" stroke="#33d1c9" stroke-width="1.6"/><circle cx="658" cy="376" r="2.4" fill="#33d1c9"/></g>
+  <g class="tp" data-tp="LSTOP"><circle cx="672" cy="222" r="7" fill="#0c1319" stroke="#33d1c9" stroke-width="1.6"/><circle cx="672" cy="222" r="2.4" fill="#33d1c9"/></g>
+  <g class="tp" data-tp="LS402"><circle cx="790" cy="452" r="7" fill="#0c1319" stroke="#33d1c9" stroke-width="1.6"/><circle cx="790" cy="452" r="2.4" fill="#33d1c9"/></g>
+  <g class="tp" data-tp="TP24"><circle cx="58" cy="470" r="7" fill="#0c1319" stroke="#33d1c9" stroke-width="1.6"/><circle cx="58" cy="470" r="2.4" fill="#33d1c9"/></g>
+</svg>
 
     <!-- MECHANICAL -->
     <svg class="layer" data-layer="mech" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
-      <!-- frame -->
-      <rect x="250" y="40" width="400" height="30" fill="#1b2530" stroke="#3a4a58"/>
-      <rect x="270" y="70" width="30" height="420" fill="#182430" stroke="#3a4a58"/>
-      <rect x="600" y="70" width="30" height="420" fill="#182430" stroke="#3a4a58"/>
-      <text class="lbl" x="256" y="60">CROWN</text>
-      <text class="lbl" x="256" y="500">BED / BOLSTER</text>
-      <rect x="250" y="490" width="400" height="30" fill="#1b2530" stroke="#3a4a58"/>
-      <!-- cylinder -->
-      <rect x="410" y="70" width="80" height="70" fill="#0e1620" stroke="#3a4a58" class="tp" data-tp="CYLM"/>
-      <text class="lbl" x="414" y="60">CYL-401</text>
-      <!-- rod + platen (moves) -->
-      <rect id="mech-rod" x="443" y="140" width="14" height="120" fill="#2a3744"/>
-      <rect id="mech-platen" x="310" y="255" width="280" height="34" fill="#3a4a58" stroke="#4a5a68" class="tp" data-tp="PLATEN"/>
-      <text class="lbl" x="410" y="277" fill="#0d1117" id="mv-ram">RAM</text>
-      <!-- guide markers -->
-      <text class="lbl" x="636" y="200">guide</text><text class="lbl" x="636" y="215">pillars</text>
-      <!-- workpiece / die -->
-      <rect x="360" y="455" width="180" height="35" fill="#233042" stroke="#3a4a58" class="tp" data-tp="WORK"/>
-      <text class="lbl" x="410" y="478">WORKPIECE / DIE</text>
-      <!-- limit switch positions -->
-      <circle cx="640" cy="130" r="6" fill="#2b3a2b" stroke="#3a4a58" id="mi-lstop"/><text class="lbl" x="652" y="134">LS-TOP (home)</text>
-      <circle cx="640" cy="430" r="6" fill="#2b3a2b" stroke="#3a4a58" id="mi-lsbot"/><text class="lbl" x="652" y="434">LS-402 (bottom)</text>
-      <!-- readouts -->
-      <rect x="690" y="70" width="185" height="150" rx="4" fill="#05080b" stroke="#3a4a58"/>
-      <text class="lbl" x="700" y="92">RAM POSITION</text>
-      <text class="val" x="700" y="118" id="mv-pos" style="font-size:20px">0 mm</text>
-      <text class="lbl" x="700" y="150">RAM VELOCITY</text>
-      <text class="val" x="700" y="176" id="mv-vel" style="font-size:20px">0 mm/s</text>
-      <text class="lbl" x="700" y="205">FORMING FORCE (true)</text>
-      <text class="val" x="700" y="228" id="mv-force" style="font-size:20px">0 kN</text>
-    </svg>
+  <defs>
+    <linearGradient id="me-steelV" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8a97a5"/><stop offset=".45" stop-color="#4a5866"/><stop offset="1" stop-color="#2c3844"/>
+    </linearGradient>
+    <linearGradient id="me-blueV" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2b74a8"/><stop offset=".22" stop-color="#1f5f8b"/><stop offset="1" stop-color="#123f60"/>
+    </linearGradient>
+    <linearGradient id="me-blueD" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1d5a84"/><stop offset="1" stop-color="#0e3450"/>
+    </linearGradient>
+    <linearGradient id="me-postH" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#39434e"/><stop offset=".3" stop-color="#b9c6d2"/><stop offset=".55" stop-color="#6b7987"/><stop offset="1" stop-color="#232b34"/>
+    </linearGradient>
+    <linearGradient id="me-postHb" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#262d35"/><stop offset=".35" stop-color="#6f7a86"/><stop offset="1" stop-color="#171d24"/>
+    </linearGradient>
+    <linearGradient id="me-rodH" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5d6c7a"/><stop offset=".35" stop-color="#f2f6fa"/><stop offset=".6" stop-color="#9fb0c0"/><stop offset="1" stop-color="#45525f"/>
+    </linearGradient>
+    <linearGradient id="me-cylH" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#37424d"/><stop offset=".28" stop-color="#9aa7b5"/><stop offset=".6" stop-color="#5a6875"/><stop offset="1" stop-color="#222b34"/>
+    </linearGradient>
+    <linearGradient id="me-ironV" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d4754"/><stop offset="1" stop-color="#242c36"/>
+    </linearGradient>
+    <linearGradient id="me-brass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d9b56a"/><stop offset=".5" stop-color="#c9a35a"/><stop offset="1" stop-color="#8a6d35"/>
+    </linearGradient>
+    <linearGradient id="me-dieV" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5f6a76"/><stop offset="1" stop-color="#2f3944"/>
+    </linearGradient>
+    <linearGradient id="me-workV" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c7d1da"/><stop offset="1" stop-color="#7e8a95"/>
+    </linearGradient>
+    <linearGradient id="me-screenV" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0d151d"/><stop offset="1" stop-color="#04070a"/>
+    </linearGradient>
+    <radialGradient id="me-bolt">
+      <stop offset="0" stop-color="#aeb9c4"/><stop offset=".6" stop-color="#5c6873"/><stop offset="1" stop-color="#2a333c"/>
+    </radialGradient>
+    <radialGradient id="me-shadow">
+      <stop offset="0" stop-color="rgba(0,0,0,.55)"/><stop offset="1" stop-color="rgba(0,0,0,0)"/>
+    </radialGradient>
+    <pattern id="me-hazard" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="12" height="12" fill="#d9a92c"/><rect width="6" height="12" fill="#191c20"/>
+    </pattern>
+    <filter id="me-ds" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity=".45"/>
+    </filter>
+  </defs>
+
+  <!-- ============ floor ============ -->
+  <ellipse cx="380" cy="556" rx="300" ry="10" fill="url(#me-shadow)"/>
+  <line x1="40" y1="556" x2="880" y2="556" stroke="#2a3540" stroke-width="2"/>
+  <line x1="40" y1="559" x2="880" y2="559" stroke="#10161d" stroke-width="2"/>
+
+  <!-- ============ back guide posts ============ -->
+  <rect x="228" y="142" width="20" height="378" fill="url(#me-postHb)"/>
+  <rect x="512" y="142" width="20" height="378" fill="url(#me-postHb)"/>
+
+  <!-- ============ bed / bolster / base ============ -->
+  <g filter="url(#me-ds)">
+    <!-- welded base -->
+    <rect x="152" y="546" width="456" height="12" fill="url(#me-ironV)" stroke="#151c23"/>
+    <rect x="140" y="551" width="38" height="8" rx="1.5" fill="url(#me-ironV)" stroke="#151c23"/>
+    <rect x="582" y="551" width="38" height="8" rx="1.5" fill="url(#me-ironV)" stroke="#151c23"/>
+    <circle cx="150" cy="555" r="3.2" fill="url(#me-bolt)"/><circle cx="168" cy="555" r="3.2" fill="url(#me-bolt)"/>
+    <circle cx="592" cy="555" r="3.2" fill="url(#me-bolt)"/><circle cx="610" cy="555" r="3.2" fill="url(#me-bolt)"/>
+    <!-- weld seams -->
+    <path d="M170 546 q3 -3 6 0 q3 3 6 0 q3 -3 6 0" stroke="#5a646e" stroke-width="1.4" fill="none" opacity=".8"/>
+    <path d="M572 546 q3 -3 6 0 q3 3 6 0 q3 -3 6 0" stroke="#5a646e" stroke-width="1.4" fill="none" opacity=".8"/>
+    <!-- painted bolster body -->
+    <rect x="170" y="524" width="420" height="22" fill="url(#me-blueD)" stroke="#0b2436"/>
+    <!-- machined bolster top plate with T-slots -->
+    <rect x="166" y="514" width="428" height="12" rx="1.5" fill="url(#me-steelV)" stroke="#1c242d"/>
+    <line x1="168" y1="515.4" x2="592" y2="515.4" stroke="rgba(255,255,255,.16)" stroke-width="1"/>
+    <path d="M236 514 v4 h-4 v4 h12 v-4 h-4 v-4 z" fill="#10161c"/>
+    <path d="M330 514 v4 h-4 v4 h12 v-4 h-4 v-4 z" fill="#10161c"/>
+    <path d="M424 514 v4 h-4 v4 h12 v-4 h-4 v-4 z" fill="#10161c"/>
+    <path d="M518 514 v4 h-4 v4 h12 v-4 h-4 v-4 z" fill="#10161c"/>
+    <!-- hazard edges -->
+    <rect x="170" y="524" width="52" height="8" fill="url(#me-hazard)" opacity=".95"/>
+    <rect x="538" y="524" width="52" height="8" fill="url(#me-hazard)" opacity=".95"/>
+    <!-- bolster label -->
+    <rect x="352" y="529" width="76" height="13" rx="2.5" fill="#0d1319" stroke="#31404d"/>
+    <text class="lbl" x="390" y="539" text-anchor="middle" style="font-size:8.5px" fill="#8fa4b5">BED / BOLSTER</text>
+  </g>
+
+  <!-- ============ lower die + workpiece (TP: WORK) ============ -->
+  <g class="tp" data-tp="WORK">
+    <rect x="300" y="502" width="160" height="12" rx="1.5" fill="url(#me-dieV)" stroke="#1a222b"/>
+    <line x1="302" y1="503.4" x2="458" y2="503.4" stroke="rgba(255,255,255,.14)" stroke-width="1"/>
+    <circle cx="310" cy="508" r="2.6" fill="url(#me-bolt)"/><circle cx="450" cy="508" r="2.6" fill="url(#me-bolt)"/>
+    <!-- formed hat-channel workpiece -->
+    <path d="M312 502 l0 -3 h26 l8 -7 h68 l8 7 h26 l0 3 z" fill="url(#me-workV)" stroke="#5a6570" stroke-width="1"/>
+    <line x1="348" y1="492.8" x2="412" y2="492.8" stroke="rgba(255,255,255,.35)" stroke-width="1"/>
+    <rect x="392" y="505" width="62" height="9" rx="2" fill="#0d1319" stroke="#31404d"/>
+    <text class="lbl" x="423" y="512" text-anchor="middle" style="font-size:7.5px" fill="#8fa4b5">DIE SET D-77</text>
+    <circle cx="474" cy="497" r="5" fill="#0a2a2e" stroke="var(--cyan)" stroke-width="1.4"/>
+    <circle cx="474" cy="497" r="1.6" fill="var(--cyan)"/>
+  </g>
+  <text class="lbl" x="484" y="500" style="font-size:9px">WORKPIECE</text>
+
+  <!-- ============ piston rod (dynamic height 10..290, y=140) ============ -->
+  <rect id="mech-rod" x="371" y="140" width="18" height="10" fill="url(#me-rodH)"/>
+
+  <!-- ============ front guide posts ============ -->
+  <rect x="186" y="140" width="28" height="380" fill="url(#me-postH)" stroke="#161d24" stroke-width=".8"/>
+  <rect x="546" y="140" width="28" height="380" fill="url(#me-postH)" stroke="#161d24" stroke-width=".8"/>
+  <!-- post base bushing collars on bolster plate -->
+  <rect x="229" y="506" width="18" height="9" rx="1.5" fill="url(#me-postHb)" stroke="#141a21"/>
+  <rect x="513" y="506" width="18" height="9" rx="1.5" fill="url(#me-postHb)" stroke="#141a21"/>
+  <path d="M188 502 h24 l5 6 v7 h-34 v-7 z" fill="url(#me-steelV)" stroke="#141a21"/>
+  <line x1="189" y1="503.4" x2="211" y2="503.4" stroke="rgba(255,255,255,.16)"/>
+  <path d="M548 502 h24 l5 6 v7 h-34 v-7 z" fill="url(#me-steelV)" stroke="#141a21"/>
+  <line x1="549" y1="503.4" x2="571" y2="503.4" stroke="rgba(255,255,255,.16)"/>
+  <circle cx="187" cy="511" r="2.2" fill="url(#me-bolt)"/><circle cx="213" cy="511" r="2.2" fill="url(#me-bolt)"/>
+  <circle cx="547" cy="511" r="2.2" fill="url(#me-bolt)"/><circle cx="573" cy="511" r="2.2" fill="url(#me-bolt)"/>
+
+  <!-- ============ MOVING PLATEN group (home: top edge y=150) ============ -->
+  <g id="mech-platen" class="tp" data-tp="PLATEN">
+    <!-- soft cast shadow under slab -->
+    <rect x="176" y="158" width="420" height="36" fill="#000" opacity=".28"/>
+    <!-- back bushing bosses -->
+    <rect x="224" y="147" width="28" height="42" rx="3" fill="url(#me-postHb)" stroke="#141a21"/>
+    <rect x="508" y="147" width="28" height="42" rx="3" fill="url(#me-postHb)" stroke="#141a21"/>
+    <!-- platen slab -->
+    <rect x="170" y="150" width="420" height="36" fill="url(#me-steelV)" stroke="#1c242d"/>
+    <line x1="172" y1="151.6" x2="588" y2="151.6" stroke="rgba(255,255,255,.18)" stroke-width="1.2"/>
+    <!-- T-slots on platen underside face -->
+    <path d="M282 186 v-4 h-4 v-4 h12 v4 h-4 v4 z" fill="#10161c"/>
+    <path d="M380 186 v-4 h-4 v-4 h12 v4 h-4 v4 z" fill="#10161c"/>
+    <path d="M478 186 v-4 h-4 v-4 h12 v4 h-4 v4 z" fill="#10161c"/>
+    <!-- hazard stripe patches on slab ends -->
+    <rect x="170" y="178" width="46" height="8" fill="url(#me-hazard)" opacity=".95"/>
+    <rect x="544" y="178" width="46" height="8" fill="url(#me-hazard)" opacity=".95"/>
+    <!-- front bushing bosses w/ grease nipples -->
+    <rect x="182" y="144" width="36" height="48" rx="4" fill="url(#me-steelV)" stroke="#141a21"/>
+    <rect x="542" y="144" width="36" height="48" rx="4" fill="url(#me-steelV)" stroke="#141a21"/>
+    <line x1="184" y1="146" x2="216" y2="146" stroke="rgba(255,255,255,.16)"/>
+    <line x1="544" y1="146" x2="576" y2="146" stroke="rgba(255,255,255,.16)"/>
+    <circle cx="200" cy="168" r="3" fill="url(#me-brass)" stroke="#5f4c22" stroke-width=".8"/>
+    <circle cx="560" cy="168" r="3" fill="url(#me-brass)" stroke="#5f4c22" stroke-width=".8"/>
+    <!-- rod clevis boss on top center -->
+    <rect x="362" y="144" width="36" height="8" rx="2" fill="url(#me-ironV)" stroke="#141a21"/>
+    <!-- engraved tag -->
+    <rect x="346" y="158" width="68" height="18" rx="3" fill="#0d1319" stroke="#31404d"/>
+    <text class="lbl" id="mv-ram" x="380" y="171" text-anchor="middle" style="font-size:9.5px" fill="#9fb4c6">PLATEN</text>
+    <!-- striker flag for prox switches -->
+    <rect x="588" y="156" width="16" height="16" rx="2" fill="url(#me-ironV)" stroke="#141a21"/>
+    <circle cx="596" cy="164" r="2.6" fill="url(#me-bolt)"/>
+    <!-- upper die clamp + die -->
+    <rect x="300" y="186" width="160" height="7" rx="1.5" fill="url(#me-ironV)" stroke="#141a21"/>
+    <circle cx="310" cy="189.5" r="2.6" fill="url(#me-bolt)"/><circle cx="450" cy="189.5" r="2.6" fill="url(#me-bolt)"/>
+    <rect x="310" y="193" width="140" height="19" rx="1.5" fill="url(#me-dieV)" stroke="#1a222b"/>
+    <line x1="312" y1="194.6" x2="448" y2="194.6" stroke="rgba(255,255,255,.14)"/>
+    <text class="lbl" x="380" y="206" text-anchor="middle" style="font-size:8px" fill="#7e93a4">UPPER DIE</text>
+    <!-- probe dot -->
+    <circle cx="252" cy="168" r="5" fill="#0a2a2e" stroke="var(--cyan)" stroke-width="1.4"/>
+    <circle cx="252" cy="168" r="1.6" fill="var(--cyan)"/>
+  </g>
+
+  <!-- ============ crown ============ -->
+  <g filter="url(#me-ds)">
+    <!-- post retaining nuts on crown top -->
+    <path d="M188 56 h24 l5 6 v6 h-34 v-6 z" fill="url(#me-steelV)" stroke="#141a21"/>
+    <path d="M548 56 h24 l5 6 v6 h-34 v-6 z" fill="url(#me-steelV)" stroke="#141a21"/>
+    <rect x="229" y="60" width="18" height="8" rx="1.5" fill="url(#me-postHb)" stroke="#141a21"/>
+    <rect x="513" y="60" width="18" height="8" rx="1.5" fill="url(#me-postHb)" stroke="#141a21"/>
+    <!-- crown slab (painted) -->
+    <rect x="170" y="68" width="420" height="76" rx="3" fill="url(#me-blueV)" stroke="#0b2436"/>
+    <line x1="173" y1="70" x2="587" y2="70" stroke="rgba(255,255,255,.2)" stroke-width="1.4"/>
+    <line x1="173" y1="142" x2="587" y2="142" stroke="rgba(0,0,0,.4)" stroke-width="1.4"/>
+    <!-- machined ledge under crown -->
+    <rect x="176" y="136" width="408" height="8" fill="url(#me-steelV)" stroke="#141a21" stroke-width=".8"/>
+    <rect x="176" y="136" width="52" height="8" fill="url(#me-hazard)" opacity=".95"/>
+    <rect x="532" y="136" width="52" height="8" fill="url(#me-hazard)" opacity=".95"/>
+    <!-- crown face bolts -->
+    <circle cx="192" cy="80" r="3.4" fill="url(#me-bolt)"/><circle cx="256" cy="80" r="3.4" fill="url(#me-bolt)"/>
+    <circle cx="504" cy="80" r="3.4" fill="url(#me-bolt)"/><circle cx="568" cy="80" r="3.4" fill="url(#me-bolt)"/>
+    <circle cx="192" cy="128" r="3.4" fill="url(#me-bolt)"/><circle cx="256" cy="128" r="3.4" fill="url(#me-bolt)"/>
+    <circle cx="504" cy="128" r="3.4" fill="url(#me-bolt)"/><circle cx="568" cy="128" r="3.4" fill="url(#me-bolt)"/>
+    <!-- nameplate -->
+    <rect x="270" y="88" width="220" height="34" rx="3" fill="#0d1319" stroke="#31404d"/>
+    <text x="380" y="103" text-anchor="middle" style="font-size:11px;letter-spacing:2px" fill="#c2cfdc">HP-160</text>
+    <text class="lbl" x="380" y="116" text-anchor="middle" style="font-size:8px" fill="#7e93a4">4-POST HYDRAULIC PRESS · 160 t · PRESS-LINE 3</text>
+    <!-- rod gland collar -->
+    <rect x="364" y="144" width="32" height="7" rx="2" fill="url(#me-ironV)" stroke="#141a21"/>
+  </g>
+
+  <!-- ============ cylinder (TP: CYLM) ============ -->
+  <g class="tp" data-tp="CYLM">
+    <!-- lifting eye -->
+    <circle cx="380" cy="6" r="6" fill="none" stroke="#4d5a66" stroke-width="4"/>
+    <!-- cap -->
+    <rect x="330" y="10" width="100" height="10" rx="2" fill="url(#me-steelV)" stroke="#141a21"/>
+    <circle cx="340" cy="15" r="2.8" fill="url(#me-bolt)"/><circle cx="358" cy="15" r="2.8" fill="url(#me-bolt)"/>
+    <circle cx="402" cy="15" r="2.8" fill="url(#me-bolt)"/><circle cx="420" cy="15" r="2.8" fill="url(#me-bolt)"/>
+    <!-- barrel -->
+    <rect x="334" y="20" width="92" height="40" fill="url(#me-cylH)" stroke="#141a21"/>
+    <line x1="334" y1="26" x2="426" y2="26" stroke="rgba(0,0,0,.3)"/>
+    <line x1="334" y1="52" x2="426" y2="52" stroke="rgba(0,0,0,.3)"/>
+    <!-- service ports: cap side + rod side, hoses drop to a bulkhead manifold on the crown -->
+    <rect x="456" y="60" width="30" height="14" rx="2" fill="url(#me-ironV)" stroke="#141a21"/>
+    <circle cx="461" cy="67" r="1.8" fill="url(#me-bolt)"/><circle cx="481" cy="67" r="1.8" fill="url(#me-bolt)"/>
+    <rect x="426" y="24" width="10" height="9" fill="url(#me-ironV)" stroke="#141a21"/>
+    <rect x="436" y="25" width="9" height="7" fill="url(#me-brass)" stroke="#5f4c22" stroke-width=".8"/>
+    <path d="M445 28.5 q32 2 32 32" stroke="#0c0f14" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <path d="M445 28.5 q32 2 32 32" stroke="#242a32" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <rect x="426" y="45" width="10" height="9" fill="url(#me-ironV)" stroke="#141a21"/>
+    <rect x="436" y="46" width="9" height="7" fill="url(#me-brass)" stroke="#5f4c22" stroke-width=".8"/>
+    <path d="M445 49.5 q21 1 21 13" stroke="#0c0f14" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <path d="M445 49.5 q21 1 21 13" stroke="#242a32" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <!-- mounting flange bolted to crown -->
+    <rect x="318" y="58" width="124" height="12" rx="2" fill="url(#me-steelV)" stroke="#141a21"/>
+    <circle cx="328" cy="64" r="3" fill="url(#me-bolt)"/><circle cx="352" cy="64" r="3" fill="url(#me-bolt)"/>
+    <circle cx="408" cy="64" r="3" fill="url(#me-bolt)"/><circle cx="432" cy="64" r="3" fill="url(#me-bolt)"/>
+    <!-- tag -->
+    <rect x="336" y="34" width="60" height="14" rx="2.5" fill="#0d1319" stroke="#31404d"/>
+    <text class="lbl" x="366" y="44" text-anchor="middle" style="font-size:8.5px" fill="#9fb4c6">CYL-401</text>
+    <!-- probe dot -->
+    <circle cx="412" cy="41" r="5" fill="#0a2a2e" stroke="var(--cyan)" stroke-width="1.4"/>
+    <circle cx="412" cy="41" r="1.6" fill="var(--cyan)"/>
+  </g>
+  <text class="lbl" x="300" y="30" text-anchor="end" style="font-size:9px">MAIN CYLINDER Ø200</text>
+  <path d="M304 27 h13 l17 7" stroke="#4a5866" stroke-width="1" fill="none"/>
+  <circle cx="335" cy="34.5" r="1.8" fill="#8fa4b5"/>
+
+  <!-- ============ sensor rail + prox switches ============ -->
+  <!-- rail column standing on bolster, braced to crown -->
+  <rect x="590" y="116" width="66" height="8" rx="2" fill="url(#me-ironV)" stroke="#141a21"/>
+  <rect x="656" y="112" width="14" height="404" fill="url(#me-ironV)" stroke="#141a21"/>
+  <line x1="657.5" y1="114" x2="657.5" y2="514" stroke="rgba(255,255,255,.1)"/>
+  <circle cx="663" cy="120" r="2.6" fill="url(#me-bolt)"/><circle cx="663" cy="508" r="2.6" fill="url(#me-bolt)"/>
+  <!-- LS-TOP -->
+  <g>
+    <rect x="650" y="157" width="8" height="12" fill="url(#me-steelV)" stroke="#141a21"/>
+    <rect x="616" y="155" width="36" height="16" rx="3" fill="url(#me-ironV)" stroke="#141a21"/>
+    <path d="M616 158 h-8 l-2 2.5 v3 l2 2.5 h8 z" fill="url(#me-brass)" stroke="#5f4c22" stroke-width=".8"/>
+    <circle cx="644" cy="163" r="6.4" fill="#10161c" stroke="#5a6875" stroke-width="1"/>
+    <circle id="mi-lstop" cx="644" cy="163" r="5" fill="#1f2f1f" stroke="#3a4a58" stroke-width=".8"/>
+    <circle cx="642.4" cy="161.4" r="1.4" fill="rgba(255,255,255,.35)"/>
+    <rect x="612" y="174" width="42" height="11" rx="2" fill="#0d1319" stroke="#31404d"/>
+    <text class="lbl" x="633" y="182.5" text-anchor="middle" style="font-size:7.5px" fill="#9fb4c6">LS-TOP</text>
+    <text class="lbl" x="633" y="195" text-anchor="middle" style="font-size:8.5px">home</text>
+  </g>
+  <!-- LS-402 -->
+  <g>
+    <rect x="650" y="437" width="8" height="12" fill="url(#me-steelV)" stroke="#141a21"/>
+    <rect x="616" y="435" width="36" height="16" rx="3" fill="url(#me-ironV)" stroke="#141a21"/>
+    <path d="M616 438 h-8 l-2 2.5 v3 l2 2.5 h8 z" fill="url(#me-brass)" stroke="#5f4c22" stroke-width=".8"/>
+    <circle cx="644" cy="443" r="6.4" fill="#10161c" stroke="#5a6875" stroke-width="1"/>
+    <circle id="mi-lsbot" cx="644" cy="443" r="5" fill="#1f2f1f" stroke="#3a4a58" stroke-width=".8"/>
+    <circle cx="642.4" cy="441.4" r="1.4" fill="rgba(255,255,255,.35)"/>
+    <rect x="612" y="454" width="42" height="11" rx="2" fill="#0d1319" stroke="#31404d"/>
+    <text class="lbl" x="633" y="462.5" text-anchor="middle" style="font-size:7.5px" fill="#9fb4c6">LS-402</text>
+    <text class="lbl" x="633" y="474" text-anchor="middle" style="font-size:8.5px">bottom</text>
+  </g>
+  <!-- sensor cables to junction box -->
+  <path d="M652 163 q24 6 26 30 v285" stroke="#0c0f14" stroke-width="4" fill="none"/>
+  <path d="M652 163 q24 6 26 30 v285" stroke="#20262e" stroke-width="1.6" fill="none"/>
+  <path d="M652 443 q30 8 32 24 v14" stroke="#0c0f14" stroke-width="4" fill="none"/>
+  <path d="M652 443 q30 8 32 24 v14" stroke="#20262e" stroke-width="1.6" fill="none"/>
+  <!-- cable glands on JB-4 top -->
+  <rect x="674.5" y="474" width="7" height="6" rx="1.5" fill="#20262e" stroke="#0c0f14" stroke-width=".8"/>
+  <rect x="680.5" y="474" width="7" height="6" rx="1.5" fill="#20262e" stroke="#0c0f14" stroke-width=".8"/>
+  <rect x="676" y="478" width="26" height="30" rx="3" fill="url(#me-ironV)" stroke="#141a21"/>
+  <circle cx="682" cy="484" r="1.8" fill="url(#me-bolt)"/><circle cx="696" cy="484" r="1.8" fill="url(#me-bolt)"/>
+  <text class="lbl" x="680" y="522" style="font-size:7.5px">JB-4</text>
+
+  <!-- ============ digital readout panel ============ -->
+  <g filter="url(#me-ds)">
+    <rect x="700" y="44" width="182" height="206" rx="8" fill="url(#me-ironV)" stroke="#0f151b" stroke-width="1.5"/>
+    <line x1="706" y1="47.5" x2="876" y2="47.5" stroke="rgba(255,255,255,.14)"/>
+    <circle cx="710" cy="54" r="2.6" fill="url(#me-bolt)"/><circle cx="872" cy="54" r="2.6" fill="url(#me-bolt)"/>
+    <circle cx="710" cy="240" r="2.6" fill="url(#me-bolt)"/><circle cx="872" cy="240" r="2.6" fill="url(#me-bolt)"/>
+    <text class="lbl" x="791" y="62" text-anchor="middle" style="font-size:9px;letter-spacing:1.5px" fill="#8fa4b5">RAM DRO-3</text>
+    <rect x="712" y="70" width="158" height="162" rx="4" fill="url(#me-screenV)" stroke="#232f3a"/>
+    <text class="lbl" x="722" y="90">RAM POSITION</text>
+    <text class="val" x="722" y="114" id="mv-pos" style="font-size:20px">0 mm</text>
+    <line x1="720" y1="126" x2="862" y2="126" stroke="#1b2732"/>
+    <text class="lbl" x="722" y="144">RAM VELOCITY</text>
+    <text class="val" x="722" y="168" id="mv-vel" style="font-size:20px">0 mm/s</text>
+    <line x1="720" y1="180" x2="862" y2="180" stroke="#1b2732"/>
+    <text class="lbl" x="722" y="198">FORMING FORCE</text>
+    <text class="val" x="722" y="222" id="mv-force" style="font-size:20px">0 kN</text>
+  </g>
+
+  <!-- stroke scale ticks beside left post -->
+  <line x1="160" y1="150" x2="160" y2="430" stroke="#31404d" stroke-width="1.5"/>
+  <line x1="154" y1="150" x2="166" y2="150" stroke="#31404d" stroke-width="1.5"/>
+  <line x1="154" y1="430" x2="166" y2="430" stroke="#31404d" stroke-width="1.5"/>
+  <text class="lbl" x="150" y="156" text-anchor="end" style="font-size:8.5px">0</text>
+  <text class="lbl" x="150" y="436" text-anchor="end" style="font-size:8.5px">250mm</text>
+</svg>
 
     <!-- PLC -->
     <svg class="layer" data-layer="plc" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
-      <text class="lbl" x="30" y="28">SEQUENCER STATE</text>
-      <rect x="30" y="40" width="250" height="40" rx="4" fill="#05080b" stroke="#3a4a58"/>
-      <text class="val" x="42" y="66" id="pv-state" style="font-size:16px">IDLE</text>
-      <!-- timers -->
-      <text class="lbl" x="320" y="28">TIMERS</text>
-      <rect x="320" y="40" width="250" height="40" rx="4" fill="#05080b" stroke="#3a4a58"/>
-      <text class="lbl" x="330" y="58" id="pv-t101">T101 extend 0.0/6.0</text>
-      <text class="lbl" x="330" y="74" id="pv-t301">T301 press  0.0/4.0</text>
-      <!-- ladder rungs -->
-      <text class="lbl" x="30" y="120">LADDER (live)</text>
-      <g id="ladder"></g>
-    </svg>
+<defs>
+  <linearGradient id="pl-iron" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#3d4754"/><stop offset="0.5" stop-color="#2d3641"/><stop offset="1" stop-color="#242c36"/>
+  </linearGradient>
+  <linearGradient id="pl-ironH" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#39434f"/><stop offset="1" stop-color="#232b34"/>
+  </linearGradient>
+  <linearGradient id="pl-steel" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#8a97a5"/><stop offset="0.45" stop-color="#4a5866"/><stop offset="1" stop-color="#2c3844"/>
+  </linearGradient>
+  <linearGradient id="pl-face" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#7f8c99"/><stop offset="0.12" stop-color="#6b7885"/><stop offset="1" stop-color="#46525f"/>
+  </linearGradient>
+  <linearGradient id="pl-cover" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#8d99a6"/><stop offset="0.5" stop-color="#5f6c79"/><stop offset="1" stop-color="#4b5763"/>
+  </linearGradient>
+  <linearGradient id="pl-blue" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#2a6f9e"/><stop offset="0.4" stop-color="#1f5f8b"/><stop offset="1" stop-color="#14456b"/>
+  </linearGradient>
+  <linearGradient id="pl-yellow" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#e8b93c"/><stop offset="1" stop-color="#b8862a"/>
+  </linearGradient>
+  <linearGradient id="pl-bezel" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#3c4652"/><stop offset="0.06" stop-color="#2b343f"/><stop offset="0.9" stop-color="#1a212a"/><stop offset="1" stop-color="#12181f"/>
+  </linearGradient>
+  <linearGradient id="pl-title" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#2e4256"/><stop offset="1" stop-color="#1a2836"/>
+  </linearGradient>
+  <linearGradient id="pl-deck" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#414c59"/><stop offset="0.08" stop-color="#333d49"/><stop offset="1" stop-color="#1f2731"/>
+  </linearGradient>
+  <radialGradient id="pl-bolt" cx="0.35" cy="0.3" r="0.9">
+    <stop offset="0" stop-color="#cfd8e0"/><stop offset="0.45" stop-color="#6b7885"/><stop offset="1" stop-color="#39434e"/>
+  </radialGradient>
+  <radialGradient id="pl-ledg" cx="0.4" cy="0.35" r="0.9">
+    <stop offset="0" stop-color="#d6ffe0"/><stop offset="0.45" stop-color="#33d17a"/><stop offset="1" stop-color="#0e5c31"/>
+  </radialGradient>
+  <radialGradient id="pl-leda" cx="0.4" cy="0.35" r="0.9">
+    <stop offset="0" stop-color="#fff0c0"/><stop offset="0.45" stop-color="#e8b93c"/><stop offset="1" stop-color="#7a5a14"/>
+  </radialGradient>
+  <radialGradient id="pl-ledr" cx="0.4" cy="0.35" r="0.9">
+    <stop offset="0" stop-color="#ffd6d6"/><stop offset="0.45" stop-color="#ff5252"/><stop offset="1" stop-color="#6e1414"/>
+  </radialGradient>
+  <radialGradient id="pl-key" cx="0.35" cy="0.3" r="1">
+    <stop offset="0" stop-color="#e6edf3"/><stop offset="0.5" stop-color="#8a97a5"/><stop offset="1" stop-color="#4a5866"/>
+  </radialGradient>
+  <filter id="pl-ds" x="-8%" y="-8%" width="116%" height="124%">
+    <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity="0.5"/>
+  </filter>
+</defs>
+<g filter="url(#pl-ds)">
+<rect x="14" y="6" width="546" height="92" rx="4" fill="url(#pl-iron)" stroke="#10151b" stroke-width="1"/>
+<line x1="16" y1="7.5" x2="558" y2="7.5" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+<rect x="14" y="6" width="14" height="92" rx="4" fill="url(#pl-ironH)" stroke="#10151b" stroke-width="0.8"/>
+<rect x="546" y="6" width="14" height="92" rx="4" fill="url(#pl-ironH)" stroke="#10151b" stroke-width="0.8"/>
+<circle cx="21" cy="15" r="3" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.6"/><line x1="19.35" y1="15" x2="22.65" y2="15" stroke="#1b232c" stroke-width="0.8"/>
+<circle cx="21" cy="89" r="3" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.6"/><line x1="19.35" y1="89" x2="22.65" y2="89" stroke="#1b232c" stroke-width="0.8"/>
+<circle cx="553" cy="15" r="3" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.6"/><line x1="551.35" y1="15" x2="554.65" y2="15" stroke="#1b232c" stroke-width="0.8"/>
+<circle cx="553" cy="89" r="3" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.6"/><line x1="551.35" y1="89" x2="554.65" y2="89" stroke="#1b232c" stroke-width="0.8"/>
+<rect x="30" y="12" width="514" height="80" rx="2" fill="#1b222b" stroke="#0f141a" stroke-width="0.8"/>
+<rect x="32" y="84" width="510" height="5" fill="url(#pl-steel)" opacity="0.55"/>
+</g>
+<g>
+<rect x="32" y="13" width="68" height="77" rx="3" fill="url(#pl-blue)" stroke="#0e2f4a" stroke-width="1"/>
+<line x1="34" y1="14.5" x2="98" y2="14.5" stroke="rgba(255,255,255,0.16)" stroke-width="1"/>
+<rect x="38" y="17" width="56" height="9" rx="1.5" fill="#0d1319" stroke="#2a3744" stroke-width="0.6"/><text x="66" y="23.732" text-anchor="middle" style="font-size:6.2px" fill="#9fb4c8">PS 24VDC 5A</text>
+<rect x="42" y="31" width="48" height="2.6" rx="1.3" fill="#0d2438" stroke="#0a1b2b" stroke-width="0.4"/>
+<rect x="42" y="36.5" width="48" height="2.6" rx="1.3" fill="#0d2438" stroke="#0a1b2b" stroke-width="0.4"/>
+<rect x="42" y="42" width="48" height="2.6" rx="1.3" fill="#0d2438" stroke="#0a1b2b" stroke-width="0.4"/>
+<rect x="42" y="47.5" width="48" height="2.6" rx="1.3" fill="#0d2438" stroke="#0a1b2b" stroke-width="0.4"/>
+<rect x="42" y="53" width="48" height="2.6" rx="1.3" fill="#0d2438" stroke="#0a1b2b" stroke-width="0.4"/>
+<rect x="42" y="58.5" width="48" height="2.6" rx="1.3" fill="#0d2438" stroke="#0a1b2b" stroke-width="0.4"/>
+<circle cx="44" cy="71" r="5.2" fill="#33d17a" opacity="0.14"/><circle cx="44" cy="71" r="2.6" fill="url(#pl-ledg)" stroke="#0b1015" stroke-width="0.5"/>
+<text x="50" y="73.5" style="font-size:6px" fill="#cfe3f2">PWR</text>
+<circle cx="72" cy="71" r="5.2" fill="#33d17a" opacity="0.14"/><circle cx="72" cy="71" r="2.6" fill="url(#pl-ledg)" stroke="#0b1015" stroke-width="0.5"/>
+<text x="78" y="73.5" style="font-size:6px" fill="#cfe3f2">DC</text>
+<rect x="38" y="79" width="26" height="8" rx="1" fill="url(#pl-yellow)" stroke="#7a5a14" stroke-width="0.5"/>
+<text x="41" y="85" style="font-size:5.5px;font-weight:700" fill="#3a2c08">24VDC</text>
+<circle cx="94" cy="83" r="2.2" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.5"/><line x1="92.68" y1="83" x2="95.32" y2="83" stroke="#1b232c" stroke-width="0.7" transform="rotate(20 94 83)"/>
+</g>
+<g>
+<rect x="104" y="13" width="82" height="77" rx="3" fill="url(#pl-face)" stroke="#1a222b" stroke-width="1"/>
+<line x1="106" y1="14.5" x2="184" y2="14.5" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+<rect x="110" y="17" width="70" height="9" rx="1.5" fill="#0d1319" stroke="#2a3744" stroke-width="0.6"/><text x="145" y="23.732" text-anchor="middle" style="font-size:6.2px" fill="#9fb4c8">CPU 315-2 DP</text>
+<circle cx="116" cy="34" r="5.6" fill="#33d17a" opacity="0.14"/><circle cx="116" cy="34" r="2.8" fill="url(#pl-ledg)" stroke="#0b1015" stroke-width="0.5"/>
+<text x="123" y="36.5" style="font-size:6px" fill="#e6edf3">RUN</text>
+<circle cx="116" cy="44" r="2.8" fill="#2e1414" stroke="#0b1015" stroke-width="0.5"/>
+<text x="123" y="46.5" style="font-size:6px" fill="#e6edf3">FLT</text>
+<circle cx="116" cy="54" r="2.8" fill="#2c2412" stroke="#0b1015" stroke-width="0.5"/>
+<text x="123" y="56.5" style="font-size:6px" fill="#e6edf3">FRC</text>
+<circle cx="162" cy="44" r="9" fill="#20272f" stroke="#0f141a" stroke-width="1"/>
+<circle cx="162" cy="44" r="6.5" fill="url(#pl-key)" stroke="#10151b" stroke-width="0.7"/>
+<rect x="160.9" y="38.6" width="2.2" height="10.8" rx="1" fill="#232b34" transform="rotate(-28 162 44)"/>
+<text x="150" y="30" style="font-size:5.5px" fill="#c9d6e2">RUN</text>
+<text x="148" y="61" style="font-size:5.5px" fill="#7d8fa1">PROG</text>
+<rect x="110" y="64" width="34" height="7" rx="1" fill="#20272f" stroke="#0f141a" stroke-width="0.7"/>
+<rect x="112" y="66" width="22" height="3" rx="0.8" fill="#0d1319"/>
+<text x="110" y="79" style="font-size:5.5px" fill="#39434e">MMC</text>
+<rect x="152" y="62" width="26" height="18" rx="2" fill="#2a333c" stroke="#161d24" stroke-width="0.8"/>
+<path d="M156 66 h18 l-3 10 h-12 z" fill="#10161c" stroke="#39434e" stroke-width="0.6"/>
+<text x="153" y="87.5" style="font-size:5px" fill="#39434e">PROFIBUS</text>
+</g>
+<g>
+<rect x="190" y="13" width="54" height="77" rx="3" fill="url(#pl-face)" stroke="#1a222b" stroke-width="1"/>
+<line x1="192" y1="14.5" x2="242" y2="14.5" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+<rect x="194" y="17" width="46" height="9" rx="1.5" fill="#0d1319" stroke="#2a3744" stroke-width="0.6"/><text x="217" y="23.66" text-anchor="middle" style="font-size:6px" fill="#9fb4c8">DI16 24V</text>
+<rect x="195" y="29" width="16" height="30" rx="1.5" fill="#151c23" stroke="#0f141a" stroke-width="0.6"/>
+<circle cx="199.5" cy="32.5" r="2.8" fill="#33d17a" opacity="0.14"/><circle cx="199.5" cy="32.5" r="1.4" fill="url(#pl-ledg)" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="199.5" cy="35.9" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="199.5" cy="39.3" r="2.8" fill="#33d17a" opacity="0.14"/><circle cx="199.5" cy="39.3" r="1.4" fill="url(#pl-ledg)" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="199.5" cy="42.7" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="199.5" cy="46.1" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="199.5" cy="49.5" r="2.8" fill="#33d17a" opacity="0.14"/><circle cx="199.5" cy="49.5" r="1.4" fill="url(#pl-ledg)" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="199.5" cy="52.9" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="199.5" cy="56.3" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="206.5" cy="32.5" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="206.5" cy="35.9" r="2.8" fill="#33d17a" opacity="0.14"/><circle cx="206.5" cy="35.9" r="1.4" fill="url(#pl-ledg)" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="206.5" cy="39.3" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="206.5" cy="42.7" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="206.5" cy="46.1" r="2.8" fill="#33d17a" opacity="0.14"/><circle cx="206.5" cy="46.1" r="1.4" fill="url(#pl-ledg)" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="206.5" cy="49.5" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="206.5" cy="52.9" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="206.5" cy="56.3" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<text x="214" y="34" style="font-size:4.5px" fill="#39434e">0</text>
+<text x="214" y="58" style="font-size:4.5px" fill="#39434e">7</text>
+<text x="220" y="40" style="font-size:5px" fill="#8a97a5" transform="rotate(90 223 38)">STATUS</text>
+<rect x="193" y="62" width="48" height="25" rx="2" fill="url(#pl-cover)" stroke="#1a222b" stroke-width="0.8"/>
+<line x1="194" y1="63.5" x2="240" y2="63.5" stroke="rgba(255,255,255,0.14)" stroke-width="0.8"/>
+<line x1="217" y1="64" x2="217" y2="85" stroke="#39434e" stroke-width="0.6"/>
+<rect x="210" y="82" width="14" height="3" rx="1.5" fill="#39434e"/>
+<circle cx="199" cy="68" r="2" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.5"/><line x1="197.8" y1="68" x2="200.2" y2="68" stroke="#1b232c" stroke-width="0.7" transform="rotate(15 199 68)"/>
+<circle cx="235" cy="68" r="2" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.5"/><line x1="233.8" y1="68" x2="236.2" y2="68" stroke="#1b232c" stroke-width="0.7" transform="rotate(-50 235 68)"/>
+</g>
+<g>
+<rect x="248" y="13" width="54" height="77" rx="3" fill="url(#pl-face)" stroke="#1a222b" stroke-width="1"/>
+<line x1="250" y1="14.5" x2="300" y2="14.5" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+<rect x="252" y="17" width="46" height="9" rx="1.5" fill="#0d1319" stroke="#2a3744" stroke-width="0.6"/><text x="275" y="23.66" text-anchor="middle" style="font-size:6px" fill="#9fb4c8">DI16 24V</text>
+<rect x="253" y="29" width="16" height="30" rx="1.5" fill="#151c23" stroke="#0f141a" stroke-width="0.6"/>
+<circle cx="257.5" cy="32.5" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="257.5" cy="35.9" r="2.8" fill="#33d17a" opacity="0.14"/><circle cx="257.5" cy="35.9" r="1.4" fill="url(#pl-ledg)" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="257.5" cy="39.3" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="257.5" cy="42.7" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="257.5" cy="46.1" r="2.8" fill="#33d17a" opacity="0.14"/><circle cx="257.5" cy="46.1" r="1.4" fill="url(#pl-ledg)" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="257.5" cy="49.5" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="257.5" cy="52.9" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="257.5" cy="56.3" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="264.5" cy="32.5" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="264.5" cy="35.9" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="264.5" cy="39.3" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="264.5" cy="42.7" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="264.5" cy="46.1" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="264.5" cy="49.5" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="264.5" cy="52.9" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="264.5" cy="56.3" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<text x="272" y="34" style="font-size:4.5px" fill="#39434e">0</text>
+<text x="272" y="58" style="font-size:4.5px" fill="#39434e">7</text>
+<text x="278" y="40" style="font-size:5px" fill="#8a97a5" transform="rotate(90 281 38)">STATUS</text>
+<rect x="251" y="62" width="48" height="25" rx="2" fill="url(#pl-cover)" stroke="#1a222b" stroke-width="0.8"/>
+<line x1="252" y1="63.5" x2="298" y2="63.5" stroke="rgba(255,255,255,0.14)" stroke-width="0.8"/>
+<line x1="275" y1="64" x2="275" y2="85" stroke="#39434e" stroke-width="0.6"/>
+<rect x="268" y="82" width="14" height="3" rx="1.5" fill="#39434e"/>
+<circle cx="257" cy="68" r="2" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.5"/><line x1="255.8" y1="68" x2="258.2" y2="68" stroke="#1b232c" stroke-width="0.7" transform="rotate(15 257 68)"/>
+<circle cx="293" cy="68" r="2" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.5"/><line x1="291.8" y1="68" x2="294.2" y2="68" stroke="#1b232c" stroke-width="0.7" transform="rotate(-50 293 68)"/>
+</g>
+<g>
+<rect x="306" y="13" width="54" height="77" rx="3" fill="url(#pl-face)" stroke="#1a222b" stroke-width="1"/>
+<line x1="308" y1="14.5" x2="358" y2="14.5" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+<rect x="310" y="17" width="46" height="9" rx="1.5" fill="#0d1319" stroke="#2a3744" stroke-width="0.6"/><text x="333" y="23.66" text-anchor="middle" style="font-size:6px" fill="#9fb4c8">DO16 RLY</text>
+<rect x="311" y="29" width="16" height="30" rx="1.5" fill="#151c23" stroke="#0f141a" stroke-width="0.6"/>
+<circle cx="315.5" cy="32.5" r="2.8" fill="#33d17a" opacity="0.14"/><circle cx="315.5" cy="32.5" r="1.4" fill="url(#pl-ledg)" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="315.5" cy="35.9" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="315.5" cy="39.3" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="315.5" cy="42.7" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="315.5" cy="46.1" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="315.5" cy="49.5" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="315.5" cy="52.9" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="315.5" cy="56.3" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="322.5" cy="32.5" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="322.5" cy="35.9" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="322.5" cy="39.3" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="322.5" cy="42.7" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="322.5" cy="46.1" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="322.5" cy="49.5" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="322.5" cy="52.9" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="322.5" cy="56.3" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<text x="330" y="34" style="font-size:4.5px" fill="#39434e">0</text>
+<text x="330" y="58" style="font-size:4.5px" fill="#39434e">7</text>
+<text x="336" y="40" style="font-size:5px" fill="#8a97a5" transform="rotate(90 339 38)">STATUS</text>
+<rect x="309" y="62" width="48" height="25" rx="2" fill="url(#pl-cover)" stroke="#1a222b" stroke-width="0.8"/>
+<line x1="310" y1="63.5" x2="356" y2="63.5" stroke="rgba(255,255,255,0.14)" stroke-width="0.8"/>
+<line x1="333" y1="64" x2="333" y2="85" stroke="#39434e" stroke-width="0.6"/>
+<rect x="326" y="82" width="14" height="3" rx="1.5" fill="#39434e"/>
+<circle cx="315" cy="68" r="2" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.5"/><line x1="313.8" y1="68" x2="316.2" y2="68" stroke="#1b232c" stroke-width="0.7" transform="rotate(15 315 68)"/>
+<circle cx="351" cy="68" r="2" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.5"/><line x1="349.8" y1="68" x2="352.2" y2="68" stroke="#1b232c" stroke-width="0.7" transform="rotate(-50 351 68)"/>
+</g>
+<g>
+<rect x="364" y="13" width="54" height="77" rx="3" fill="url(#pl-face)" stroke="#1a222b" stroke-width="1"/>
+<line x1="366" y1="14.5" x2="416" y2="14.5" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+<rect x="368" y="17" width="46" height="9" rx="1.5" fill="#0d1319" stroke="#2a3744" stroke-width="0.6"/><text x="391" y="23.66" text-anchor="middle" style="font-size:6px" fill="#9fb4c8">AI8 4-20</text>
+<rect x="369" y="29" width="16" height="30" rx="1.5" fill="#151c23" stroke="#0f141a" stroke-width="0.6"/>
+<circle cx="373.5" cy="32.5" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="373.5" cy="35.9" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="373.5" cy="39.3" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="373.5" cy="42.7" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="373.5" cy="46.1" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="373.5" cy="49.5" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="373.5" cy="52.9" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="373.5" cy="56.3" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="380.5" cy="32.5" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="380.5" cy="35.9" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="380.5" cy="39.3" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="380.5" cy="42.7" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="380.5" cy="46.1" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="380.5" cy="49.5" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="380.5" cy="52.9" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<circle cx="380.5" cy="56.3" r="1.4" fill="#12291c" stroke="#0b1015" stroke-width="0.5"/>
+<text x="388" y="34" style="font-size:4.5px" fill="#39434e">0</text>
+<text x="388" y="58" style="font-size:4.5px" fill="#39434e">7</text>
+<circle cx="404" cy="36" r="2.4" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.5"/><line x1="402.56" y1="36" x2="405.44" y2="36" stroke="#1b232c" stroke-width="0.7" transform="rotate(65 404 36)"/>
+<text x="397" y="46" style="font-size:4.8px" fill="#8a97a5">SPAN</text>
+<circle cx="404" cy="52" r="2.4" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.5"/><line x1="402.56" y1="52" x2="405.44" y2="52" stroke="#1b232c" stroke-width="0.7" transform="rotate(-30 404 52)"/>
+<text x="397" y="61" style="font-size:4.8px" fill="#8a97a5">ZERO</text>
+<rect x="367" y="62" width="48" height="25" rx="2" fill="url(#pl-cover)" stroke="#1a222b" stroke-width="0.8"/>
+<line x1="368" y1="63.5" x2="414" y2="63.5" stroke="rgba(255,255,255,0.14)" stroke-width="0.8"/>
+<line x1="391" y1="64" x2="391" y2="85" stroke="#39434e" stroke-width="0.6"/>
+<rect x="384" y="82" width="14" height="3" rx="1.5" fill="#39434e"/>
+<circle cx="373" cy="68" r="2" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.5"/><line x1="371.8" y1="68" x2="374.2" y2="68" stroke="#1b232c" stroke-width="0.7" transform="rotate(15 373 68)"/>
+<circle cx="409" cy="68" r="2" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.5"/><line x1="407.8" y1="68" x2="410.2" y2="68" stroke="#1b232c" stroke-width="0.7" transform="rotate(-50 409 68)"/>
+</g>
+<g>
+<rect x="422" y="13" width="54" height="77" rx="3" fill="#39434e" stroke="#1a222b" stroke-width="1"/>
+<line x1="424" y1="14.5" x2="474" y2="14.5" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+<text x="446" y="70" style="font-size:8px;letter-spacing:2px" fill="#20272f" transform="rotate(-90 449 60)">SPARE</text>
+<circle cx="449" cy="22" r="2.4" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.5"/><line x1="447.56" y1="22" x2="450.44" y2="22" stroke="#1b232c" stroke-width="0.7" transform="rotate(30 449 22)"/>
+<circle cx="449" cy="81" r="2.4" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.5"/><line x1="447.56" y1="81" x2="450.44" y2="81" stroke="#1b232c" stroke-width="0.7" transform="rotate(-20 449 81)"/>
+</g>
+<g>
+<rect x="480" y="13" width="62" height="77" rx="3" fill="url(#pl-face)" stroke="#1a222b" stroke-width="1"/>
+<line x1="482" y1="14.5" x2="540" y2="14.5" stroke="rgba(255,255,255,0.14)" stroke-width="1"/>
+<rect x="487" y="24" width="3" height="34" rx="1.5" fill="#2a333c" stroke="#161d24" stroke-width="0.4"/>
+<rect x="494" y="24" width="3" height="34" rx="1.5" fill="#2a333c" stroke="#161d24" stroke-width="0.4"/>
+<rect x="501" y="24" width="3" height="34" rx="1.5" fill="#2a333c" stroke="#161d24" stroke-width="0.4"/>
+<rect x="508" y="24" width="3" height="34" rx="1.5" fill="#2a333c" stroke="#161d24" stroke-width="0.4"/>
+<rect x="515" y="24" width="3" height="34" rx="1.5" fill="#2a333c" stroke="#161d24" stroke-width="0.4"/>
+<rect x="522" y="24" width="3" height="34" rx="1.5" fill="#2a333c" stroke="#161d24" stroke-width="0.4"/>
+<rect x="529" y="24" width="3" height="34" rx="1.5" fill="#2a333c" stroke="#161d24" stroke-width="0.4"/>
+<rect x="485" y="64" width="52" height="10" rx="1.5" fill="#0d1319" stroke="#2a3744" stroke-width="0.6"/><text x="511" y="71.34" text-anchor="middle" style="font-size:6.5px" fill="#9fb4c8">RACK 0</text>
+<rect x="485" y="76" width="52" height="10" rx="1.5" fill="#0d1319" stroke="#2a3744" stroke-width="0.6"/><text x="511" y="83.16" text-anchor="middle" style="font-size:6px" fill="#9fb4c8">IM 360</text>
+</g>
+<path d="M165 80 C165 92 163 100 162 112" fill="none" stroke="#0c0f14" stroke-width="6" stroke-linecap="round"/>
+<path d="M165 80 C165 92 163 100 162 112" fill="none" stroke="#1a1e24" stroke-width="4" stroke-linecap="round"/>
+<path d="M164 82 C164 90 163 96 162.5 104" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1.2"/>
+<g filter="url(#pl-ds)">
+<rect x="570" y="6" width="316" height="92" rx="4" fill="url(#pl-iron)" stroke="#10151b" stroke-width="1"/>
+<rect x="570" y="6" width="316" height="5" rx="2.5" fill="url(#pl-yellow)"/>
+<line x1="572" y1="12" x2="884" y2="12" stroke="rgba(0,0,0,0.4)" stroke-width="1"/>
+</g>
+<circle cx="578" cy="17" r="2.4" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.5"/><line x1="576.56" y1="17" x2="579.44" y2="17" stroke="#1b232c" stroke-width="0.7" transform="rotate(30 578 17)"/>
+<circle cx="878" cy="17" r="2.4" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.5"/><line x1="876.56" y1="17" x2="879.44" y2="17" stroke="#1b232c" stroke-width="0.7" transform="rotate(-40 878 17)"/>
+<circle cx="578" cy="91" r="2.4" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.5"/><line x1="576.56" y1="91" x2="579.44" y2="91" stroke="#1b232c" stroke-width="0.7" transform="rotate(70 578 91)"/>
+<circle cx="878" cy="91" r="2.4" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.5"/><line x1="876.56" y1="91" x2="879.44" y2="91" stroke="#1b232c" stroke-width="0.7" transform="rotate(10 878 91)"/>
+<text class="lbl" x="588" y="26">SEQUENCER STATE</text>
+<text class="lbl" x="744" y="26">TIMERS</text>
+<rect x="586" y="31" width="144" height="59" rx="3" fill="#05080b" stroke="#3a4a58" stroke-width="1"/>
+<line x1="587" y1="89" x2="729" y2="89" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+<text id="pv-state" x="658" y="68" text-anchor="middle" style="font-size:20px;font-weight:700" fill="#33d17a">IDLE</text>
+<rect x="738" y="31" width="140" height="59" rx="3" fill="#05080b" stroke="#3a4a58" stroke-width="1"/>
+<line x1="739" y1="89" x2="877" y2="89" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+<text id="pv-t101" x="745" y="53" style="font-size:10.5px" fill="#8fd7b8">T101 extend 0.0/6.0</text>
+<text id="pv-t301" x="745" y="75" style="font-size:10.5px" fill="#8fd7b8">T301 press  0.0/4.0</text>
+<g filter="url(#pl-ds)">
+<rect x="8" y="100" width="884" height="348" rx="8" fill="url(#pl-bezel)" stroke="#0c1116" stroke-width="1.2"/>
+<line x1="12" y1="101.6" x2="888" y2="101.6" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+</g>
+<rect x="160.7" y="90" width="4" height="9" rx="1.8" fill="#1a1e24" stroke="#0c0f14" stroke-width="0.5"/>
+<rect x="158.8" y="97.5" width="7.5" height="6" rx="1.2" fill="#2a333c" stroke="#10151b" stroke-width="0.7"/>
+<line x1="159.8" y1="98.7" x2="165.3" y2="98.7" stroke="rgba(255,255,255,0.16)" stroke-width="0.7"/>
+<rect x="15" y="105" width="870" height="18" rx="3" fill="url(#pl-title)" stroke="#2a3744" stroke-width="0.8"/>
+<text x="26" y="117.5" style="font-size:10px;font-weight:700" fill="#bcd2e6">LADDER MONITOR — MainRoutine</text>
+<circle cx="292" cy="114" r="3" fill="url(#pl-ledg)"/>
+<text x="299" y="117.5" style="font-size:9px" fill="#33d17a">ONLINE</text>
+<text x="682" y="117.5" style="font-size:9px" fill="#7d8fa1">PRESS-LINE 3 · CPU 315-2 DP</text>
+<rect x="846" y="109" width="9" height="9" rx="2" fill="#2f3d4a" stroke="#54687c" stroke-width="0.7"/>
+<rect x="859" y="109" width="9" height="9" rx="2" fill="#2f3d4a" stroke="#54687c" stroke-width="0.7"/>
+<rect x="872" y="109" width="9" height="9" rx="2" fill="#5a2727" stroke="#8a4040" stroke-width="0.7"/>
+<rect x="15" y="125" width="870" height="290" fill="#05080b" stroke="#223140" stroke-width="1"/>
+<g id="ladder"></g>
+<rect x="15" y="418" width="870" height="15" rx="2" fill="#0a1119" stroke="#1c2833" stroke-width="0.8"/>
+<circle cx="27" cy="425.5" r="3" fill="url(#pl-ledg)"/>
+<text x="35" y="429" style="font-size:9px" fill="#33d17a">ONLINE</text>
+<text x="96" y="429" style="font-size:9px" fill="#7d8fa1">MODE: RUN</text>
+<text x="186" y="429" style="font-size:9px" fill="#7d8fa1">SCAN 2.4 ms</text>
+<text x="286" y="429" style="font-size:9px" fill="#7d8fa1">MainRoutine · RUNGS 1–5</text>
+<text x="878" y="429" text-anchor="end" style="font-size:9px" fill="#7d8fa1">NO EDITS PENDING</text>
+<circle cx="26" cy="440" r="3" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.6"/><line x1="24.35" y1="440" x2="27.65" y2="440" stroke="#1b232c" stroke-width="0.8"/>
+<circle cx="874" cy="440" r="3" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.6"/><line x1="872.35" y1="440" x2="875.65" y2="440" stroke="#1b232c" stroke-width="0.8"/>
+<g filter="url(#pl-ds)">
+<rect x="8" y="452" width="884" height="100" rx="6" fill="url(#pl-deck)" stroke="#0c1116" stroke-width="1"/>
+<line x1="12" y1="453.6" x2="888" y2="453.6" stroke="rgba(255,255,255,0.12)" stroke-width="1"/>
+</g>
+<circle cx="20" cy="464" r="3" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.6"/><line x1="18.35" y1="464" x2="21.65" y2="464" stroke="#1b232c" stroke-width="0.8"/>
+<circle cx="880" cy="464" r="3" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.6"/><line x1="878.35" y1="464" x2="881.65" y2="464" stroke="#1b232c" stroke-width="0.8"/>
+<circle cx="20" cy="540" r="3" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.6"/><line x1="18.35" y1="540" x2="21.65" y2="540" stroke="#1b232c" stroke-width="0.8"/>
+<circle cx="880" cy="540" r="3" fill="url(#pl-bolt)" stroke="#10151b" stroke-width="0.6"/><line x1="878.35" y1="540" x2="881.65" y2="540" stroke="#1b232c" stroke-width="0.8"/>
+<rect x="34" y="461" width="832" height="82" rx="4" fill="#10161d" stroke="#2a3744" stroke-width="0.8"/>
+<rect x="46" y="456" width="116" height="11" rx="1.5" fill="#0d1319" stroke="#2a3744" stroke-width="0.6"/><text x="104" y="464.2" text-anchor="middle" style="font-size:7.5px" fill="#c9d6e2">LADDER LEGEND</text>
+<line x1="52" y1="489" x2="66" y2="489" stroke="#9fb4c8" stroke-width="2"/>
+<line x1="66" y1="481" x2="66" y2="497" stroke="#9fb4c8" stroke-width="2"/>
+<line x1="78" y1="481" x2="78" y2="497" stroke="#9fb4c8" stroke-width="2"/>
+<line x1="78" y1="489" x2="92" y2="489" stroke="#9fb4c8" stroke-width="2"/>
+<text x="102" y="492" style="font-size:9px" fill="#7d8fa1">CONTACT — EXAMINE ON</text>
+<line x1="266" y1="489" x2="280" y2="489" stroke="#9fb4c8" stroke-width="2"/>
+<line x1="280" y1="481" x2="280" y2="497" stroke="#9fb4c8" stroke-width="2"/>
+<line x1="292" y1="481" x2="292" y2="497" stroke="#9fb4c8" stroke-width="2"/>
+<line x1="278" y1="498" x2="294" y2="480" stroke="#9fb4c8" stroke-width="2"/>
+<line x1="292" y1="489" x2="306" y2="489" stroke="#9fb4c8" stroke-width="2"/>
+<text x="316" y="492" style="font-size:9px" fill="#7d8fa1">CONTACT — EXAMINE OFF</text>
+<line x1="488" y1="489" x2="502" y2="489" stroke="#9fb4c8" stroke-width="2"/>
+<circle cx="511" cy="489" r="9" fill="none" stroke="#9fb4c8" stroke-width="2"/>
+<line x1="520" y1="489" x2="534" y2="489" stroke="#9fb4c8" stroke-width="2"/>
+<text x="544" y="492" style="font-size:9px" fill="#7d8fa1">OUTPUT COIL (Q)</text>
+<rect x="694" y="479" width="34" height="20" rx="2" fill="none" stroke="#9fb4c8" stroke-width="2"/>
+<text x="700" y="492.5" style="font-size:8px;font-weight:700" fill="#9fb4c8">TON</text>
+<text x="738" y="492" style="font-size:9px" fill="#7d8fa1">TIMER (T101 / T301)</text>
+<line x1="52" y1="523" x2="92" y2="523" stroke="#33d17a" stroke-width="2.5"/>
+<circle cx="72" cy="523" r="3.4" fill="#33d17a"/>
+<text x="102" y="526" style="font-size:9px" fill="#7d8fa1">POWER FLOW — LOGIC TRUE</text>
+<line x1="266" y1="523" x2="306" y2="523" stroke="#2a3744" stroke-width="2.5"/>
+<text x="316" y="526" style="font-size:9px" fill="#7d8fa1">NO FLOW — LOGIC FALSE</text>
+<text x="488" y="526" style="font-size:9px" fill="#7d8fa1">I x.x = INPUT · Q x.x = OUTPUT</text>
+<text x="716" y="526" style="font-size:9px" fill="#4a5866">DWG PLC-LAD-003 REV C</text>
+</svg>
 
     <!-- HMI -->
     <svg class="layer" data-layer="hmi" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
-      <rect x="120" y="30" width="660" height="500" rx="10" fill="#0a1017" stroke="#2a3744" stroke-width="2"/>
-      <rect x="140" y="50" width="620" height="60" rx="4" id="hmi-banner" fill="#12351f" stroke="#2c7a48"/>
-      <text x="160" y="88" id="hmi-bannertext" style="font-size:20px;font-weight:700" fill="#33d17a">SYSTEM READY</text>
-      <text class="lbl" x="160" y="150">STATION</text><text style="font-size:22px" x="160" y="182" fill="#c9d6e2">PRESS-LINE 3</text>
-      <!-- pressure gauge (analog) -->
-      <circle cx="300" cy="330" r="94" fill="#05080b" stroke="#3a4a58" stroke-width="3"/>
-      <!-- 240° tick arc: 0 bar at 210°, 250 bar at -30° (sweep clockwise) -->
-      <g id="hmi-ticks"></g>
-      <!-- green setpoint marker at 200 bar -->
-      <path id="hmi-setmark" d="" stroke="#33d17a" stroke-width="3" fill="none"/>
-      <text class="lbl" x="256" y="238">CAP PRESSURE · PLC</text>
-      <line id="hmi-needle" x1="300" y1="330" x2="300" y2="255" stroke="#ffb020" stroke-width="3.5" stroke-linecap="round"/>
-      <circle cx="300" cy="330" r="7" fill="#3a4a58" stroke="#c9d6e2"/>
-      <text x="238" y="392" id="hmi-press" style="font-size:40px;font-weight:700" fill="#ffb020">0</text>
-      <text class="lbl" x="286" y="418" style="font-size:13px">bar</text>
-      <text class="lbl" x="252" y="452">SETPOINT 200 bar</text>
-      <!-- status lamps -->
-      <g id="hmi-lamps">
-        <circle cx="560" cy="200" r="14" id="lamp-run" fill="#2b3a2b" stroke="#3a4a58"/><text class="lbl" x="585" y="205">RUN</text>
-        <circle cx="560" cy="250" r="14" id="lamp-ok" fill="#2b3a2b" stroke="#3a4a58"/><text class="lbl" x="585" y="255">CYCLE OK</text>
-        <circle cx="560" cy="300" r="14" id="lamp-fault" fill="#2b3a2b" stroke="#3a4a58"/><text class="lbl" x="585" y="305">FAULT</text>
-        <circle cx="560" cy="350" r="14" id="lamp-estop" fill="#3a2b2b" stroke="#7a2c2c"/><text class="lbl" x="585" y="355">E-STOP OK</text>
-      </g>
-      <text class="lbl" x="160" y="500" id="hmi-hint">Press ▶ CYCLE (top bar) to run a press cycle.</text>
-    </svg>
+  <defs>
+    <linearGradient id="hm-iron" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d4754"/><stop offset="1" stop-color="#242c36"/>
+    </linearGradient>
+    <linearGradient id="hm-bezel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2b333d"/><stop offset=".08" stop-color="#20272f"/>
+      <stop offset=".9" stop-color="#161c23"/><stop offset="1" stop-color="#0e1319"/>
+    </linearGradient>
+    <linearGradient id="hm-screen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a1119"/><stop offset="1" stop-color="#060b11"/>
+    </linearGradient>
+    <linearGradient id="hm-key" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#39424d"/><stop offset=".12" stop-color="#2b333d"/>
+      <stop offset=".85" stop-color="#1b222a"/><stop offset="1" stop-color="#12181f"/>
+    </linearGradient>
+    <linearGradient id="hm-tube" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2c3844"/><stop offset=".25" stop-color="#8a97a5"/>
+      <stop offset=".5" stop-color="#4a5866"/><stop offset="1" stop-color="#232b34"/>
+    </linearGradient>
+    <linearGradient id="hm-gring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8a97a5"/><stop offset=".45" stop-color="#4a5866"/>
+      <stop offset="1" stop-color="#2c3844"/>
+    </linearGradient>
+    <radialGradient id="hm-screw" cx=".35" cy=".3" r="1">
+      <stop offset="0" stop-color="#9aa7b4"/><stop offset=".55" stop-color="#55626f"/>
+      <stop offset="1" stop-color="#232b34"/>
+    </radialGradient>
+    <radialGradient id="hm-hub" cx=".35" cy=".3" r="1">
+      <stop offset="0" stop-color="#7d8fa1"/><stop offset=".6" stop-color="#3a4a58"/>
+      <stop offset="1" stop-color="#1c242d"/>
+    </radialGradient>
+    <radialGradient id="hm-yellow" cx=".38" cy=".3" r="1">
+      <stop offset="0" stop-color="#f0c85a"/><stop offset=".55" stop-color="#e8b93c"/>
+      <stop offset="1" stop-color="#a97c26"/>
+    </radialGradient>
+    <radialGradient id="hm-red" cx=".38" cy=".3" r="1">
+      <stop offset="0" stop-color="#e8635a"/><stop offset=".45" stop-color="#c02f2a"/>
+      <stop offset="1" stop-color="#6e1512"/>
+    </radialGradient>
+    <radialGradient id="hm-redtop" cx=".4" cy=".32" r="1">
+      <stop offset="0" stop-color="#d94a42"/><stop offset=".6" stop-color="#a32320"/>
+      <stop offset="1" stop-color="#5c100e"/>
+    </radialGradient>
+    <radialGradient id="hm-lampwell" cx=".5" cy=".42" r=".85">
+      <stop offset="0" stop-color="#10161d"/><stop offset="1" stop-color="#04070a"/>
+    </radialGradient>
+    <linearGradient id="hm-selring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#95a2b0"/><stop offset=".5" stop-color="#4a5866"/>
+      <stop offset="1" stop-color="#262e38"/>
+    </linearGradient>
+    <filter id="hm-ds" x="-30%" y="-20%" width="170%" height="150%">
+      <feDropShadow dx="5" dy="7" stdDeviation="7" flood-color="#000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <g font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace">
+
+    <!-- ================= pedestal / mounting hardware (behind) ================= -->
+    <g>
+      <rect x="782" y="410" width="32" height="150" fill="url(#hm-tube)" stroke="#10151b"/>
+      <rect x="776" y="430" width="44" height="10" rx="3" fill="url(#hm-iron)" stroke="#10151b"/>
+      <rect x="776" y="500" width="44" height="10" rx="3" fill="url(#hm-iron)" stroke="#10151b"/>
+      <rect x="372" y="524" width="56" height="36" fill="url(#hm-tube)" stroke="#10151b"/>
+      <rect x="364" y="530" width="72" height="12" rx="4" fill="url(#hm-iron)" stroke="#10151b"/>
+      <circle cx="374" cy="536" r="3" fill="url(#hm-screw)"/><circle cx="426" cy="536" r="3" fill="url(#hm-screw)"/>
+    </g>
+
+    <!-- ================= enclosure + bezel ================= -->
+    <rect x="62" y="24" width="678" height="514" rx="14" fill="url(#hm-iron)" stroke="#10151b" stroke-width="2" filter="url(#hm-ds)"/>
+    <rect x="74" y="34" width="654" height="494" rx="10" fill="url(#hm-bezel)" stroke="#0b0f14" stroke-width="1.5"/>
+    <path d="M84 36 h634" stroke="rgba(255,255,255,.14)" stroke-width="1" fill="none"/>
+    <path d="M76 46 v470" stroke="rgba(255,255,255,.05)" stroke-width="1" fill="none"/>
+
+    <!-- corner torx screws -->
+    <g stroke="#0b0f14" stroke-width=".8">
+      <circle cx="92" cy="50" r="6.5" fill="url(#hm-screw)"/>
+      <circle cx="710" cy="50" r="6.5" fill="url(#hm-screw)"/>
+      <circle cx="92" cy="512" r="6.5" fill="url(#hm-screw)"/>
+      <circle cx="710" cy="512" r="6.5" fill="url(#hm-screw)"/>
+    </g>
+    <g fill="#141a21">
+      <path d="M92 46.4l1.6 2.7 3.1.1-1.5 2.8 1.5 2.8-3.1.1-1.6 2.7-1.6-2.7-3.1-.1 1.5-2.8-1.5-2.8 3.1-.1z"/>
+      <path d="M710 46.4l1.6 2.7 3.1.1-1.5 2.8 1.5 2.8-3.1.1-1.6 2.7-1.6-2.7-3.1-.1 1.5-2.8-1.5-2.8 3.1-.1z"/>
+      <path d="M92 508.4l1.6 2.7 3.1.1-1.5 2.8 1.5 2.8-3.1.1-1.6 2.7-1.6-2.7-3.1-.1 1.5-2.8-1.5-2.8 3.1-.1z"/>
+      <path d="M710 508.4l1.6 2.7 3.1.1-1.5 2.8 1.5 2.8-3.1.1-1.6 2.7-1.6-2.7-3.1-.1 1.5-2.8-1.5-2.8 3.1-.1z"/>
+    </g>
+
+    <!-- brand plate -->
+    <rect x="266" y="40" width="268" height="20" rx="3" fill="#0b1016" stroke="#2a3540" stroke-width="1"/>
+    <rect x="274" y="45" width="10" height="10" fill="#e8b93c" stroke="#8a6d35" stroke-width=".8"/>
+    <text x="406" y="54" text-anchor="middle" font-size="12" letter-spacing="4" fill="#9fb0c0" font-weight="700">PRESSVIEW 1000</text>
+    <text x="694" y="525" text-anchor="end" font-size="7" fill="#5b6a79">TYPE HM-2711 · 24VDC 1.2A · IP65 FRONT</text>
+    <text x="108" y="525" font-size="7" fill="#5b6a79">SER 0742-A3</text>
+
+    <!-- ================= screen recess + glass ================= -->
+    <rect x="106" y="64" width="588" height="402" rx="7" fill="#04060a" stroke="#000" stroke-width="2"/>
+    <rect x="112" y="70" width="576" height="390" rx="4" fill="url(#hm-screen)" stroke="#1c2732" stroke-width="1"/>
+
+    <!-- ============ HMI APPLICATION (on screen) ============ -->
+    <!-- alarm banner -->
+    <rect x="124" y="82" width="552" height="42" rx="4" id="hmi-banner" fill="#12351f" stroke="#2c7a48"/>
+    <text x="140" y="110" id="hmi-bannertext" font-size="18" font-weight="700" fill="#33d17a">SYSTEM READY</text>
+
+    <!-- station header -->
+    <text x="126" y="150" font-size="9" fill="#7d8fa1" letter-spacing="2">STATION</text>
+    <text x="126" y="172" font-size="17" fill="#c9d6e2" font-weight="700">PRESS-LINE 3</text>
+    <line x1="126" y1="182" x2="500" y2="182" stroke="#1c2732" stroke-width="1"/>
+    <text x="676" y="146" text-anchor="end" font-size="9" fill="#5b6a79">SCREEN 1/4 · OVERVIEW</text>
+
+    <!-- ===== analog gauge, face center exactly (300,330) ===== -->
+    <circle cx="300" cy="330" r="105" fill="url(#hm-gring)" stroke="#10151b" stroke-width="1.5"/>
+    <circle cx="300" cy="330" r="98" fill="#1a212a" stroke="#0b0f14" stroke-width="1"/>
+    <circle cx="300" cy="330" r="95" fill="#04070a" stroke="#2a3744" stroke-width="1"/>
+    <path d="M231.4 258.3 A98 98 0 0 1 300 232" stroke="rgba(255,255,255,.12)" stroke-width="1.5" fill="none"/>
+    <!-- red zone 210-250 bar -->
+    <path d="M390.0 316.7 A91 91 0 0 1 378.8 375.5" stroke="#c93636" stroke-width="5" fill="none"/>
+    <!-- JS-built ticks + green setpoint mark -->
+    <g id="hmi-ticks"></g>
+    <path id="hmi-setmark" d="" stroke="#33d17a" stroke-width="3" fill="none"/>
+    <!-- dial legend in the needle's dead wedge, below the hub -->
+    <text x="300" y="353" text-anchor="middle" font-size="8" fill="#7d8fa1" letter-spacing="1">CAP PRESSURE</text>
+    <text x="300" y="364" text-anchor="middle" font-size="7" fill="#5b6a79">PLC</text>
+    <!-- digital insert window -->
+    <rect x="252" y="378" width="96" height="34" rx="4" fill="#020409" stroke="#1e2a36"/>
+    <text x="292" y="404" id="hmi-press" text-anchor="middle" font-size="25" font-weight="700" fill="#ffb020">0</text>
+    <text x="336" y="403" text-anchor="end" font-size="9" fill="#7d8fa1">bar</text>
+    <!-- needle (JS rotates about 300,330 + recolors stroke); static default rests at 0 bar -->
+    <line id="hmi-needle" x1="300" y1="330" x2="300" y2="260" stroke="#ffb020" stroke-width="3.5" stroke-linecap="round" transform="rotate(-120)" style="transform-origin:300px 330px"/>
+    <circle cx="300" cy="330" r="9" fill="url(#hm-hub)" stroke="#0b0f14" stroke-width="1"/>
+    <circle cx="297" cy="327" r="2.4" fill="rgba(255,255,255,.28)"/>
+    <text x="300" y="446" text-anchor="middle" font-size="10" fill="#7d8fa1">SETPOINT 200 bar</text>
+    <rect x="238" y="438" width="7" height="7" fill="none" stroke="#33d17a" stroke-width="1.5"/>
+
+    <!-- ===== status lamp column ===== -->
+    <rect x="516" y="156" width="164" height="260" rx="6" fill="rgba(255,255,255,.03)" stroke="#1c2732"/>
+    <text x="528" y="174" font-size="9" fill="#7d8fa1" letter-spacing="2">STATUS</text>
+    <g>
+      <circle cx="550" cy="198" r="17" fill="url(#hm-gring)" stroke="#0d1218"/>
+      <circle cx="550" cy="198" r="13.5" fill="url(#hm-lampwell)"/>
+      <circle cx="550" cy="198" r="11" id="lamp-run" fill="#2b3a2b" stroke="#3a4a58"/>
+      <rect x="574" y="189" width="92" height="17" rx="2" fill="#0b1016" stroke="#232f3a"/>
+      <text x="580" y="201" font-size="10" fill="#9fb0c0">RUN</text>
+
+      <circle cx="550" cy="252" r="17" fill="url(#hm-gring)" stroke="#0d1218"/>
+      <circle cx="550" cy="252" r="13.5" fill="url(#hm-lampwell)"/>
+      <circle cx="550" cy="252" r="11" id="lamp-ok" fill="#2b3a2b" stroke="#3a4a58"/>
+      <rect x="574" y="243" width="92" height="17" rx="2" fill="#0b1016" stroke="#232f3a"/>
+      <text x="580" y="255" font-size="10" fill="#9fb0c0">CYCLE OK</text>
+
+      <circle cx="550" cy="306" r="17" fill="url(#hm-gring)" stroke="#0d1218"/>
+      <circle cx="550" cy="306" r="13.5" fill="url(#hm-lampwell)"/>
+      <circle cx="550" cy="306" r="11" id="lamp-fault" fill="#2b3a2b" stroke="#3a4a58"/>
+      <rect x="574" y="297" width="92" height="17" rx="2" fill="#0b1016" stroke="#232f3a"/>
+      <text x="580" y="309" font-size="10" fill="#9fb0c0">FAULT</text>
+
+      <circle cx="550" cy="360" r="17" fill="url(#hm-gring)" stroke="#0d1218"/>
+      <circle cx="550" cy="360" r="13.5" fill="url(#hm-lampwell)"/>
+      <circle cx="550" cy="360" r="11" id="lamp-estop" fill="#3a2b2b" stroke="#7a2c2c"/>
+      <rect x="574" y="351" width="92" height="17" rx="2" fill="#0b1016" stroke="#232f3a"/>
+      <text x="580" y="363" font-size="10" fill="#9fb0c0">E-STOP OK</text>
+    </g>
+    <text x="528" y="400" font-size="8" fill="#5b6a79">PLC LINK ● OK   SCAN 4 ms</text>
+
+    <!-- help line -->
+    <text x="400" y="448" id="hmi-hint" font-size="10" fill="#7d8fa1">Press ▶ CYCLE (top bar) to run a press cycle.</text>
+
+    <!-- glass glare (very low opacity, on top of screen) -->
+    <polygon points="112,70 440,70 260,262 112,352" fill="rgba(255,255,255,.035)"/>
+    <polygon points="480,70 520,70 300,460 260,460" fill="rgba(255,255,255,.02)"/>
+
+    <!-- ================= membrane keys F1-F4 ================= -->
+    <g>
+      <rect x="214" y="474" width="372" height="44" rx="9" fill="rgba(0,0,0,.28)" stroke="#0a0e13"/>
+      <rect x="224" y="480" width="76" height="36" rx="7" fill="url(#hm-key)" stroke="#0a0e13" stroke-width="1.2"/>
+      <path d="M230 482 h64" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
+      <text x="262" y="503" text-anchor="middle" font-size="12" fill="#c9d6e2" font-weight="700">F1</text>
+      <rect x="316" y="480" width="76" height="36" rx="7" fill="url(#hm-key)" stroke="#0a0e13" stroke-width="1.2"/>
+      <path d="M322 482 h64" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
+      <text x="354" y="503" text-anchor="middle" font-size="12" fill="#c9d6e2" font-weight="700">F2</text>
+      <rect x="408" y="480" width="76" height="36" rx="7" fill="url(#hm-key)" stroke="#0a0e13" stroke-width="1.2"/>
+      <path d="M414 482 h64" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
+      <text x="446" y="503" text-anchor="middle" font-size="12" fill="#c9d6e2" font-weight="700">F3</text>
+      <rect x="500" y="480" width="76" height="36" rx="7" fill="url(#hm-key)" stroke="#0a0e13" stroke-width="1.2"/>
+      <path d="M506 482 h64" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
+      <text x="538" y="503" text-anchor="middle" font-size="12" fill="#c9d6e2" font-weight="700">F4</text>
+    </g>
+
+    <!-- ================= E-STOP / selector station ================= -->
+    <rect x="746" y="148" width="104" height="272" rx="10" fill="url(#hm-iron)" stroke="#10151b" stroke-width="2" filter="url(#hm-ds)"/>
+    <path d="M754 152 h88" stroke="rgba(255,255,255,.12)" stroke-width="1" fill="none"/>
+    <circle cx="760" cy="162" r="4" fill="url(#hm-screw)" stroke="#0b0f14" stroke-width=".7"/>
+    <circle cx="836" cy="162" r="4" fill="url(#hm-screw)" stroke="#0b0f14" stroke-width=".7"/>
+    <circle cx="760" cy="406" r="4" fill="url(#hm-screw)" stroke="#0b0f14" stroke-width=".7"/>
+    <circle cx="836" cy="406" r="4" fill="url(#hm-screw)" stroke="#0b0f14" stroke-width=".7"/>
+
+    <!-- E-STOP mushroom on yellow disc -->
+    <circle cx="798" cy="222" r="42" fill="url(#hm-yellow)" stroke="#8a6d35" stroke-width="1.5"/>
+    <circle cx="798" cy="222" r="42" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="1" stroke-dasharray="2 130" stroke-dashoffset="-30"/>
+    <circle cx="798" cy="222" r="29" fill="#1a1e24" stroke="#0c0f14"/>
+    <circle cx="798" cy="222" r="26" fill="url(#hm-red)" stroke="#5c1010" stroke-width="1.5"/>
+    <circle cx="798" cy="222" r="18" fill="url(#hm-redtop)" stroke="#7c1b17" stroke-width="1"/>
+    <ellipse cx="791" cy="213" rx="9" ry="6" fill="rgba(255,255,255,.22)"/>
+    <rect x="759" y="272" width="78" height="15" rx="2" fill="#0b1016" stroke="#232f3a"/>
+    <text x="798" y="283" text-anchor="middle" font-size="8" fill="#e0e6ec" letter-spacing="1">EMERG STOP</text>
+
+    <!-- 22mm selector switch -->
+    <circle cx="798" cy="336" r="21" fill="url(#hm-selring)" stroke="#0d1218" stroke-width="1.2"/>
+    <circle cx="798" cy="336" r="15.5" fill="#111820" stroke="#05080b"/>
+    <g transform="rotate(28 798 336)">
+      <rect x="793.5" y="319" width="9" height="34" rx="4" fill="#1a1e24" stroke="#0c0f14"/>
+      <rect x="795.5" y="321" width="2.2" height="13" rx="1" fill="rgba(255,255,255,.18)"/>
+    </g>
+    <text x="772" y="322" text-anchor="end" font-size="7" fill="#9fb0c0">MAN</text>
+    <text x="824" y="322" font-size="7" fill="#9fb0c0">AUTO</text>
+    <rect x="766" y="366" width="64" height="14" rx="2" fill="#0b1016" stroke="#232f3a"/>
+    <text x="798" y="376" text-anchor="middle" font-size="8" fill="#e0e6ec" letter-spacing="2">MODE</text>
+  </g>
+</svg>
   </div>
 
   <!-- ============ INSTRUMENT PANEL ============ -->
@@ -897,6 +2399,10 @@ function renderHyd(){
   $('hi-solA').setAttribute('fill', S.solAen?'var(--green)':'#2b3a2b');
   $('hi-solB').setAttribute('fill', S.solBen?'var(--green)':'#2b3a2b');
   $('hv-dcv').textContent = S.solAen?'P→A  B→T':S.solBen?'P→B  A→T':'CENTER';
+  // analog gauge needles (present in illustrated art; pivot read from data-cx/cy)
+  const n1=$('pg101-needle'), n2=$('pg102-needle');
+  if(n1) n1.setAttribute('transform',`rotate(${gaugeAngle(S.Ppump).toFixed(1)} ${n1.dataset.cx} ${n1.dataset.cy})`);
+  if(n2) n2.setAttribute('transform',`rotate(${gaugeAngle(S.Ppost).toFixed(1)} ${n2.dataset.cx} ${n2.dataset.cy})`);
   // piston position in cylinder (200..470 -> pos 0..250)
   const y=200+(S.pos/STROKE)*270;
   $('hyd-piston').setAttribute('y',y);
@@ -928,10 +2434,9 @@ function renderElec(){
 }
 function renderMech(){
   const py=150+(S.pos/STROKE)*280;              // platen top, home=150 .. bottom=430
-  $('mech-platen').setAttribute('y',py);
-  $('mech-rod').setAttribute('y',140);
-  $('mech-rod').setAttribute('height',Math.max(4,py-140));
-  $('mv-ram').setAttribute('y',py+22);
+  // platen is a <g> drawn at home position; the whole die assembly rides one translate
+  $('mech-platen').setAttribute('transform',`translate(0 ${(py-150).toFixed(1)})`);
+  $('mech-rod').setAttribute('height',Math.max(10,py-140));
   lamp('mi-lstop',S.Itop,'#33d17a');
   lamp('mi-lsbot',S.Ibottom,'#33d17a');
   $('mv-pos').textContent=S.pos.toFixed(0)+' mm';
@@ -987,8 +2492,9 @@ function drawLadder(){
       svg+=`<line x1="${x}" y1="${r.y}" x2="${x+20}" y2="${r.y}" stroke="${on?'#33d17a':'#2a3744'}" stroke-width="2"/>`;
       svg+=`<line x1="${x+20}" y1="${r.y-10}" x2="${x+20}" y2="${r.y+10}" stroke="${on?'#33d17a':'#556'}" stroke-width="2"/>`;
       svg+=`<line x1="${x+34}" y1="${r.y-10}" x2="${x+34}" y2="${r.y+10}" stroke="${on?'#33d17a':'#556'}" stroke-width="2"/>`;
-      svg+=`<text class="lbl" x="${x}" y="${r.y-16}" style="font-size:9px">${c[0]}</text>`;
-      x+=54;
+      svg+=`<line x1="${x+34}" y1="${r.y}" x2="${x+110}" y2="${r.y}" stroke="${on?'#33d17a':'#2a3744'}" stroke-width="2"/>`;
+      svg+=`<text class="lbl" x="${x+27}" y="${r.y-16}" text-anchor="middle" style="font-size:9px">${c[0]}</text>`;
+      x+=110;
     });
     svg+=`<line x1="${x}" y1="${r.y}" x2="620" y2="${r.y}" stroke="${r.on?'#33d17a':'#2a3744'}" stroke-width="2"/>`;
     svg+=`<circle cx="640" cy="${r.y}" r="10" fill="none" stroke="${r.on?'#33d17a':'#556'}" stroke-width="2"/>`;

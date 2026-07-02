@@ -145,8 +145,39 @@ table.io .a{color:var(--dim);width:42%}
 .pill.run{background:#12351f;color:var(--green)}
 .pill.fault{background:#3a1717;color:var(--red);animation:pulse 1s infinite}
 .pill.done{background:#16283a;color:var(--blue)}
-.wire{stroke:var(--edge);stroke-width:3;fill:none}
-.pipe{stroke:#3a4a58;stroke-width:6;fill:none;stroke-linecap:round}
+.wire{stroke:var(--edge);stroke-width:3;fill:none;transition:stroke .18s ease}
+.pipe{stroke:#3a4a58;stroke-width:6;fill:none;stroke-linecap:round;transition:stroke .2s ease,stroke-width .2s ease}
+/* animated flow: a pressurized+flowing pipe becomes a moving dashed line (no extra markup) */
+.pipe.flowing{stroke-dasharray:15 11;animation:flowdash .55s linear infinite}
+@keyframes flowdash{to{stroke-dashoffset:-26}}
+svg text{transition:fill .18s ease}
+/* focus + interaction polish */
+.btn:focus-visible,.itool:focus-visible,.tab:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+.btn:active{transform:translateY(1px)}
+.itool{transition:.12s} .tab{transition:.12s}
+/* HMI analog gauge needle */
+#hmi-needle{transition:transform .12s ease-out;transform-origin:300px 330px}
+/* toast */
+.toast{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:var(--panel2);
+  border:1px solid var(--blue);border-radius:8px;padding:10px 16px;font-size:12px;color:var(--ink);
+  z-index:30;box-shadow:0 8px 30px #000b;max-width:520px;line-height:1.5}
+.toast b{color:var(--blue)} .toast .k{background:#05080b;border:1px solid var(--edge);border-radius:3px;padding:1px 5px;font-size:11px}
+.toast button{background:none;border:none;color:var(--dim);float:right;font-size:14px;cursor:pointer;margin-left:10px}
+/* responsive: degrade the fixed control-station grid gracefully */
+@media (max-width:1180px){
+  .app{grid-template-columns:130px 1fr 210px}
+  .readout .big{font-size:22px}
+}
+@media (max-width:960px){
+  .app{grid-template-columns:112px 1fr;grid-template-areas:"top top" "tabs main" "instr instr" "drawer drawer"}
+  .instr{max-height:230px} .itools{grid-template-columns:repeat(4,1fr)}
+}
+@media (max-width:640px){
+  html,body{overflow:auto}
+  .app{height:auto;min-height:100vh;grid-template-columns:1fr;grid-template-areas:"top" "tabs" "main" "instr" "drawer"}
+  .tabs{flex-direction:row;flex-wrap:wrap} .tab{flex:1;min-width:90px}
+  .main{min-height:340px}
+}
 </style>
 </head>
 <body>
@@ -219,20 +250,23 @@ table.io .a{color:var(--dim);width:42%}
       <!-- filter -->
       <rect x="370" y="335" width="40" height="50" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="FILTER"/>
       <path d="M375 345 L405 375 M405 345 L375 375" stroke="#3a4a58" stroke-width="1.5"/>
-      <text class="lbl" x="360" y="330">FILTER FLT-201</text>
-      <circle cx="390" cy="322" r="6" fill="#2b3a2b" stroke="#3a4a58" id="hi-filterclog"/>
-      <text class="lbl" x="360" y="404" id="hv-filtdp">ΔP 0.3 bar</text>
+      <text class="lbl" x="352" y="326">FILTER FLT-201</text>
+      <circle cx="446" cy="323" r="6" fill="#2b3a2b" stroke="#3a4a58" id="hi-filterclog"/>
+      <text class="lbl" x="358" y="404" id="hv-filtdp">ΔP 0.3 bar</text>
       <!-- post filter node -->
       <path class="pipe" id="pipe-post" d="M410 360 L470 360"/>
-      <!-- relief + accumulator tee -->
-      <path class="pipe" d="M470 360 L470 300"/>
-      <rect x="450" y="255" width="40" height="46" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="RELIEF"/>
-      <text class="lbl" x="495" y="278">RELIEF RV-501</text>
-      <text class="lbl" x="495" y="292" id="hv-relief">set 210 bar</text>
-      <path class="pipe" d="M470 255 L470 220 L150 220 L150 345" stroke-dasharray="2 4"/>
-      <path class="pipe" d="M540 360 L540 305"/>
-      <path d="M525 260 a15 15 0 0 1 30 0 l0 45 l-30 0 z" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="ACCUM"/>
-      <text class="lbl" x="560" y="285">ACCUM</text>
+      <!-- relief tee down from the post-filter node -->
+      <path class="pipe" d="M470 360 L470 302"/>
+      <rect x="452" y="256" width="36" height="46" rx="3" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="RELIEF"/>
+      <text class="lbl" x="398" y="266">RELIEF</text>
+      <text class="lbl" x="398" y="279">RV-501</text>
+      <text class="lbl" x="398" y="292" id="hv-relief">210 bar</text>
+      <!-- relief return to reservoir (dashed) -->
+      <path class="pipe" d="M470 256 L470 205 L150 205 L150 345" stroke-dasharray="2 4"/>
+      <!-- accumulator tees on the run to the DCV -->
+      <path class="pipe" d="M585 360 L585 300"/>
+      <path d="M570 256 a15 15 0 0 1 30 0 l0 44 l-30 0 z" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="ACCUM"/>
+      <text class="lbl" x="568" y="248">ACCUM</text>
       <!-- to DCV -->
       <path class="pipe" id="pipe-toDCV" d="M470 360 L620 360"/>
       <!-- DCV 4/3 -->
@@ -385,12 +419,18 @@ table.io .a{color:var(--dim);width:42%}
       <rect x="140" y="50" width="620" height="60" rx="4" id="hmi-banner" fill="#12351f" stroke="#2c7a48"/>
       <text x="160" y="88" id="hmi-bannertext" style="font-size:20px;font-weight:700" fill="#33d17a">SYSTEM READY</text>
       <text class="lbl" x="160" y="150">STATION</text><text style="font-size:22px" x="160" y="182" fill="#c9d6e2">PRESS-LINE 3</text>
-      <!-- pressure gauge -->
-      <circle cx="300" cy="330" r="90" fill="#05080b" stroke="#3a4a58" stroke-width="3"/>
-      <text class="lbl" x="255" y="250">CAP PRESSURE (PLC)</text>
-      <text x="240" y="345" id="hmi-press" style="font-size:44px;font-weight:700" fill="#ffb020">0</text>
-      <text class="lbl" x="285" y="375" style="font-size:14px">bar</text>
-      <text class="lbl" x="240" y="440">SETPOINT 200 bar</text>
+      <!-- pressure gauge (analog) -->
+      <circle cx="300" cy="330" r="94" fill="#05080b" stroke="#3a4a58" stroke-width="3"/>
+      <!-- 240° tick arc: 0 bar at 210°, 250 bar at -30° (sweep clockwise) -->
+      <g id="hmi-ticks"></g>
+      <!-- green setpoint marker at 200 bar -->
+      <path id="hmi-setmark" d="" stroke="#33d17a" stroke-width="3" fill="none"/>
+      <text class="lbl" x="256" y="238">CAP PRESSURE · PLC</text>
+      <line id="hmi-needle" x1="300" y1="330" x2="300" y2="255" stroke="#ffb020" stroke-width="3.5" stroke-linecap="round"/>
+      <circle cx="300" cy="330" r="7" fill="#3a4a58" stroke="#c9d6e2"/>
+      <text x="238" y="392" id="hmi-press" style="font-size:40px;font-weight:700" fill="#ffb020">0</text>
+      <text class="lbl" x="286" y="418" style="font-size:13px">bar</text>
+      <text class="lbl" x="252" y="452">SETPOINT 200 bar</text>
       <!-- status lamps -->
       <g id="hmi-lamps">
         <circle cx="560" cy="200" r="14" id="lamp-run" fill="#2b3a2b" stroke="#3a4a58"/><text class="lbl" x="585" y="205">RUN</text>
@@ -783,7 +823,9 @@ function loop(now){
 /* =========================================================================
    RENDERING  (binds live engine state -> DOM/SVG per active layer)
    ========================================================================= */
-const $=id=>document.getElementById(id);
+// memoized element lookup — avoids repeated getElementById in the 60fps render path
+const _elc=Object.create(null);
+const $=id=>{ let e=_elc[id]; if(e===undefined){ e=_elc[id]=document.getElementById(id); } return e; };
 let activeLayer='hyd', instrument='none';
 
 function pcol(bar){ // pressure -> colour
@@ -791,8 +833,12 @@ function pcol(bar){ // pressure -> colour
   const t=Math.min(1,bar/210);
   if(t<0.5) return '#7a6a2c'; if(t<0.85) return 'var(--amber)'; return 'var(--red)';
 }
+// dirty-checked pipe update: only touch the DOM when colour/flow actually change
 function setPipe(id,bar,flow){ const el=$(id); if(!el)return;
-  el.style.stroke=pcol(bar); el.style.strokeWidth = flow>1? '7':'6';
+  const c=pcol(bar), w=flow>1?'7':'6', f=flow>1;
+  if(el._c!==c){ el.style.stroke=c; el._c=c; }
+  if(el._w!==w){ el.style.strokeWidth=w; el._w=w; }
+  if(el._f!==f){ el.classList.toggle('flowing',f); el._f=f; }
 }
 function lamp(id,on,color){ const el=$(id); if(!el)return;
   el.setAttribute('fill', on?(color||'#33d17a'):'#2b3a2b');
@@ -900,8 +946,14 @@ function renderPLC(){
   $('pv-t301').textContent=`T301 press  ${S.plc.t301.toFixed(1)}/4.0`;
   drawLadder();
 }
+function gaugeAngle(p){ return -120 + Math.max(0,Math.min(250,p))/250*240; }  // deg, needle rotation
+function gaugePoint(r,p){ const a=gaugeAngle(p)*Math.PI/180; return [300+r*Math.sin(a), 330-r*Math.cos(a)]; }
 function renderHMI(){
   const p=Math.max(0,S.AIpress);
+  const nd=$('hmi-needle'); const ang=gaugeAngle(p).toFixed(1);
+  if(nd._a!==ang){ nd.style.transform=`rotate(${ang}deg)`; nd._a=ang; }
+  const col=S.plc.state==='FAULTED'?'#ff5252':(p>=SP?'#33d17a':'#ffb020');
+  if(nd._col!==col){ nd.setAttribute('stroke',col); nd._col=col; }
   $('hmi-press').textContent=p.toFixed(0);
   $('hmi-press').style.fill = S.plc.state==='FAULTED'?'var(--red)':(p>=SP?'var(--green)':'var(--amber)');
   lamp('lamp-run',S.motor,'#33d17a'); lamp('lamp-ok',S.okLamp,'#4aa3ff');
@@ -913,7 +965,8 @@ function renderHMI(){
   else { b.setAttribute('fill','#16283a'); b.setAttribute('stroke','#2c5a8a'); t.setAttribute('fill','#4aa3ff'); t.textContent='CYCLE RUNNING · '+S.plc.state; }
 }
 
-// ladder diagram (live rung states)
+// ladder diagram (live rung states) — only rebuilds DOM when a rung/contact toggles
+let _ladderSig='';
 function drawLadder(){
   const rungs=[
     {y:150, label:'MOTOR RUN (Q0.0)', on:S.motorCmd&&S.estopOK, conds:[['E-STOP OK',S.IestopOK],['O/L OK',S.IolOK],['RUN CMD',S.motorCmd]]},
@@ -922,6 +975,9 @@ function drawLadder(){
     {y:330, label:'RETRACT SOL (Q0.2)', on:S.solB, conds:[['STATE=RETRACT',S.solB?1:0]]},
     {y:390, label:'T101 EXTEND TIMER', on:S.plc.t101>=6.0, conds:[['I0.4 BOTTOM',S.Ibottom],['T101.DN',S.plc.t101>=6.0?1:0]]},
   ];
+  const sig=rungs.map(r=>(r.on?1:0)+r.conds.map(c=>c[1]?1:0).join('')).join('|');
+  if(sig===_ladderSig) return;   // nothing toggled -> skip the innerHTML rebuild
+  _ladderSig=sig;
   let svg='';
   rungs.forEach(r=>{
     let x=40; svg+=`<line x1="20" y1="${r.y}" x2="20" y2="${r.y}" />`;
@@ -1026,25 +1082,41 @@ function renderIO(){
     ['Q0.0 MOTOR RUN',S.motorCmd?1:0],['Q0.1 SOL-A EXTEND',S.solA?1:0],
     ['Q0.2 SOL-B RETRACT',S.solB?1:0],['Q0.7 ALARM',S.alarmOut?1:0],
   ];
-  $('iotable').innerHTML=rows.map(r=>{
+  const html=rows.map(r=>{
     let cell;
     if(typeof r[1]==='number'&&(r[1]===0||r[1]===1)) cell=`<span class="b1 ${r[1]?'hi':'lo'}">${r[1]}</span>`;
     else cell=`<span style="color:var(--cyan)">${r[1]}</span>`;
     return `<tr><td class="a">${r[0]}</td><td>${cell}</td></tr>`;
   }).join('');
+  if(html!==_ioHtml){ $('iotable').innerHTML=html; _ioHtml=html; }   // skip rebuild when unchanged
 }
+let _ioHtml='';
 setInterval(renderIO,150);
 
 /* =========================================================================
    WIRING UP THE UI
    ========================================================================= */
 // layer tabs
-document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
-  activeLayer=t.dataset.layer;
-  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===t));
-  document.querySelectorAll('svg.layer').forEach(s=>s.classList.toggle('on',s.dataset.layer===activeLayer));
-  const titles={hyd:'HYDRAULIC · P&ID',elec:'ELECTRICAL · POWER + CONTROL',mech:'MECHANICAL · RAM & TOOLING',plc:'PLC · I/O + LADDER',hmi:'HMI · OPERATOR PANEL'};
-  $('layer-title').innerHTML=titles[activeLayer];
+const LAYER_TITLES={hyd:'HYDRAULIC · P&ID',elec:'ELECTRICAL · POWER + CONTROL',mech:'MECHANICAL · RAM & TOOLING',plc:'PLC · I/O + LADDER',hmi:'HMI · OPERATOR PANEL'};
+function selectLayer(layer){
+  activeLayer=layer;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.layer===layer));
+  document.querySelectorAll('svg.layer').forEach(s=>s.classList.toggle('on',s.dataset.layer===layer));
+  $('layer-title').innerHTML=LAYER_TITLES[layer];
+}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>selectLayer(t.dataset.layer));
+// keyboard shortcuts (ignored while typing in a field)
+const LAYER_KEYS={'1':'hyd','2':'elec','3':'mech','4':'plc','5':'hmi'};
+document.addEventListener('keydown',e=>{
+  if(/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) return;
+  const k=e.key.toLowerCase();
+  if(LAYER_KEYS[k]){ selectLayer(LAYER_KEYS[k]); }
+  else if(k==='c'){ if(S.plc.state==='IDLE') startCycle(); }
+  else if(k==='r'){ doReset(); }
+  else if(k==='e'){ $('btn-estop').click(); }
+  else if(k==='s'){ $('btn-career').click(); }
+  else return;
+  e.preventDefault();
 });
 // instrument selection
 document.querySelectorAll('.itool').forEach(b=>b.onclick=()=>{
@@ -1272,6 +1344,33 @@ $('btn-career').onclick=()=>{ if(career.active) endShift(); else startShift(); }
 $('wo-abandon').onclick=abandonTicket;
 $('sm-again').onclick=()=>{ $('shiftmodal').style.display='none'; startShift(); };
 $('sm-close').onclick=()=>{ $('shiftmodal').style.display='none'; };
+
+// build the HMI analog gauge (ticks + green setpoint marker) once
+function buildGauge(){
+  const g=$('hmi-ticks'); if(!g) return; let s='';
+  for(let bar=0; bar<=250; bar+=25){
+    const [x1,y1]=gaugePoint(88,bar), [x2,y2]=gaugePoint(bar%50===0?76:81,bar);
+    const major=bar%50===0;
+    s+=`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${major?'#7d8fa1':'#3a4a58'}" stroke-width="${major?2:1}"/>`;
+    if(major){ const [lx,ly]=gaugePoint(64,bar);
+      s+=`<text x="${lx.toFixed(1)}" y="${(ly+3).toFixed(1)}" text-anchor="middle" style="font-size:9px" fill="#7d8fa1">${bar}</text>`; }
+  }
+  g.innerHTML=s;
+  const [sx1,sy1]=gaugePoint(72,SP), [sx2,sy2]=gaugePoint(90,SP);
+  $('hmi-setmark').setAttribute('d',`M${sx1.toFixed(1)} ${sy1.toFixed(1)} L${sx2.toFixed(1)} ${sy2.toFixed(1)}`);
+}
+buildGauge();
+
+// dismissible first-run tip
+(function(){
+  const tip=document.createElement('div'); tip.className='toast';
+  tip.innerHTML='<button aria-label="dismiss">×</button><b>Tip:</b> press <span class="k">▶ START SHIFT</span> for the game, '
+    +'or free-play with <span class="k">⚙ INSTRUCTOR</span>. Shortcuts: <span class="k">1-5</span> layers · '
+    +'<span class="k">C</span> cycle · <span class="k">R</span> reset · <span class="k">S</span> shift.';
+  $('main').appendChild(tip);
+  const close=()=>tip.remove();
+  tip.querySelector('button').onclick=close; setTimeout(close,11000);
+})();
 
 // boot
 log('alarm','ok','Workstation online · PRESS-LINE 3 · ▶ START SHIFT for career mode, or CYCLE to free-play');

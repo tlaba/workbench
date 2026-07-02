@@ -41,6 +41,11 @@ Press **▶ START SHIFT** for the playable loop:
   operator complaint to go on (some complaints are deliberately ambiguous —
   "slow extend" could be the filter *or* a sticky spool; "can't make tonnage"
   could be a worn pump *or* a cylinder seal).
+- **Every shift is different:** ticket order is shuffled and fault severity is
+  randomized, and the last two tickets are ⚠ PRIORITY calls with **two
+  simultaneous faults** — fix one and the machine is *still* broken, exactly
+  like the real nightmare where one fault masks another.
+- **Personal best** (grade + total cost) persists across shifts in your browser.
 - **Diagnose** with the instruments, pick the replacement part, and **CYCLE to
   verify**. A wrong part burns real money and the ticket stays open.
 - **Economy:** $5,000 parts budget, downtime billed at $12/s while the machine

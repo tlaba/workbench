@@ -205,6 +205,7 @@ svg text{transition:fill .18s ease}
         <option value="conveyor">SORT-LINE 2</option>
         <option value="press" selected>PRESS-LINE 3</option>
         <option value="robot">PICK-CELL 4</option>
+        <option value="molder">MOLD-LINE 5</option>
       </select><br><small id="wo-sub">150-ton downstroke hydraulic press · ★★</small></div>
     <div class="metric"><b id="m-state"><span class="pill idle">IDLE</span></b><span>machine</span></div>
     <div class="metric"><b id="m-cycles">0</b><span>good / <span id="m-weak">0</span> weak</span></div>
@@ -3606,6 +3607,800 @@ svg text{transition:fill .18s ease}
   </g>
 </svg>
 
+
+    <!-- ================= MOLDER · MOLD-LINE 5 ================= -->
+    <svg class="layer" data-machine="molder" data-layer="mold" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,Menlo,Consolas,monospace">
+  <defs>
+    <linearGradient id="img-mo-steel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8a97a5"/><stop offset=".5" stop-color="#4a5866"/><stop offset="1" stop-color="#2c3844"/>
+    </linearGradient>
+    <linearGradient id="img-mo-steel2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7c8996"/><stop offset="1" stop-color="#37424e"/>
+    </linearGradient>
+    <linearGradient id="img-mo-iron" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d4754"/><stop offset="1" stop-color="#242c36"/>
+    </linearGradient>
+    <linearGradient id="img-mo-blue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1f5f8b"/><stop offset="1" stop-color="#14456b"/>
+    </linearGradient>
+    <linearGradient id="img-mo-yellow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8b93c"/><stop offset="1" stop-color="#b8862a"/>
+    </linearGradient>
+    <linearGradient id="img-mo-mica" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8a6d35"/><stop offset="1" stop-color="#5c4622"/>
+    </linearGradient>
+    <linearGradient id="img-mo-melt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f2ab3e"/><stop offset="1" stop-color="#b06f1e"/>
+    </linearGradient>
+    <g id="img-mo-bolt"><circle r="4" fill="#232a33"/><circle r="2.1" fill="#5d6a78"/></g>
+    <g id="img-mo-nut"><rect x="-7" y="-9" width="14" height="18" rx="2" fill="#37424e" stroke="#1c232b" stroke-width="1"/><rect x="-7" y="-9" width="14" height="3" fill="rgba(255,255,255,.14)"/></g>
+  </defs>
+
+  <!-- floor shadow -->
+  <ellipse cx="450" cy="530" rx="418" ry="14" fill="rgba(0,0,0,.4)"/>
+
+  <!-- ============ MACHINE BASE ============ -->
+  <rect x="40" y="378" width="830" height="122" fill="url(#img-mo-iron)" stroke="#161c23" stroke-width="1.5"/>
+  <rect x="40" y="374" width="830" height="8" fill="url(#img-mo-steel2)"/>
+  <rect x="40" y="374" width="830" height="1.5" fill="rgba(255,255,255,.14)"/>
+  <rect x="40" y="490" width="830" height="6" fill="url(#img-mo-yellow)"/>
+  <rect x="60" y="500" width="46" height="20" fill="#1b2129"/>
+  <rect x="300" y="500" width="46" height="20" fill="#1b2129"/>
+  <rect x="560" y="500" width="46" height="20" fill="#1b2129"/>
+  <rect x="806" y="500" width="46" height="20" fill="#1b2129"/>
+  <line x1="290" y1="386" x2="290" y2="488" stroke="#161c23" stroke-width="1.5"/>
+  <line x1="530" y1="386" x2="530" y2="488" stroke="#161c23" stroke-width="1.5"/>
+  <line x1="700" y1="386" x2="700" y2="488" stroke="#161c23" stroke-width="1.5"/>
+
+  <!-- hydraulic power pack recess -->
+  <rect x="88" y="406" width="178" height="86" fill="#0d1218" stroke="#161c23"/>
+  <rect x="98" y="428" width="82" height="58" fill="url(#img-mo-iron)" stroke="#161c23"/>
+  <rect x="98" y="428" width="82" height="2" fill="rgba(255,255,255,.12)"/>
+  <line x1="104" y1="442" x2="174" y2="442" stroke="#1a212a" stroke-width="1.5"/>
+  <line x1="104" y1="456" x2="174" y2="456" stroke="#1a212a" stroke-width="1.5"/>
+  <line x1="104" y1="470" x2="174" y2="470" stroke="#1a212a" stroke-width="1.5"/>
+  <rect x="182" y="444" width="22" height="18" fill="url(#img-mo-steel2)" stroke="#1c232b"/>
+  <circle cx="226" cy="452" r="24" fill="url(#img-mo-blue)" stroke="#0e2f4a" stroke-width="2"/>
+  <circle cx="226" cy="452" r="9" fill="#37424e" stroke="#1c232b"/>
+  <path d="M226 428 C205 392 70 372 46 300" fill="none" stroke="#14181d" stroke-width="6"/>
+  <path d="M226 428 C205 392 70 372 46 300" fill="none" stroke="#31383f" stroke-width="1.5"/>
+  <rect x="96" y="410" width="70" height="14" rx="3" fill="#10151b" stroke="#39434f"/>
+  <text x="131" y="420" font-size="9" fill="#9aa6b2" text-anchor="middle">HPU 180 bar</text>
+
+  <!-- way cover pleats (behind moving platen) -->
+  <rect x="118" y="352" width="348" height="26" fill="#333d48" stroke="#1c232b"/>
+  <rect x="118" y="352" width="348" height="1.5" fill="rgba(255,255,255,.12)"/>
+  <path d="M132 352 V378 M146 352 V378 M160 352 V378 M174 352 V378 M188 352 V378 M202 352 V378 M216 352 V378 M230 352 V378 M244 352 V378 M258 352 V378 M272 352 V378 M286 352 V378 M300 352 V378 M314 352 V378 M328 352 V378 M342 352 V378 M356 352 V378 M370 352 V378 M384 352 V378 M398 352 V378 M412 352 V378 M426 352 V378 M440 352 V378 M454 352 V378" stroke="rgba(0,0,0,.3)" stroke-width="2"/>
+
+  <!-- ============ CLAMP END ============ -->
+  <!-- tie bars -->
+  <rect x="110" y="158" width="400" height="8" fill="url(#img-mo-steel2)"/>
+  <rect x="110" y="180" width="400" height="8" fill="url(#img-mo-steel2)"/>
+  <rect x="110" y="310" width="400" height="8" fill="url(#img-mo-steel2)"/>
+  <rect x="110" y="332" width="400" height="8" fill="url(#img-mo-steel2)"/>
+  <rect x="110" y="158" width="400" height="1.2" fill="rgba(255,255,255,.16)"/>
+  <rect x="110" y="180" width="400" height="1.2" fill="rgba(255,255,255,.16)"/>
+  <rect x="110" y="310" width="400" height="1.2" fill="rgba(255,255,255,.16)"/>
+  <rect x="110" y="332" width="400" height="1.2" fill="rgba(255,255,255,.16)"/>
+
+  <!-- clamp end plate -->
+  <rect x="78" y="142" width="38" height="226" fill="url(#img-mo-steel)" stroke="#1c232b" stroke-width="1.5"/>
+  <rect x="78" y="142" width="38" height="2" fill="rgba(255,255,255,.14)"/>
+  <use href="#img-mo-nut" x="72" y="162"/><use href="#img-mo-nut" x="72" y="184"/>
+  <use href="#img-mo-nut" x="72" y="314"/><use href="#img-mo-nut" x="72" y="336"/>
+
+  <!-- gauge boss + gauge (CLAMPG) -->
+  <rect x="40" y="178" width="8" height="26" fill="#37424e" stroke="#1c232b"/>
+  <circle cx="44" cy="164" r="15" fill="#dde3e8" stroke="#4a5866" stroke-width="3"/>
+  <path d="M44 164 L36 155" stroke="#a33" stroke-width="2"/>
+  <circle cx="44" cy="164" r="2" fill="#333"/>
+
+  <!-- ============ MOVING PLATEN CARRIAGE (drawn OPEN, +140 closes) ============ -->
+  <g id="im-clampcar" class="tp" data-tp="CLAMP">
+    <rect x="95" y="243" width="120" height="14" fill="url(#img-mo-steel2)"/>
+    <rect x="95" y="243" width="120" height="1.2" fill="rgba(255,255,255,.16)"/>
+    <!-- ejector housing -->
+    <rect x="202" y="198" width="10" height="114" fill="url(#img-mo-iron)" stroke="#161c23"/>
+    <!-- moving platen -->
+    <rect x="212" y="140" width="38" height="230" fill="url(#img-mo-blue)" stroke="#0e2f4a" stroke-width="1.5"/>
+    <rect x="212" y="140" width="38" height="2" fill="rgba(255,255,255,.14)"/>
+    <rect x="206" y="150" width="50" height="42" fill="url(#img-mo-iron)" stroke="#161c23" rx="3"/>
+    <rect x="206" y="302" width="50" height="42" fill="url(#img-mo-iron)" stroke="#161c23" rx="3"/>
+    <use href="#img-mo-bolt" x="222" y="206"/><use href="#img-mo-bolt" x="240" y="206"/>
+    <use href="#img-mo-bolt" x="222" y="292"/><use href="#img-mo-bolt" x="240" y="292"/>
+    <!-- moving mold half -->
+    <rect x="250" y="195" width="40" height="120" fill="url(#img-mo-steel)" stroke="#1c232b" stroke-width="1.5"/>
+    <rect x="250" y="195" width="40" height="2" fill="rgba(255,255,255,.14)"/>
+    <rect x="278" y="237" width="12" height="36" fill="#171d24"/>
+    <circle cx="260" cy="191" r="4" fill="#b08d3f" stroke="#6b5526"/>
+    <circle cx="278" cy="191" r="4" fill="#b08d3f" stroke="#6b5526"/>
+    <line x1="256" y1="222" x2="284" y2="222" stroke="#1c232b" stroke-width="1"/>
+    <line x1="256" y1="290" x2="284" y2="290" stroke="#1c232b" stroke-width="1"/>
+    <circle cx="231" cy="255" r="6" fill="#233" stroke="#33d1c9" stroke-width="2"/>
+  </g>
+
+  <!-- main clamp ram (over thin rod) + cylinder -->
+  <rect x="114" y="236" width="118" height="28" fill="url(#img-mo-steel)" stroke="#1c232b"/>
+  <rect x="114" y="236" width="118" height="2" fill="rgba(255,255,255,.16)"/>
+  <rect x="224" y="232" width="10" height="36" fill="#37424e" stroke="#1c232b"/>
+  <rect x="14" y="202" width="64" height="96" fill="url(#img-mo-iron)" stroke="#161c23" stroke-width="1.5"/>
+  <rect x="14" y="198" width="9" height="104" fill="url(#img-mo-steel2)" stroke="#1c232b"/>
+  <rect x="69" y="198" width="9" height="104" fill="url(#img-mo-steel2)" stroke="#1c232b"/>
+  <rect x="14" y="198" width="64" height="2" fill="rgba(255,255,255,.12)"/>
+  <use href="#img-mo-bolt" x="18" y="206"/><use href="#img-mo-bolt" x="18" y="294"/>
+  <use href="#img-mo-bolt" x="73" y="206"/><use href="#img-mo-bolt" x="73" y="294"/>
+
+  <!-- ============ FIXED PLATEN + FIXED MOLD HALF ============ -->
+  <rect x="464" y="130" width="8" height="250" fill="url(#img-mo-steel2)" stroke="#1c232b"/>
+  <rect x="470" y="130" width="36" height="250" fill="url(#img-mo-blue)" stroke="#0e2f4a" stroke-width="1.5"/>
+  <rect x="470" y="130" width="36" height="2" fill="rgba(255,255,255,.14)"/>
+  <use href="#img-mo-nut" x="513" y="162"/><use href="#img-mo-nut" x="513" y="184"/>
+  <use href="#img-mo-nut" x="513" y="314"/><use href="#img-mo-nut" x="513" y="336"/>
+  <use href="#img-mo-bolt" x="488" y="145"/><use href="#img-mo-bolt" x="488" y="365"/>
+  <rect x="430" y="195" width="40" height="120" fill="url(#img-mo-steel)" stroke="#1c232b" stroke-width="1.5"/>
+  <rect x="430" y="195" width="40" height="2" fill="rgba(255,255,255,.14)"/>
+  <rect x="430" y="237" width="12" height="36" fill="#171d24"/>
+  <circle cx="440" cy="191" r="4" fill="#b08d3f" stroke="#6b5526"/>
+  <circle cx="458" cy="191" r="4" fill="#b08d3f" stroke="#6b5526"/>
+  <line x1="436" y1="222" x2="464" y2="222" stroke="#1c232b" stroke-width="1"/>
+  <line x1="436" y1="290" x2="464" y2="290" stroke="#1c232b" stroke-width="1"/>
+
+  <!-- ============ PARTS CHUTE + BIN ============ -->
+  <rect x="296" y="378" width="132" height="64" fill="#10151b" stroke="#161c23"/>
+  <polygon points="302,382 320,382 402,442 384,442" fill="url(#img-mo-steel2)" stroke="#1c232b"/>
+  <path id="im-partout" d="M352 424 l24 0 -4 16 -16 0 z" fill="#7bd88a" opacity="0.15"/>
+  <rect x="322" y="442" width="124" height="74" rx="4" fill="url(#img-mo-yellow)" stroke="#6b5526" stroke-width="1.5"/>
+  <rect x="328" y="448" width="112" height="10" fill="#3a2f14"/>
+  <rect x="322" y="442" width="124" height="2" fill="rgba(255,255,255,.2)"/>
+  <line x1="342" y1="462" x2="342" y2="512" stroke="rgba(0,0,0,.2)" stroke-width="2"/>
+  <line x1="384" y1="462" x2="384" y2="512" stroke="rgba(0,0,0,.2)" stroke-width="2"/>
+  <line x1="426" y1="462" x2="426" y2="512" stroke="rgba(0,0,0,.2)" stroke-width="2"/>
+
+  <!-- ============ INJECTION UNIT ============ -->
+  <!-- pedestal -->
+  <polygon points="566,296 854,296 854,378 586,378" fill="url(#img-mo-iron)" stroke="#161c23" stroke-width="1.5"/>
+  <rect x="556" y="288" width="308" height="9" fill="url(#img-mo-steel2)" stroke="#1c232b"/>
+  <rect x="556" y="288" width="308" height="1.5" fill="rgba(255,255,255,.14)"/>
+
+  <!-- barrel bore backdrop + melt -->
+  <rect x="558" y="234" width="219" height="32" fill="#140d06"/>
+  <rect x="558" y="236" width="50" height="28" fill="url(#img-mo-melt)"/>
+
+  <!-- screw / ram (drawn RETRACTED; game translates negative x) -->
+  <g id="im-screwpos">
+    <rect x="608" y="240" width="12" height="20" fill="#b9c4cf" stroke="#5d6a78"/>
+    <rect x="610" y="244" width="245" height="12" fill="url(#img-mo-steel2)"/>
+    <rect x="610" y="244" width="245" height="1.2" fill="rgba(255,255,255,.2)"/>
+    <path d="M612 259 L625 241 M631 259 L644 241 M650 259 L663 241 M669 259 L682 241 M688 259 L701 241 M707 259 L720 241 M726 259 L739 241 M745 259 L758 241 M764 259 L777 241" stroke="#d7dee6" stroke-width="2.5"/>
+    <rect x="802" y="230" width="54" height="40" fill="url(#img-mo-iron)" stroke="#161c23"/>
+  </g>
+
+  <!-- barrel walls -->
+  <rect x="545" y="224" width="255" height="12" fill="url(#img-mo-steel)" stroke="#1c232b"/>
+  <rect x="545" y="264" width="255" height="12" fill="url(#img-mo-steel)" stroke="#1c232b"/>
+  <rect x="545" y="224" width="16" height="52" fill="url(#img-mo-steel)" stroke="#1c232b"/>
+  <rect x="775" y="224" width="25" height="52" fill="url(#img-mo-steel)" stroke="#1c232b"/>
+  <rect x="545" y="224" width="255" height="1.5" fill="rgba(255,255,255,.16)"/>
+
+  <!-- heater bands on barrel -->
+  <rect x="565" y="220" width="30" height="60" fill="url(#img-mo-mica)" stroke="#3a2d14" stroke-width="1"/>
+  <rect x="625" y="220" width="30" height="60" fill="url(#img-mo-mica)" stroke="#3a2d14" stroke-width="1"/>
+  <rect x="685" y="220" width="30" height="60" fill="url(#img-mo-mica)" stroke="#3a2d14" stroke-width="1"/>
+  <rect x="565" y="220" width="30" height="1.5" fill="rgba(255,255,255,.18)"/>
+  <rect x="625" y="220" width="30" height="1.5" fill="rgba(255,255,255,.18)"/>
+  <rect x="685" y="220" width="30" height="1.5" fill="rgba(255,255,255,.18)"/>
+  <rect x="576" y="213" width="8" height="8" fill="#37424e" stroke="#1c232b"/>
+  <rect x="636" y="213" width="8" height="8" fill="#37424e" stroke="#1c232b"/>
+  <rect x="696" y="213" width="8" height="8" fill="#37424e" stroke="#1c232b"/>
+  <path d="M580 280 V296 M640 280 V296 M700 280 V296" stroke="#14181d" stroke-width="3"/>
+  <path d="M580 296 H700" stroke="#14181d" stroke-width="3" fill="none"/>
+
+  <!-- feed throat -->
+  <rect x="748" y="224" width="24" height="12" fill="#10151b"/>
+
+  <!-- nozzle (over screw tip travel) -->
+  <polygon points="518,236 518,264 504,258 504,242" fill="url(#img-mo-steel2)" stroke="#1c232b"/>
+  <rect x="518" y="234" width="28" height="32" fill="url(#img-mo-steel)" stroke="#1c232b"/>
+  <rect x="524" y="231" width="12" height="38" fill="url(#img-mo-mica)" stroke="#3a2d14"/>
+
+  <!-- rear drive housing -->
+  <rect x="800" y="205" width="72" height="90" fill="url(#img-mo-iron)" stroke="#161c23" stroke-width="1.5"/>
+  <rect x="800" y="205" width="72" height="2" fill="rgba(255,255,255,.12)"/>
+  <circle cx="838" cy="250" r="26" fill="url(#img-mo-steel)" stroke="#1c232b" stroke-width="1.5"/>
+  <circle cx="838" cy="250" r="8" fill="#37424e" stroke="#1c232b"/>
+  <use href="#img-mo-bolt" x="806" y="212"/><use href="#img-mo-bolt" x="864" y="212"/>
+  <use href="#img-mo-bolt" x="806" y="288"/><use href="#img-mo-bolt" x="864" y="288"/>
+  <path d="M846 205 C846 172 878 172 878 208 V290" fill="none" stroke="#14181d" stroke-width="5"/>
+
+  <!-- hopper -->
+  <polygon points="712,108 808,108 776,224 746,224" fill="url(#img-mo-steel)" stroke="#1c232b" stroke-width="1.5"/>
+  <rect x="706" y="94" width="108" height="15" rx="3" fill="url(#img-mo-steel2)" stroke="#1c232b"/>
+  <rect x="706" y="94" width="108" height="2" fill="rgba(255,255,255,.16)"/>
+  <rect x="722" y="86" width="76" height="9" rx="3" fill="#37424e" stroke="#1c232b"/>
+  <rect x="749" y="122" width="16" height="58" fill="#22303c" stroke="#1c232b"/>
+  <rect x="740" y="210" width="42" height="12" fill="url(#img-mo-iron)" stroke="#161c23"/>
+
+  <!-- ============ LABEL PLATES ============ -->
+  <rect x="18" y="14" width="316" height="26" rx="4" fill="#10151b" stroke="#39434f"/>
+  <text x="30" y="31" font-size="12" fill="#cfd8e0" letter-spacing="1">MOLD-LINE 5 · INJECTION MOLDER</text>
+  <rect x="120" y="112" width="100" height="18" rx="3" fill="#10151b" stroke="#39434f"/>
+  <text x="170" y="125" font-size="9" fill="#9aa6b2" text-anchor="middle">CLAMP UNIT</text>
+  <rect x="560" y="132" width="126" height="18" rx="3" fill="#10151b" stroke="#39434f"/>
+  <text x="623" y="145" font-size="9" fill="#9aa6b2" text-anchor="middle">INJECTION UNIT</text>
+
+  <!-- readout plate -->
+  <rect x="588" y="410" width="274" height="78" rx="6" fill="#10151b" stroke="#39434f" stroke-width="1.5"/>
+  <text x="602" y="428" font-size="9" fill="#6b7684" letter-spacing="1">CLAMP / SHOT</text>
+  <text id="im-tonnage" x="602" y="456" font-size="24" fill="#9fe8df" font-weight="bold">0 t</text>
+  <text id="im-cushion" x="602" y="476" font-size="12" fill="#cfd8e0">CUSHION 0.0</text>
+  <text id="im-moldT" x="738" y="476" font-size="12" fill="#cfd8e0">MOLD 30°C</text>
+
+  <!-- ============ TEST POINTS ============ -->
+  <circle class="tp" data-tp="HOPPER" cx="762" cy="90" r="6" fill="#233" stroke="#33d1c9" stroke-width="2"/>
+  <circle class="tp" data-tp="NOZZLE" cx="528" cy="222" r="6" fill="#233" stroke="#33d1c9" stroke-width="2"/>
+  <circle class="tp" data-tp="RING" cx="598" cy="250" r="6" fill="#233" stroke="#33d1c9" stroke-width="2"/>
+  <circle class="tp" data-tp="SCREW" cx="668" cy="250" r="6" fill="#233" stroke="#33d1c9" stroke-width="2"/>
+  <circle class="tp" data-tp="CLAMPG" cx="44" cy="164" r="6" fill="#233" stroke="#33d1c9" stroke-width="2"/>
+  <circle class="tp" data-tp="PUMP5" cx="200" cy="472" r="6" fill="#233" stroke="#33d1c9" stroke-width="2"/>
+  <circle class="tp" data-tp="MOLD" cx="450" cy="255" r="6" fill="#233" stroke="#33d1c9" stroke-width="2"/>
+</svg>
+    <svg class="layer" data-machine="molder" data-layer="heat" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,Menlo,Consolas,monospace">
+  <defs>
+    <linearGradient id="img-he-steel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8a97a5"/><stop offset=".5" stop-color="#4a5866"/><stop offset="1" stop-color="#2c3844"/>
+    </linearGradient>
+    <linearGradient id="img-he-steel2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7c8996"/><stop offset="1" stop-color="#37424e"/>
+    </linearGradient>
+    <linearGradient id="img-he-iron" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d4754"/><stop offset="1" stop-color="#242c36"/>
+    </linearGradient>
+    <linearGradient id="img-he-blue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1f5f8b"/><stop offset="1" stop-color="#14456b"/>
+    </linearGradient>
+    <linearGradient id="img-he-melt" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f2ab3e"/><stop offset=".55" stop-color="#c87e22"/><stop offset="1" stop-color="#8f5514"/>
+    </linearGradient>
+    <linearGradient id="img-he-moldm" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#57646f"/><stop offset="1" stop-color="#2c3844"/>
+    </linearGradient>
+  </defs>
+
+  <!-- title -->
+  <rect x="18" y="6" width="220" height="22" rx="4" fill="#10151b" stroke="#39434f"/>
+  <text x="26" y="21" font-size="10" fill="#cfd8e0" letter-spacing="1">MOLD-LINE 5 · THERMAL VIEW</text>
+
+  <!-- ============ TC READOUT PLATES ============ -->
+  <rect x="150" y="30" width="120" height="30" rx="4" fill="#10151b" stroke="#39434f"/>
+  <text x="160" y="50" font-size="10" fill="#6b7684">Z3</text>
+  <text id="im-t3" x="222" y="51" font-size="15" fill="#ffd27a" text-anchor="middle" font-weight="bold">220°C</text>
+  <rect x="355" y="30" width="120" height="30" rx="4" fill="#10151b" stroke="#39434f"/>
+  <text x="365" y="50" font-size="10" fill="#6b7684">Z2</text>
+  <text id="im-t2" x="427" y="51" font-size="15" fill="#ffd27a" text-anchor="middle" font-weight="bold">220°C</text>
+  <rect x="560" y="30" width="120" height="30" rx="4" fill="#10151b" stroke="#39434f"/>
+  <text x="570" y="50" font-size="10" fill="#6b7684">Z1</text>
+  <text id="im-t1" x="632" y="51" font-size="15" fill="#ffd27a" text-anchor="middle" font-weight="bold">220°C</text>
+
+  <!-- ============ BARREL CROSS-SECTION ============ -->
+  <!-- shadow -->
+  <rect x="96" y="228" width="690" height="10" fill="rgba(0,0,0,.35)" rx="5"/>
+  <!-- nozzle -->
+  <polygon points="90,130 90,210 46,184 46,156" fill="url(#img-he-steel2)" stroke="#1c232b" stroke-width="1.5"/>
+  <rect x="34" y="152" width="14" height="36" fill="url(#img-he-steel)" stroke="#1c232b"/>
+  <!-- barrel body -->
+  <rect x="90" y="118" width="690" height="104" fill="url(#img-he-steel)" stroke="#1c232b" stroke-width="1.5"/>
+  <rect x="90" y="118" width="690" height="2" fill="rgba(255,255,255,.14)"/>
+  <!-- bore / melt -->
+  <rect x="100" y="150" width="670" height="40" fill="url(#img-he-melt)" stroke="#5c3a10"/>
+  <rect x="100" y="162" width="670" height="16" fill="rgba(0,0,0,.14)"/>
+  <path d="M120 188 L138 152 M156 188 L174 152 M192 188 L210 152 M228 188 L246 152 M264 188 L282 152 M300 188 L318 152 M336 188 L354 152 M372 188 L390 152 M408 188 L426 152 M444 188 L462 152 M480 188 L498 152 M516 188 L534 152 M552 188 L570 152 M588 188 L606 152 M624 188 L642 152 M660 188 L678 152 M696 188 L714 152 M732 188 L750 152" stroke="rgba(60,30,0,.35)" stroke-width="3"/>
+  <!-- end cap -->
+  <rect x="780" y="126" width="26" height="88" fill="url(#img-he-iron)" stroke="#161c23"/>
+  <!-- hopper stub + throat -->
+  <polygon points="700,58 772,58 754,118 718,118" fill="url(#img-he-steel2)" stroke="#1c232b" stroke-width="1.5"/>
+  <rect x="694" y="48" width="84" height="12" rx="3" fill="url(#img-he-steel)" stroke="#1c232b"/>
+  <rect x="726" y="120" width="22" height="32" fill="#1a1208"/>
+
+  <!-- ============ HEATER ZONE BANDS (game tints fills) ============ -->
+  <rect id="im-z3" x="120" y="110" width="170" height="120" rx="8" fill="#7a6030"/>
+  <rect id="im-z2" x="330" y="110" width="170" height="120" rx="8" fill="#7a6030"/>
+  <rect id="im-z1" x="545" y="110" width="150" height="120" rx="8" fill="#7a6030"/>
+  <!-- band furniture (thin, over tinted rects) -->
+  <rect x="120" y="110" width="170" height="2" fill="rgba(255,255,255,.16)"/>
+  <rect x="330" y="110" width="170" height="2" fill="rgba(255,255,255,.16)"/>
+  <rect x="545" y="110" width="150" height="2" fill="rgba(255,255,255,.16)"/>
+  <line x1="176" y1="112" x2="176" y2="228" stroke="rgba(0,0,0,.22)" stroke-width="2"/>
+  <line x1="234" y1="112" x2="234" y2="228" stroke="rgba(0,0,0,.22)" stroke-width="2"/>
+  <line x1="386" y1="112" x2="386" y2="228" stroke="rgba(0,0,0,.22)" stroke-width="2"/>
+  <line x1="444" y1="112" x2="444" y2="228" stroke="rgba(0,0,0,.22)" stroke-width="2"/>
+  <line x1="592" y1="112" x2="592" y2="228" stroke="rgba(0,0,0,.22)" stroke-width="2"/>
+  <line x1="648" y1="112" x2="648" y2="228" stroke="rgba(0,0,0,.22)" stroke-width="2"/>
+  <rect x="196" y="102" width="18" height="10" fill="#37424e" stroke="#1c232b"/>
+  <rect x="406" y="102" width="18" height="10" fill="#37424e" stroke="#1c232b"/>
+  <rect x="611" y="102" width="18" height="10" fill="#37424e" stroke="#1c232b"/>
+  <!-- zone labels -->
+  <text x="205" y="252" font-size="10" fill="#9aa6b2" text-anchor="middle">ZONE 3 · FRONT</text>
+  <text x="455" y="252" font-size="10" fill="#9aa6b2" text-anchor="middle">ZONE 2 · MID</text>
+  <text x="620" y="252" font-size="10" fill="#9aa6b2" text-anchor="middle">ZONE 1 · REAR</text>
+
+  <!-- thermocouples -->
+  <rect x="202" y="82" width="6" height="30" fill="#8a97a5" stroke="#4a5866"/>
+  <rect x="194" y="66" width="22" height="16" rx="3" fill="url(#img-he-steel2)" stroke="#1c232b"/>
+  <path d="M205 66 C205 56 168 60 150 56" fill="none" stroke="#2f8f4e" stroke-width="2.5"/>
+  <rect x="412" y="82" width="6" height="30" fill="#8a97a5" stroke="#4a5866"/>
+  <rect x="404" y="66" width="22" height="16" rx="3" fill="url(#img-he-steel2)" stroke="#1c232b"/>
+  <path d="M415 66 C415 56 378 60 360 56" fill="none" stroke="#2f8f4e" stroke-width="2.5"/>
+  <rect x="617" y="82" width="6" height="30" fill="#8a97a5" stroke="#4a5866"/>
+  <rect x="609" y="66" width="22" height="16" rx="3" fill="url(#img-he-steel2)" stroke="#1c232b"/>
+  <path d="M620 66 C620 56 583 60 565 56" fill="none" stroke="#2f8f4e" stroke-width="2.5"/>
+
+  <!-- zone 2 heater terminal box -->
+  <rect x="345" y="232" width="50" height="26" rx="3" fill="url(#img-he-iron)" stroke="#161c23"/>
+  <rect x="345" y="232" width="50" height="1.5" fill="rgba(255,255,255,.1)"/>
+  <circle cx="360" cy="245" r="4" fill="#b08d3f" stroke="#6b5526"/>
+  <circle cx="380" cy="245" r="4" fill="#b08d3f" stroke="#6b5526"/>
+  <path d="M370 258 V292 H640" fill="none" stroke="#14181d" stroke-width="4"/>
+  <rect x="640" y="284" width="66" height="16" rx="3" fill="#10151b" stroke="#39434f"/>
+  <text x="673" y="295" font-size="8" fill="#9aa6b2" text-anchor="middle">TO K5</text>
+
+  <!-- ============ COOLING CIRCUIT ============ -->
+  <!-- TCU / chiller -->
+  <rect x="58" y="330" width="140" height="140" rx="4" fill="url(#img-he-iron)" stroke="#161c23" stroke-width="1.5"/>
+  <rect x="58" y="330" width="140" height="2" fill="rgba(255,255,255,.12)"/>
+  <line x1="70" y1="350" x2="150" y2="350" stroke="#1a212a" stroke-width="2"/>
+  <line x1="70" y1="360" x2="150" y2="360" stroke="#1a212a" stroke-width="2"/>
+  <line x1="70" y1="370" x2="150" y2="370" stroke="#1a212a" stroke-width="2"/>
+  <circle cx="168" cy="360" r="13" fill="#dde3e8" stroke="#4a5866" stroke-width="2.5"/>
+  <path d="M168 360 L162 351" stroke="#a33" stroke-width="2"/>
+  <circle cx="104" cy="424" r="22" fill="url(#img-he-blue)" stroke="#0e2f4a" stroke-width="2"/>
+  <circle cx="104" cy="424" r="8" fill="#37424e" stroke="#1c232b"/>
+  <rect x="136" y="410" width="42" height="28" fill="url(#img-he-steel2)" stroke="#1c232b"/>
+  <rect x="66" y="448" width="124" height="14" rx="3" fill="#10151b" stroke="#39434f"/>
+  <text x="128" y="458" font-size="9" fill="#9aa6b2" text-anchor="middle">TCU-5 · WATER</text>
+
+  <!-- mold block -->
+  <rect x="286" y="326" width="280" height="10" fill="rgba(0,0,0,.3)" rx="4"/>
+  <rect x="280" y="320" width="138" height="150" fill="url(#img-he-moldm)" stroke="#1c232b" stroke-width="1.5"/>
+  <rect x="422" y="320" width="138" height="150" fill="url(#img-he-steel)" stroke="#1c232b" stroke-width="1.5"/>
+  <rect x="280" y="320" width="280" height="2" fill="rgba(255,255,255,.14)"/>
+  <rect x="418" y="320" width="4" height="150" fill="#141a21"/>
+  <rect x="406" y="365" width="28" height="60" rx="3" fill="#171d24" stroke="#0d1116"/>
+  <text x="420" y="311" font-size="10" fill="#9aa6b2" text-anchor="middle">MOLD · COOLING CHANNELS</text>
+  <!-- manifolds -->
+  <rect x="260" y="336" width="22" height="28" fill="#b08d3f" stroke="#6b5526" stroke-width="1.5"/>
+  <rect x="558" y="406" width="22" height="28" fill="#b08d3f" stroke="#6b5526" stroke-width="1.5"/>
+
+  <!-- water lines (game colors these) -->
+  <path id="imw-coolin" class="pipe" d="M198 368 H240 V350 H520 V385 H300 V420 H556" fill="none" stroke="#2a6f8f" stroke-width="6" stroke-linejoin="round"/>
+  <path id="imw-coolout" class="pipe" d="M566 420 H600 V505 H160 V432 H198" fill="none" stroke="#2a6f8f" stroke-width="6" stroke-linejoin="round"/>
+  <!-- flow arrows -->
+  <polygon points="228,363 240,368 228,373" fill="#9fd8e8"/>
+  <polygon points="380,500 368,505 380,510" fill="#9fd8e8"/>
+  <text x="238" y="394" font-size="9" fill="#6b7684" text-anchor="middle">SUPPLY</text>
+  <text x="470" y="522" font-size="9" fill="#6b7684">RETURN</text>
+
+  <!-- mold temp plate -->
+  <rect x="620" y="330" width="180" height="34" rx="4" fill="#10151b" stroke="#39434f"/>
+  <text id="im-moldtemp" x="710" y="353" font-size="15" fill="#9fe8df" text-anchor="middle" font-weight="bold">MOLD 30°C</text>
+
+  <!-- ============ TEST POINTS ============ -->
+  <circle class="tp" data-tp="BARREL3" cx="205" cy="170" r="6" fill="#233" stroke="#33d1c9" stroke-width="2"/>
+  <circle class="tp" data-tp="BARREL2" cx="390" cy="170" r="6" fill="#233" stroke="#33d1c9" stroke-width="2"/>
+  <circle class="tp" data-tp="BARREL1" cx="620" cy="170" r="6" fill="#233" stroke="#33d1c9" stroke-width="2"/>
+  <circle class="tp" data-tp="TC2" cx="415" cy="74" r="6" fill="#233" stroke="#33d1c9" stroke-width="2"/>
+  <circle class="tp" data-tp="HTR2" cx="370" cy="245" r="6" fill="#233" stroke="#33d1c9" stroke-width="2"/>
+  <circle class="tp" data-tp="COOLIN" cx="222" cy="368" r="6" fill="#233" stroke="#33d1c9" stroke-width="2"/>
+  <circle class="tp" data-tp="COOLOUT" cx="380" cy="505" r="6" fill="#233" stroke="#33d1c9" stroke-width="2"/>
+  <circle class="tp" data-tp="MOLDT" cx="320" cy="445" r="6" fill="#233" stroke="#33d1c9" stroke-width="2"/>
+</svg>
+    <svg class="layer" data-machine="molder" data-layer="elec" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,Menlo,Consolas,monospace">
+  <defs>
+    <linearGradient id="img-el-panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#78848f"/><stop offset="1" stop-color="#525e6a"/>
+    </linearGradient>
+    <linearGradient id="img-el-steel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8a97a5"/><stop offset=".5" stop-color="#4a5866"/><stop offset="1" stop-color="#2c3844"/>
+    </linearGradient>
+    <linearGradient id="img-el-iron" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d4754"/><stop offset="1" stop-color="#242c36"/>
+    </linearGradient>
+    <linearGradient id="img-el-yellow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8b93c"/><stop offset="1" stop-color="#b8862a"/>
+    </linearGradient>
+    <linearGradient id="img-el-red" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c94040"/><stop offset="1" stop-color="#7d1f1f"/>
+    </linearGradient>
+    <g id="img-el-screw"><circle r="4.5" fill="#39434f" stroke="#1c232b"/><line x1="-2.8" y1="-2.8" x2="2.8" y2="2.8" stroke="#9aa6b2" stroke-width="1.4"/></g>
+    <g id="img-el-lug"><circle r="5.5" fill="#b08d3f" stroke="#6b5526" stroke-width="1.5"/><circle r="2" fill="#4a3a18"/></g>
+  </defs>
+
+  <!-- cabinet frame -->
+  <rect x="15" y="12" width="870" height="536" rx="8" fill="url(#img-el-iron)" stroke="#10151b" stroke-width="2"/>
+  <rect x="15" y="12" width="870" height="2" fill="rgba(255,255,255,.12)"/>
+  <rect x="35" y="46" width="830" height="482" rx="3" fill="url(#img-el-panel)" stroke="#2c3844" stroke-width="2"/>
+  <rect x="35" y="46" width="830" height="2" fill="rgba(255,255,255,.14)"/>
+  <rect x="30" y="18" width="380" height="22" rx="4" fill="#10151b" stroke="#39434f"/>
+  <text x="40" y="33" font-size="11" fill="#cfd8e0" letter-spacing="1">MOLD-LINE 5 · HEATER / CONTROL CABINET</text>
+  <use href="#img-el-screw" x="44" y="56"/><use href="#img-el-screw" x="856" y="56"/>
+  <use href="#img-el-screw" x="44" y="518"/><use href="#img-el-screw" x="856" y="518"/>
+
+  <!-- DIN rails -->
+  <rect x="50" y="118" width="800" height="10" fill="#39434f" stroke="#1c232b"/>
+  <rect x="50" y="288" width="560" height="10" fill="#39434f" stroke="#1c232b"/>
+
+  <!-- ====== static feed wires (drawn under devices) ====== -->
+  <path d="M725 118 V196 H375 V172" fill="none" stroke="#1d232b" stroke-width="3"/>
+  <path d="M760 118 V204 H410 V172" fill="none" stroke="#1d232b" stroke-width="3"/>
+  <path d="M795 118 V212 H445 V172" fill="none" stroke="#1d232b" stroke-width="3"/>
+  <path d="M375 172 V214 H370 V250" fill="none" stroke="#1d232b" stroke-width="3"/>
+  <path d="M410 172 V222 H445 V250" fill="none" stroke="#1d232b" stroke-width="3"/>
+  <path d="M445 172 V230 H520 V250" fill="none" stroke="#1d232b" stroke-width="3"/>
+
+  <!-- ====== dynamic wires ====== -->
+  <path id="imw-24" class="wire" d="M125 166 V224 H252 V164" fill="none" stroke="#566070" stroke-width="4"/>
+  <path id="imw-estop" class="wire" d="M278 164 V236 H462 V176" fill="none" stroke="#566070" stroke-width="4"/>
+  <path id="imw-h1" class="wire" d="M370 332 V430" fill="none" stroke="#566070" stroke-width="4"/>
+  <path id="imw-h2" class="wire" d="M445 332 V430" fill="none" stroke="#566070" stroke-width="4"/>
+  <path id="imw-h3" class="wire" d="M520 332 V430" fill="none" stroke="#566070" stroke-width="4"/>
+
+  <!-- ====== PSU 24VDC ====== -->
+  <rect x="62" y="60" width="126" height="106" rx="4" fill="url(#img-el-steel)" stroke="#1c232b" stroke-width="1.5"/>
+  <rect x="62" y="60" width="126" height="2" fill="rgba(255,255,255,.16)"/>
+  <path d="M72 70 V120 M80 70 V120 M88 70 V120 M96 70 V120 M104 70 V120" stroke="#2c3844" stroke-width="2.5"/>
+  <rect x="112" y="68" width="68" height="30" rx="3" fill="#10151b" stroke="#39434f"/>
+  <text x="146" y="80" font-size="9" fill="#cfd8e0" text-anchor="middle">PSU 24VDC</text>
+  <text x="146" y="92" font-size="9" fill="#9aa6b2" text-anchor="middle">10 A</text>
+  <circle cx="120" cy="110" r="3.5" fill="#35d06a"/>
+  <text x="130" y="114" font-size="8" fill="#20262e">DC OK</text>
+  <rect x="70" y="146" width="110" height="12" fill="#20262e" stroke="#10151b"/>
+  <use href="#img-el-screw" x="82" y="152"/><use href="#img-el-screw" x="104" y="152"/>
+  <use href="#img-el-screw" x="126" y="152"/><use href="#img-el-screw" x="148" y="152"/><use href="#img-el-screw" x="170" y="152"/>
+
+  <!-- ====== E-STOP ====== -->
+  <rect x="225" y="58" width="82" height="108" rx="6" fill="url(#img-el-yellow)" stroke="#6b5526" stroke-width="2"/>
+  <rect x="225" y="58" width="82" height="2" fill="rgba(255,255,255,.25)"/>
+  <circle cx="266" cy="100" r="27" fill="#2c3138" stroke="#171b20" stroke-width="2"/>
+  <circle cx="266" cy="96" r="21" fill="url(#img-el-red)" stroke="#5c1414" stroke-width="2"/>
+  <ellipse cx="266" cy="89" rx="14" ry="6" fill="rgba(255,255,255,.22)"/>
+  <text x="266" y="142" font-size="8" fill="#3a2f14" text-anchor="middle" font-weight="bold">EMERGENCY</text>
+  <text x="266" y="152" font-size="8" fill="#3a2f14" text-anchor="middle" font-weight="bold">STOP</text>
+  <use href="#img-el-screw" x="234" y="67"/><use href="#img-el-screw" x="298" y="67"/>
+  <use href="#img-el-screw" x="234" y="157"/><use href="#img-el-screw" x="298" y="157"/>
+
+  <!-- ====== CONTACTOR K5 ====== -->
+  <rect x="350" y="58" width="120" height="114" rx="5" fill="#2a2f38" stroke="#14181d" stroke-width="2"/>
+  <rect x="350" y="58" width="120" height="2" fill="rgba(255,255,255,.12)"/>
+  <use href="#img-el-lug" x="375" y="70"/><use href="#img-el-lug" x="410" y="70"/><use href="#img-el-lug" x="445" y="70"/>
+  <use href="#img-el-lug" x="375" y="160"/><use href="#img-el-lug" x="410" y="160"/><use href="#img-el-lug" x="445" y="160"/>
+  <text x="375" y="88" font-size="7" fill="#8a97a5" text-anchor="middle">1L1</text>
+  <text x="410" y="88" font-size="7" fill="#8a97a5" text-anchor="middle">3L2</text>
+  <text x="445" y="88" font-size="7" fill="#8a97a5" text-anchor="middle">5L3</text>
+  <text x="375" y="150" font-size="7" fill="#8a97a5" text-anchor="middle">2T1</text>
+  <text x="410" y="150" font-size="7" fill="#8a97a5" text-anchor="middle">4T2</text>
+  <text x="445" y="150" font-size="7" fill="#8a97a5" text-anchor="middle">6T3</text>
+  <rect x="366" y="96" width="88" height="34" rx="3" fill="#10151b" stroke="#39434f"/>
+  <text x="410" y="112" font-size="13" fill="#cfd8e0" text-anchor="middle" font-weight="bold">K5</text>
+  <text x="410" y="124" font-size="8" fill="#9aa6b2" text-anchor="middle">3P · AC-3 · 32A</text>
+  <rect x="456" y="94" width="10" height="10" fill="#4a5866" stroke="#1c232b"/>
+  <text x="452" y="90" font-size="7" fill="#8a97a5">A1</text>
+  <rect x="456" y="118" width="10" height="10" fill="#4a5866" stroke="#1c232b"/>
+  <text x="452" y="140" font-size="7" fill="#8a97a5">A2</text>
+
+  <!-- ====== AMMETER ====== -->
+  <rect x="520" y="56" width="130" height="118" rx="5" fill="url(#img-el-steel)" stroke="#1c232b" stroke-width="1.5"/>
+  <rect x="520" y="56" width="130" height="2" fill="rgba(255,255,255,.16)"/>
+  <circle cx="585" cy="104" r="38" fill="#dde3e8" stroke="#2c3844" stroke-width="3"/>
+  <path d="M557 92 L563 96 M568 80 L572 86 M585 74 L585 82 M602 80 L598 86 M613 92 L607 96" stroke="#4a5866" stroke-width="2"/>
+  <path d="M585 104 L562 84" stroke="#a33" stroke-width="2.5"/>
+  <circle cx="585" cy="104" r="3" fill="#333"/>
+  <text x="585" y="128" font-size="8" fill="#4a5866" text-anchor="middle">HEATER AMPS</text>
+  <rect x="538" y="148" width="94" height="20" rx="3" fill="#10151b" stroke="#39434f"/>
+  <text id="im-hamps" x="585" y="163" font-size="13" fill="#9fe8df" text-anchor="middle" font-weight="bold">0.0 A</text>
+
+  <!-- ====== SUPPLY TERMINALS ====== -->
+  <rect x="700" y="60" width="150" height="58" rx="4" fill="url(#img-el-iron)" stroke="#161c23" stroke-width="1.5"/>
+  <path d="M725 60 V36 M760 60 V36 M795 60 V36" stroke="#14181d" stroke-width="5"/>
+  <rect x="712" y="70" width="26" height="38" fill="#4a5866" stroke="#1c232b"/>
+  <rect x="747" y="70" width="26" height="38" fill="#4a5866" stroke="#1c232b"/>
+  <rect x="782" y="70" width="26" height="38" fill="#4a5866" stroke="#1c232b"/>
+  <use href="#img-el-screw" x="725" y="84"/><use href="#img-el-screw" x="760" y="84"/><use href="#img-el-screw" x="795" y="84"/>
+  <text x="725" y="103" font-size="8" fill="#cfd8e0" text-anchor="middle">L1</text>
+  <text x="760" y="103" font-size="8" fill="#cfd8e0" text-anchor="middle">L2</text>
+  <text x="795" y="103" font-size="8" fill="#cfd8e0" text-anchor="middle">L3</text>
+  <text x="848" y="134" font-size="8" fill="#8a97a5" text-anchor="end">400V 3~ 50Hz</text>
+
+  <!-- ====== FUSED BRANCHES ====== -->
+  <rect x="340" y="240" width="210 " height="14" rx="3" fill="#10151b" stroke="#39434f"/>
+  <text x="445" y="250" font-size="8" fill="#9aa6b2" text-anchor="middle">HEATER BRANCH FUSES</text>
+  <rect x="350" y="256" width="40" height="76" rx="4" fill="#2a2f38" stroke="#14181d" stroke-width="1.5"/>
+  <rect x="358" y="266" width="24" height="44" rx="10" fill="url(#img-el-steel)" stroke="#1c232b"/>
+  <rect x="366" y="276" width="8" height="24" fill="#b08d3f"/>
+  <text x="370" y="326" font-size="8" fill="#cfd8e0" text-anchor="middle">F1·Z1</text>
+  <rect x="425" y="256" width="40" height="76" rx="4" fill="#2a2f38" stroke="#14181d" stroke-width="1.5"/>
+  <rect x="433" y="266" width="24" height="44" rx="10" fill="url(#img-el-steel)" stroke="#1c232b"/>
+  <rect x="441" y="276" width="8" height="24" fill="#b08d3f"/>
+  <text x="445" y="326" font-size="8" fill="#cfd8e0" text-anchor="middle">F2·Z2</text>
+  <rect x="500" y="256" width="40" height="76" rx="4" fill="#2a2f38" stroke="#14181d" stroke-width="1.5"/>
+  <rect x="508" y="266" width="24" height="44" rx="10" fill="url(#img-el-steel)" stroke="#1c232b"/>
+  <rect x="516" y="276" width="8" height="24" fill="#b08d3f"/>
+  <text x="520" y="326" font-size="8" fill="#cfd8e0" text-anchor="middle">F3·Z3</text>
+
+  <!-- ====== HEATER OUT STRIP ====== -->
+  <rect x="330" y="430" width="230" height="46" rx="4" fill="url(#img-el-iron)" stroke="#161c23" stroke-width="1.5"/>
+  <use href="#img-el-lug" x="370" y="448"/><use href="#img-el-lug" x="445" y="448"/><use href="#img-el-lug" x="520" y="448"/>
+  <text x="370" y="470" font-size="8" fill="#9aa6b2" text-anchor="middle">Z1 HTR</text>
+  <text x="445" y="470" font-size="8" fill="#9aa6b2" text-anchor="middle">Z2 HTR</text>
+  <text x="520" y="470" font-size="8" fill="#9aa6b2" text-anchor="middle">Z3 HTR</text>
+  <path d="M370 476 V506 M445 476 V506 M520 476 V506" stroke="#14181d" stroke-width="5"/>
+  <rect x="336" y="500" width="220" height="16" rx="3" fill="#10151b" stroke="#39434f"/>
+  <text x="446" y="511" font-size="8" fill="#9aa6b2" text-anchor="middle">TO BARREL HEATER BANDS</text>
+
+  <!-- ====== TC TERMINAL BLOCKS ====== -->
+  <rect x="650" y="240" width="205" height="180" rx="5" fill="#262d36" stroke="#14181d" stroke-width="2"/>
+  <rect x="650" y="240" width="205" height="2" fill="rgba(255,255,255,.1)"/>
+  <rect x="660" y="248" width="185" height="16" rx="3" fill="#10151b" stroke="#39434f"/>
+  <text x="752" y="259" font-size="8" fill="#9aa6b2" text-anchor="middle">TC TERMINALS · TYPE K COMP CABLE</text>
+  <rect x="662" y="274" width="180" height="36" rx="3" fill="#39434f" stroke="#1c232b"/>
+  <text x="676" y="296" font-size="10" fill="#cfd8e0">TC1</text>
+  <use href="#img-el-screw" x="720" y="292"/><use href="#img-el-screw" x="756" y="292"/>
+  <text x="720" y="308" font-size="7" fill="#9aa6b2" text-anchor="middle">+</text>
+  <text x="756" y="308" font-size="7" fill="#9aa6b2" text-anchor="middle">−</text>
+  <path d="M776 288 H812 M776 296 H812" stroke="#2f8f4e" stroke-width="3"/>
+  <rect x="662" y="318" width="180" height="36" rx="3" fill="#39434f" stroke="#1c232b"/>
+  <text x="676" y="340" font-size="10" fill="#cfd8e0">TC2</text>
+  <use href="#img-el-screw" x="720" y="336"/><use href="#img-el-screw" x="756" y="336"/>
+  <text x="720" y="352" font-size="7" fill="#9aa6b2" text-anchor="middle">+</text>
+  <text x="756" y="352" font-size="7" fill="#9aa6b2" text-anchor="middle">−</text>
+  <path d="M776 332 H812 M776 340 H812" stroke="#2f8f4e" stroke-width="3"/>
+  <rect x="662" y="362" width="180" height="36" rx="3" fill="#39434f" stroke="#1c232b"/>
+  <text x="676" y="384" font-size="10" fill="#cfd8e0">TC3</text>
+  <use href="#img-el-screw" x="720" y="380"/><use href="#img-el-screw" x="756" y="380"/>
+  <text x="720" y="396" font-size="7" fill="#9aa6b2" text-anchor="middle">+</text>
+  <text x="756" y="396" font-size="7" fill="#9aa6b2" text-anchor="middle">−</text>
+  <path d="M776 376 H812 M776 384 H812" stroke="#2f8f4e" stroke-width="3"/>
+  <path d="M820 288 C842 288 842 460 800 470 M820 332 C838 332 838 452 798 462 M820 376 C832 376 832 446 796 454" fill="none" stroke="#2f8f4e" stroke-width="2.5"/>
+  <rect x="700" y="440" width="150" height="16" rx="3" fill="#10151b" stroke="#39434f"/>
+  <text x="775" y="451" font-size="8" fill="#9aa6b2" text-anchor="middle">GREEN = K COMP · IEC</text>
+
+  <!-- ====== LAMPS ====== -->
+  <rect x="60" y="418" width="180" height="100" rx="5" fill="url(#img-el-steel)" stroke="#1c232b" stroke-width="1.5"/>
+  <rect x="60" y="418" width="180" height="2" fill="rgba(255,255,255,.16)"/>
+  <rect x="146" y="428" width="86" height="14" rx="3" fill="#10151b" stroke="#39434f"/>
+  <text x="189" y="438" font-size="8" fill="#9aa6b2" text-anchor="middle">PILOT LAMPS</text>
+  <circle cx="95" cy="450" r="16" fill="none" stroke="#2c3844" stroke-width="4"/>
+  <circle id="imi-run" cx="95" cy="450" r="12" fill="#1c4a2e"/>
+  <text x="120" y="455" font-size="11" fill="#20262e" font-weight="bold">RUN</text>
+  <circle cx="95" cy="492" r="16" fill="none" stroke="#2c3844" stroke-width="4"/>
+  <circle id="imi-fault" cx="95" cy="492" r="12" fill="#4a1c1c"/>
+  <text x="120" y="497" font-size="11" fill="#20262e" font-weight="bold">FAULT</text>
+
+  <!-- ground bar -->
+  <rect x="600" y="496" width="90" height="14" fill="#b08d3f" stroke="#6b5526"/>
+  <text x="645" y="524" font-size="9" fill="#2c3844" text-anchor="middle">PE ⏚</text>
+
+  <!-- ====== TEST POINTS ====== -->
+  <circle class="tp" data-tp="PSU5" cx="125" cy="132" r="6" fill="#233" stroke="#33d1c9" stroke-width="2"/>
+  <circle class="tp" data-tp="ESTOP5" cx="238" cy="110" r="6" fill="#233" stroke="#33d1c9" stroke-width="2"/>
+  <circle class="tp" data-tp="K5" cx="410" cy="140" r="6" fill="#233" stroke="#33d1c9" stroke-width="2"/>
+  <circle class="tp" data-tp="TC2E" cx="700" cy="336" r="6" fill="#233" stroke="#33d1c9" stroke-width="2"/>
+</svg>
+    <svg class="layer" data-machine="molder" data-layer="plc" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,Menlo,Consolas,monospace">
+  <defs>
+    <linearGradient id="img-pl-steel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8a97a5"/><stop offset=".5" stop-color="#4a5866"/><stop offset="1" stop-color="#2c3844"/>
+    </linearGradient>
+    <linearGradient id="img-pl-iron" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d4754"/><stop offset="1" stop-color="#242c36"/>
+    </linearGradient>
+    <linearGradient id="img-pl-mod" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#59646f"/><stop offset="1" stop-color="#333d47"/>
+    </linearGradient>
+  </defs>
+
+  <!-- chassis -->
+  <rect x="10" y="8" width="880" height="544" rx="8" fill="url(#img-pl-iron)" stroke="#10151b" stroke-width="2"/>
+  <rect x="10" y="8" width="880" height="2" fill="rgba(255,255,255,.12)"/>
+
+  <!-- ====== RACK BAND ====== -->
+  <rect x="15" y="16" width="870" height="78" rx="4" fill="#20262e" stroke="#10151b" stroke-width="1.5"/>
+  <rect x="15" y="16" width="870" height="1.5" fill="rgba(255,255,255,.1)"/>
+  <rect x="22" y="52" width="856" height="8" fill="#39434f" stroke="#1c232b"/>
+
+  <!-- PSU module -->
+  <rect x="25" y="22" width="94" height="66" rx="3" fill="url(#img-pl-mod)" stroke="#1c232b" stroke-width="1.5"/>
+  <rect x="25" y="22" width="94" height="1.5" fill="rgba(255,255,255,.14)"/>
+  <text x="72" y="36" font-size="9" fill="#cfd8e0" text-anchor="middle">PSU</text>
+  <path d="M33 44 V80 M40 44 V80 M47 44 V80 M54 44 V80" stroke="#2c3844" stroke-width="2"/>
+  <circle cx="72" cy="50" r="3" fill="#35d06a"/>
+  <text x="80" y="53" font-size="7" fill="#9aa6b2">DC</text>
+  <!-- CPU module -->
+  <rect x="125" y="22" width="94" height="66" rx="3" fill="url(#img-pl-mod)" stroke="#1c232b" stroke-width="1.5"/>
+  <rect x="125" y="22" width="94" height="1.5" fill="rgba(255,255,255,.14)"/>
+  <text x="172" y="36" font-size="9" fill="#cfd8e0" text-anchor="middle">CPU</text>
+  <circle cx="140" cy="48" r="3" fill="#35d06a"/><text x="148" y="51" font-size="7" fill="#9aa6b2">RUN</text>
+  <circle cx="140" cy="60" r="3" fill="#5c2222"/><text x="148" y="63" font-size="7" fill="#9aa6b2">ERR</text>
+  <circle cx="140" cy="72" r="3" fill="#8a6d35"/><text x="148" y="75" font-size="7" fill="#9aa6b2">COM</text>
+  <rect x="182" y="46" width="28" height="34" rx="2" fill="#10151b" stroke="#39434f"/>
+  <!-- DI16 -->
+  <rect x="225" y="22" width="94" height="66" rx="3" fill="url(#img-pl-mod)" stroke="#1c232b" stroke-width="1.5"/>
+  <rect x="225" y="22" width="94" height="1.5" fill="rgba(255,255,255,.14)"/>
+  <text x="272" y="36" font-size="9" fill="#cfd8e0" text-anchor="middle">DI 16</text>
+  <rect x="236" y="44" width="4" height="6" fill="#35d06a"/><rect x="244" y="44" width="4" height="6" fill="#35d06a"/><rect x="252" y="44" width="4" height="6" fill="#17351f"/><rect x="260" y="44" width="4" height="6" fill="#35d06a"/><rect x="268" y="44" width="4" height="6" fill="#17351f"/><rect x="276" y="44" width="4" height="6" fill="#17351f"/><rect x="284" y="44" width="4" height="6" fill="#35d06a"/><rect x="292" y="44" width="4" height="6" fill="#17351f"/>
+  <rect x="236" y="54" width="4" height="6" fill="#17351f"/><rect x="244" y="54" width="4" height="6" fill="#35d06a"/><rect x="252" y="54" width="4" height="6" fill="#17351f"/><rect x="260" y="54" width="4" height="6" fill="#17351f"/><rect x="268" y="54" width="4" height="6" fill="#35d06a"/><rect x="276" y="54" width="4" height="6" fill="#17351f"/><rect x="284" y="54" width="4" height="6" fill="#17351f"/><rect x="292" y="54" width="4" height="6" fill="#17351f"/>
+  <rect x="234" y="66" width="76" height="16" fill="#20262e" stroke="#10151b"/>
+  <!-- DO16 -->
+  <rect x="325" y="22" width="94" height="66" rx="3" fill="url(#img-pl-mod)" stroke="#1c232b" stroke-width="1.5"/>
+  <rect x="325" y="22" width="94" height="1.5" fill="rgba(255,255,255,.14)"/>
+  <text x="372" y="36" font-size="9" fill="#cfd8e0" text-anchor="middle">DO 16</text>
+  <rect x="336" y="44" width="4" height="6" fill="#35d06a"/><rect x="344" y="44" width="4" height="6" fill="#17351f"/><rect x="352" y="44" width="4" height="6" fill="#35d06a"/><rect x="360" y="44" width="4" height="6" fill="#17351f"/><rect x="368" y="44" width="4" height="6" fill="#17351f"/><rect x="376" y="44" width="4" height="6" fill="#35d06a"/><rect x="384" y="44" width="4" height="6" fill="#17351f"/><rect x="392" y="44" width="4" height="6" fill="#17351f"/>
+  <rect x="336" y="54" width="4" height="6" fill="#17351f"/><rect x="344" y="54" width="4" height="6" fill="#17351f"/><rect x="352" y="54" width="4" height="6" fill="#35d06a"/><rect x="360" y="54" width="4" height="6" fill="#17351f"/><rect x="368" y="54" width="4" height="6" fill="#35d06a"/><rect x="376" y="54" width="4" height="6" fill="#17351f"/><rect x="384" y="54" width="4" height="6" fill="#17351f"/><rect x="392" y="54" width="4" height="6" fill="#17351f"/>
+  <rect x="334" y="66" width="76" height="16" fill="#20262e" stroke="#10151b"/>
+  <!-- AI-TC -->
+  <rect x="425" y="22" width="94" height="66" rx="3" fill="url(#img-pl-mod)" stroke="#1c232b" stroke-width="1.5"/>
+  <rect x="425" y="22" width="94" height="1.5" fill="rgba(255,255,255,.14)"/>
+  <text x="472" y="36" font-size="9" fill="#cfd8e0" text-anchor="middle">AI-TC ×4</text>
+  <circle cx="440" cy="50" r="3" fill="#35d06a"/><circle cx="452" cy="50" r="3" fill="#35d06a"/><circle cx="464" cy="50" r="3" fill="#35d06a"/><circle cx="476" cy="50" r="3" fill="#17351f"/>
+  <path d="M436 64 H508 M436 72 H508" stroke="#2f8f4e" stroke-width="2.5"/>
+  <rect x="434" y="78" width="76" height="6" fill="#20262e"/>
+  <!-- rack plate -->
+  <rect x="540" y="28" width="336" height="24" rx="4" fill="#10151b" stroke="#39434f"/>
+  <text x="552" y="44" font-size="11" fill="#cfd8e0" letter-spacing="1">S5-PLC · MOLD-LINE 5 · SLOT RACK</text>
+  <text x="552" y="76" font-size="9" fill="#7c8996">SCAN 4 ms · PROG IMOLD_V12</text>
+  <circle cx="860" cy="72" r="4" fill="#35d06a"/>
+
+  <!-- ====== STATE + TIMER CELLS ====== -->
+  <rect x="15" y="98" width="290" height="24" rx="3" fill="#0a0f14" stroke="#2c3844" stroke-width="1.5"/>
+  <text x="24" y="114" font-size="9" fill="#6b7684">STATE</text>
+  <text id="im-state" x="180" y="115" font-size="14" fill="#7fe0d0" text-anchor="middle" font-weight="bold">IDLE</text>
+  <rect x="315" y="98" width="245" height="24" rx="3" fill="#0a0f14" stroke="#2c3844" stroke-width="1.5"/>
+  <text id="im-tm1" x="437" y="115" font-size="12" fill="#ffd27a" text-anchor="middle">T1 INJ 0.0s</text>
+  <rect x="570" y="98" width="245" height="24" rx="3" fill="#0a0f14" stroke="#2c3844" stroke-width="1.5"/>
+  <text id="im-tm2" x="692" y="115" font-size="12" fill="#ffd27a" text-anchor="middle">T2 COOL 0.0s</text>
+  <rect x="825" y="98" width="60" height="24" rx="3" fill="#0a0f14" stroke="#2c3844" stroke-width="1.5"/>
+  <text x="855" y="114" font-size="8" fill="#6b7684" text-anchor="middle">LADDER</text>
+
+  <!-- ====== LADDER MONITOR SCREEN (game draws rungs here) ====== -->
+  <rect x="15" y="125" width="870" height="290" fill="#05080b" stroke="#2c3844" stroke-width="2"/>
+  <g id="im-ladder"></g>
+
+  <!-- ====== LEGEND STRIP ====== -->
+  <rect x="15" y="428" width="870" height="34" rx="4" fill="#171d24" stroke="#10151b"/>
+  <text x="30" y="449" font-size="9" fill="#6b7684">LADDER MONITOR</text>
+  <line x1="170" y1="445" x2="205" y2="445" stroke="#33d1c9" stroke-width="3"/>
+  <text x="212" y="449" font-size="9" fill="#9aa6b2">ENERGIZED</text>
+  <line x1="310" y1="445" x2="345" y2="445" stroke="#24313d" stroke-width="3"/>
+  <text x="352" y="449" font-size="9" fill="#9aa6b2">OFF</text>
+  <circle cx="420" cy="445" r="7" fill="none" stroke="#33d1c9" stroke-width="2"/>
+  <text x="435" y="449" font-size="9" fill="#9aa6b2">COIL ON</text>
+  <rect x="520" y="438" width="26" height="14" rx="2" fill="none" stroke="#8a6d35" stroke-width="2"/>
+  <text x="554" y="449" font-size="9" fill="#9aa6b2">TIMER</text>
+  <text x="870" y="449" font-size="9" fill="#6b7684" text-anchor="end">RUNGS LIVE FROM CPU</text>
+
+  <!-- bottom plates -->
+  <rect x="15" y="474" width="420" height="64" rx="6" fill="#10151b" stroke="#39434f" stroke-width="1.5"/>
+  <text x="30" y="496" font-size="10" fill="#9aa6b2">I/O MAP</text>
+  <text x="30" y="512" font-size="9" fill="#7c8996">DI0 GUARD · DI1 ESTOP · DI2 MOLD CLOSED · DI3 EJECT RTN</text>
+  <text x="30" y="526" font-size="9" fill="#7c8996">DO0 PUMP · DO1 K5 HEAT · DO2 INJ VLV · DO3 EJECT VLV</text>
+  <rect x="455" y="474" width="430" height="64" rx="6" fill="#10151b" stroke="#39434f" stroke-width="1.5"/>
+  <text x="470" y="496" font-size="10" fill="#9aa6b2">ANALOG</text>
+  <text x="470" y="512" font-size="9" fill="#7c8996">AI0 TC Z1 · AI1 TC Z2 · AI2 TC Z3 · AI3 MOLD TC</text>
+  <text x="470" y="526" font-size="9" fill="#7c8996">AI4 HYD PRESS · AO0 INJ SERVO · AO1 BACKPRESS</text>
+</svg>
+    <svg class="layer" data-machine="molder" data-layer="hmi" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,Menlo,Consolas,monospace">
+  <defs>
+    <linearGradient id="img-hm-bezel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a5866"/><stop offset=".5" stop-color="#333d48"/><stop offset="1" stop-color="#242c36"/>
+    </linearGradient>
+    <linearGradient id="img-hm-steel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8a97a5"/><stop offset=".5" stop-color="#4a5866"/><stop offset="1" stop-color="#2c3844"/>
+    </linearGradient>
+    <linearGradient id="img-hm-screen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a1219"/><stop offset="1" stop-color="#060a0f"/>
+    </linearGradient>
+    <linearGradient id="img-hm-key" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#59646f"/><stop offset="1" stop-color="#333d47"/>
+    </linearGradient>
+    <g id="img-hm-screw"><circle r="7" fill="#39434f" stroke="#1c232b" stroke-width="1.5"/><line x1="-4" y1="0" x2="4" y2="0" stroke="#9aa6b2" stroke-width="1.6"/><line x1="0" y1="-4" x2="0" y2="4" stroke="#9aa6b2" stroke-width="1.6"/></g>
+  </defs>
+
+  <!-- panel shadow -->
+  <rect x="52" y="42" width="812" height="500" rx="14" fill="rgba(0,0,0,.4)"/>
+
+  <!-- bezel -->
+  <rect x="40" y="30" width="820" height="500" rx="14" fill="url(#img-hm-bezel)" stroke="#141a20" stroke-width="2.5"/>
+  <rect x="46" y="34" width="808" height="3" rx="1.5" fill="rgba(255,255,255,.14)"/>
+  <use href="#img-hm-screw" x="62" y="52"/><use href="#img-hm-screw" x="838" y="52"/>
+  <use href="#img-hm-screw" x="62" y="508"/><use href="#img-hm-screw" x="838" y="508"/>
+
+  <!-- brand plate -->
+  <rect x="86" y="46" width="200" height="32" rx="5" fill="#10151b" stroke="#39434f" stroke-width="1.5"/>
+  <text x="186" y="67" font-size="14" fill="#cfd8e0" text-anchor="middle" letter-spacing="2" font-weight="bold">MOLDVIEW 600</text>
+  <text x="700" y="66" font-size="10" fill="#7c8996" text-anchor="end">OPERATOR TERMINAL · IP65</text>
+
+  <!-- ====== SCREEN ====== -->
+  <rect x="70" y="92" width="620" height="372" rx="6" fill="#10151b" stroke="#141a20" stroke-width="3"/>
+  <rect x="78" y="100" width="604" height="356" rx="3" fill="url(#img-hm-screen)" stroke="#1f2a35" stroke-width="1.5"/>
+  <rect x="78" y="100" width="604" height="2" fill="rgba(255,255,255,.06)"/>
+  <polygon points="78,100 250,100 120,456 78,456" fill="rgba(255,255,255,.02)"/>
+
+  <!-- alarm banner -->
+  <rect id="im-banner" x="92" y="112" width="576" height="36" rx="4" fill="#22303c"/>
+  <text id="im-bannertext" x="380" y="136" font-size="15" fill="#cfd8e0" text-anchor="middle" font-weight="bold">NO ACTIVE ALARMS</text>
+
+  <!-- station name -->
+  <text x="380" y="182" font-size="20" fill="#7fe0d0" text-anchor="middle" letter-spacing="3" font-weight="bold">MOLD-LINE 5</text>
+  <line x1="120" y1="196" x2="640" y2="196" stroke="#1f2a35" stroke-width="2"/>
+
+  <!-- good parts counter -->
+  <rect x="106" y="216" width="330" height="160" rx="6" fill="#0a1016" stroke="#1f2a35" stroke-width="2"/>
+  <text x="126" y="244" font-size="12" fill="#6b7684" letter-spacing="2">GOOD PARTS</text>
+  <text id="im-goodhmi" x="271" y="330" font-size="72" fill="#7bd88a" text-anchor="middle" font-weight="bold">0</text>
+  <text x="126" y="362" font-size="10" fill="#4a5866">SHIFT TARGET 1200</text>
+
+  <!-- melt temp readout -->
+  <rect x="456" y="216" width="212" height="160" rx="6" fill="#0a1016" stroke="#1f2a35" stroke-width="2"/>
+  <text x="476" y="244" font-size="12" fill="#6b7684" letter-spacing="2">MELT TEMP</text>
+  <text id="im-melthmi" x="562" y="300" font-size="19" fill="#ffd27a" text-anchor="middle" font-weight="bold">MELT 0°C · SP 220</text>
+  <rect x="476" y="322" width="172" height="12" rx="6" fill="#141b23" stroke="#1f2a35"/>
+  <rect x="476" y="322" width="70" height="12" rx="6" fill="#8a6d35"/>
+  <text x="476" y="360" font-size="10" fill="#4a5866">ZONE PROFILE 200/215/220</text>
+
+  <!-- status footer on screen -->
+  <line x1="92" y1="398" x2="668" y2="398" stroke="#1f2a35" stroke-width="2"/>
+  <text x="92" y="424" font-size="11" fill="#4a5866">CYCLE 24.8s</text>
+  <text x="240" y="424" font-size="11" fill="#4a5866">CLAMP 180t</text>
+  <text x="392" y="424" font-size="11" fill="#4a5866">AUTO MODE</text>
+  <text x="540" y="424" font-size="11" fill="#4a5866">REJ 0</text>
+  <text x="92" y="444" font-size="10" fill="#33424f">F1 CYCLE · F2 TEMPS · F3 ALARMS · F4 SETUP</text>
+
+  <!-- ====== LAMP COLUMN ====== -->
+  <rect x="712" y="92" width="136" height="290" rx="8" fill="url(#img-hm-steel)" stroke="#1c232b" stroke-width="1.5"/>
+  <rect x="712" y="92" width="136" height="2" fill="rgba(255,255,255,.16)"/>
+  <circle cx="750" cy="132" r="19" fill="none" stroke="#20262e" stroke-width="5"/>
+  <circle id="imlamp-run" cx="750" cy="132" r="14" fill="#1c4a2e"/>
+  <text x="778" y="137" font-size="11" fill="#141a20" font-weight="bold">RUN</text>
+  <circle cx="750" cy="196" r="19" fill="none" stroke="#20262e" stroke-width="5"/>
+  <circle id="imlamp-fault" cx="750" cy="196" r="14" fill="#4a1c1c"/>
+  <text x="778" y="201" font-size="11" fill="#141a20" font-weight="bold">FAULT</text>
+  <circle cx="750" cy="260" r="19" fill="none" stroke="#20262e" stroke-width="5"/>
+  <circle id="imlamp-estop" cx="750" cy="260" r="14" fill="#1c4a2e"/>
+  <text x="778" y="256" font-size="11" fill="#141a20" font-weight="bold">E-STOP</text>
+  <text x="778" y="270" font-size="11" fill="#141a20" font-weight="bold">OK</text>
+  <rect x="726" y="300" width="108" height="66" rx="4" fill="#2a333d" stroke="#1c232b"/>
+  <circle cx="780" cy="333" r="24" fill="url(#img-hm-key)" stroke="#1c232b" stroke-width="2"/>
+  <rect x="777" y="315" width="6" height="20" rx="3" fill="#141a20"/>
+  <text x="780" y="376" font-size="8" fill="#9aa6b2" text-anchor="middle">MODE</text>
+
+  <!-- ====== MEMBRANE KEYS ====== -->
+  <rect x="70" y="476" width="620" height="42" rx="6" fill="#20262e" stroke="#141a20" stroke-width="2"/>
+  <rect x="84" y="482" width="60" height="30" rx="4" fill="url(#img-hm-key)" stroke="#1c232b" stroke-width="1.5"/>
+  <text x="114" y="501" font-size="10" fill="#cfd8e0" text-anchor="middle">F1</text>
+  <rect x="154" y="482" width="60" height="30" rx="4" fill="url(#img-hm-key)" stroke="#1c232b" stroke-width="1.5"/>
+  <text x="184" y="501" font-size="10" fill="#cfd8e0" text-anchor="middle">F2</text>
+  <rect x="224" y="482" width="60" height="30" rx="4" fill="url(#img-hm-key)" stroke="#1c232b" stroke-width="1.5"/>
+  <text x="254" y="501" font-size="10" fill="#cfd8e0" text-anchor="middle">F3</text>
+  <rect x="294" y="482" width="60" height="30" rx="4" fill="url(#img-hm-key)" stroke="#1c232b" stroke-width="1.5"/>
+  <text x="324" y="501" font-size="10" fill="#cfd8e0" text-anchor="middle">F4</text>
+  <rect x="364" y="482" width="60" height="30" rx="4" fill="url(#img-hm-key)" stroke="#1c232b" stroke-width="1.5"/>
+  <text x="394" y="501" font-size="10" fill="#cfd8e0" text-anchor="middle">F5</text>
+  <rect x="448" y="482" width="44" height="30" rx="4" fill="url(#img-hm-key)" stroke="#1c232b" stroke-width="1.5"/>
+  <text x="470" y="502" font-size="12" fill="#cfd8e0" text-anchor="middle">▲</text>
+  <rect x="500" y="482" width="44" height="30" rx="4" fill="url(#img-hm-key)" stroke="#1c232b" stroke-width="1.5"/>
+  <text x="522" y="502" font-size="12" fill="#cfd8e0" text-anchor="middle">▼</text>
+  <rect x="552" y="482" width="58" height="30" rx="4" fill="#1c4a2e" stroke="#123421" stroke-width="1.5"/>
+  <text x="581" y="501" font-size="9" fill="#a8e8b8" text-anchor="middle">ENTER</text>
+  <rect x="618" y="482" width="58" height="30" rx="4" fill="#4a1c1c" stroke="#341212" stroke-width="1.5"/>
+  <text x="647" y="501" font-size="9" fill="#e8a8a8" text-anchor="middle">STOP</text>
+
+  <!-- lower right plate -->
+  <rect x="712" y="400" width="136" height="118" rx="6" fill="#10151b" stroke="#39434f" stroke-width="1.5"/>
+  <text x="780" y="424" font-size="9" fill="#9aa6b2" text-anchor="middle">MOLD-LINE 5</text>
+  <text x="780" y="440" font-size="8" fill="#6b7684" text-anchor="middle">HMI NODE 05</text>
+  <text x="780" y="456" font-size="8" fill="#6b7684" text-anchor="middle">FW 6.2.1</text>
+  <text x="780" y="484" font-size="8" fill="#4a5866" text-anchor="middle">SER 600-2214-05</text>
+  <text x="780" y="500" font-size="8" fill="#4a5866" text-anchor="middle">24VDC 0.8A</text>
+</svg>
+
   </div>
 
   <!-- ============ INSTRUMENT PANEL ============ -->
@@ -4003,7 +4798,7 @@ let acc=0, last=performance.now();
 function loop(now){
   let d=(now-last)/1000; last=now; if(d>0.25)d=0.25; acc+=d;
   while(acc>=DT){
-    if(plant.on){ pressStep(DT); cvStep(DT); rbStep(DT); plantTick(DT); }
+    if(plant.on){ pressStep(DT); cvStep(DT); rbStep(DT); imStep(DT); plantTick(DT); }
     else MACHINE.step(DT);
     if(career.active&&career.open){ career.ticketTime+=DT; career.shiftTime+=DT; }  // career downtime clock
     acc-=DT;
@@ -4365,7 +5160,7 @@ document.querySelectorAll('.dtab').forEach(t=>t.onclick=()=>{
 });
 
 $('briefbody').innerHTML=`
-<b style="color:var(--amber)">🏭 PLANT MODE:</b> the endgame — unlock all three machines at grade C+, then run the WHOLE
+<b style="color:var(--amber)">🏭 PLANT MODE:</b> the endgame — unlock all FOUR machines at grade C+, then run the WHOLE
 floor at once: every machine steps simultaneously in AUTO, hidden faults (some <b>degrading over time</b>) land
 anywhere, work orders queue, and you are scored on <b>fleet uptime</b>.
 <br><br>
@@ -4373,9 +5168,11 @@ anywhere, work orders queue, and you are scored on <b>fleet uptime</b>.
 Thermal camera now shows an actual heat-glow overlay; failing bearings visibly vibrate, leaking seals drip,
 chafed wiring sparks at full stroke; faulted machines strobe red.
 <br><br>
-<b style="color:var(--blue)">▶ THREE MACHINES:</b> the dropdown in the top-left switches between <b>SORT-LINE 2</b> (belt
-conveyor · ★), <b>PRESS-LINE 3</b> (hydraulic press · ★★) and <b>PICK-CELL 4</b> (gantry robot · ★★★) — each with its own
-physics, PLC program, instruments, fault library and per-machine personal best.
+<b style="color:var(--blue)">▶ FOUR MACHINES:</b> the dropdown in the top-left switches between <b>SORT-LINE 2</b> (belt
+conveyor · ★), <b>PRESS-LINE 3</b> (hydraulic press · ★★), <b>PICK-CELL 4</b> (gantry robot · ★★★) and <b>MOLD-LINE 5</b>
+(injection molder · ★★★★ — barrel heater zones under TC control, screw & check ring, mold cooling; short shots,
+burned parts and flash all emerge from the process physics) — each with its own physics, PLC program, instruments,
+fault library and per-machine personal best.
 <br><br>
 <b style="color:var(--blue)">▶ CAREER MODE:</b> press <b>START SHIFT</b> (top bar) for the game — work orders with hidden faults
 (shuffled order + randomized severity every shift, and the last two are ⚠ PRIORITY tickets with <b>two simultaneous
@@ -4834,6 +5631,234 @@ const rbREPAIRS=[['CUPP','Replace vacuum cup / bellows'],['XDRVP','Replace X ser
   ['VPUMPP','Rebuild vacuum pump'],['CURTP','Realign light curtain'],['ZENCP','Replace Z-axis encoder']];
 
 /* =========================================================================
+   MACHINE 4 — MOLD-LINE 5 (hydraulic-clamp injection molder). The new
+   physics dimension is THERMAL PROCESS CONTROL: three barrel heater zones
+   under PLC bang-bang control via thermocouples, mold cooling water, and
+   melt-quality consequences. Faults are data overrides via imEff; short
+   shots, burned parts, flash and eject-sticking all emerge.
+   ========================================================================= */
+const imP={ htr:{z1:1,z2:1,z3:1}, tc2:{offset:0}, ring:{leak:0},
+            cool:{flow:1}, clamp:{eff:1}, hopper:{ok:1} };
+const imFaults={};
+function imEff(path){ const [c,k]=path.split('.'); let v=imP[c][k]; const f=imFaults[path];
+  if(!f) return v;
+  if(f.mode==='ramp') return f.from+(f.to-f.from)*Math.max(0,Math.min(1,(plant.t-f.start)/f.dur));
+  if(f.mode==='scale') return v*f.value;
+  if(f.mode==='offset') return v+f.value;
+  if(f.mode==='set') return f.value;
+  return v; }
+const imS={ state:'IDLE', faultCode:'', estopOK:true,
+  T:[220,220,220], tc:[220,220,220], heatOn:[false,true,false], heaterAmps:0,   // machine left at temp
+  moldT:30, clampX:0, clampT:0, clampF:0, screw:0, screwT:0, fill:0, cushion:0,
+  shotBridged:false, partFlash:false, partQ:'', partAge:9,
+  good:0, weak:0, cycleT:0, cost:0, tm1:0, tm2:0, plcAcc:0 };
+
+function imStep(dt){
+  // barrel zone thermodynamics: heater power in, ambient loss out
+  for(let z=0; z<3; z++){
+    const hp=imEff('htr.z'+(z+1))*(imS.heatOn[z]?1:0);
+    imS.T[z]+=(hp*22-(imS.T[z]-25)*0.10)*dt;
+    imS.tc[z]=imS.T[z]+(z===1?imEff('tc2.offset'):0);   // the PLC only ever sees the TC
+  }
+  imS.heaterAmps=imS.heatOn.reduce((a,on,z)=>a+(on?imEff('htr.z'+(z+1))*8:0),0);
+  // mold cooling water pulls mold heat toward 30°C, scaled by flow
+  imS.moldT+=-(imS.moldT-30)*0.08*imEff('cool.flow')*dt;
+  // clamp carriage + tonnage
+  imS.clampX+=Math.max(-190*dt,Math.min(190*dt,imS.clampT-imS.clampX));
+  const fTarget=(imS.clampX>=139&&(imS.state==='CLAMP'||imS.state==='INJECT'||imS.state==='PACK'||imS.state==='COOL'))
+    ?200*imEff('clamp.eff'):0;
+  imS.clampF+=Math.max(-260*dt,Math.min(130*dt,fTarget-imS.clampF));
+  // screw: forward during injection; melt delivery loses across a worn check ring
+  const ds=Math.max(-160*dt,Math.min(78*dt,imS.screwT-imS.screw));
+  imS.screw+=ds;
+  if(imS.state==='INJECT'&&ds>0){
+    imS.fill+=ds*(1-imEff('ring.leak'))*(imS.shotBridged?0.45:1)*(105/90);
+    if(imS.fill>=100){ imS.screwT=imS.screw; imS.cushion=90-imS.screw; }
+  }
+  imS.partAge+=dt;
+  if(imS.state!=='IDLE'&&imS.state!=='FAULTED'&&imS.state!=='ESTOP') imS.cycleT+=dt;
+  if(imS.state==='FAULTED'||imS.state==='ESTOP') imS.cost+=dt*7;
+  imS.plcAcc+=dt; if(imS.plcAcc>=0.1){ imS.plcAcc-=0.1; imScan(); }
+}
+function imFault(code,msg){ imS.state='FAULTED'; imS.faultCode=code;
+  imS.screwT=imS.screw; log('alarm','active',code+' · '+msg); }
+function imScan(){
+  if(!imS.estopOK){ imS.state='ESTOP'; imS.faultCode='E-STOP'; imS.heatOn=[false,false,false]; return; }
+  // zone heat regulation runs in every state (bang-bang ±2°C on the TC reading)
+  for(let z=0;z<3;z++){
+    if(imS.tc[z]<218) imS.heatOn[z]=true; else if(imS.tc[z]>222) imS.heatOn[z]=false;
+  }
+  switch(imS.state){
+    case 'IDLE': break;
+    case 'CLAMP': imS.clampT=140; imS.tm2+=0.1;
+      if(imS.clampX>=139&&imS.clampF>=175&&imS.screw<=2){ imS.state='MELT_CHK'; }   // screw-recovery interlock
+      else if(imS.tm2>4){ imFault('ALM-4404','TONNAGE NOT REACHED · clamp cannot build force'); }
+      break;
+    case 'MELT_CHK':{
+      const out=imS.tc.some(t=>t<208||t>232);
+      if(out){ imFault('ALM-4401','MELT TEMP OUT OF WINDOW · zone TCs '+imS.tc.map(t=>t.toFixed(0)).join('/')); break; }
+      imS.shotBridged=(imEff('hopper.ok')<1&&rnd()<0.5);     // bridged hopper starves the shot
+      imS.fill=0; imS.cushion=0; imS.screwT=90; imS.tm1=0; imS.state='INJECT'; break; }
+    case 'INJECT': imS.tm1+=0.1;
+      if(imS.fill>=100||imS.screw>=89.5){ imS.cushion=Math.max(0,90-imS.screw);
+        imS.state='PACK'; imS.tm1=0; }
+      else if(imS.tm1>3){ imFault('ALM-4402','SHORT SHOT · screw stalled, no cushion'); }
+      break;
+    case 'PACK': imS.tm1+=0.1;
+      if(imS.tm1<0.15&&imS.cushion<=1){ imFault('ALM-4402','SHORT SHOT · screw bottomed, zero cushion'); break; }
+      imS.partFlash=(imS.clampF<192&&imS.fill>=97);
+      if(imS.tm1>=0.8){ imS.moldT+=9; imS.tm1=0; imS.state='COOL'; }
+      break;
+    case 'COOL':{ imS.tm1+=0.1;
+      const need=2.2*(1+Math.max(0,imS.moldT-42)/25);
+      if(imS.moldT>72){ imFault('ALM-4403','EJECT FAULT · part sticking, mold overtemperature'); break; }
+      if(imS.tm1>=need){ imS.state='OPEN'; imS.clampT=0; } break; }
+    case 'OPEN': if(imS.clampX<=2){ imS.state='EJECT'; } break;
+    case 'EJECT':{
+      const burned=imS.T[1]>240;
+      imS.partQ=burned?'burned':imS.partFlash?'flash':'good';
+      imS.partAge=0; imS.good++;
+      if(burned){ imS.weak++; log('alarm','info','ALM-4400 (advisory) PART DEGRADED · melt ran '+imS.T[1].toFixed(0)+'°C actual — brown/brittle'); }
+      else if(imS.partFlash){ imS.weak++; log('alarm','info','ALM-4405 (advisory) FLASH ON PARTING LINE · tonnage '+imS.clampF.toFixed(0)+'t at pack'); }
+      else log('alarm','ok','CYCLE COMPLETE · good part ('+imS.good+' total)');
+      imS.screwT=0; imS.state='IDLE';
+      if(S.auto&&(MACHINE.id==='molder'||plant.on)) setTimeout(()=>{ if(imS.state==='IDLE') imStart(); },600);
+      break; }
+    case 'FAULTED': case 'ESTOP': break;
+  }
+}
+function imStart(){ if(imS.state!=='IDLE')return;
+  imS.state='CLAMP'; imS.tm1=0; imS.tm2=0; imS.cycleT=0; imS.clampT=140; imS.screwT=0;
+  log('alarm','','CYCLE START · clamp & shoot'); }
+function imReset(){ if(!imS.estopOK)return;
+  imS.state='IDLE'; imS.faultCode=''; imS.clampT=0; imS.screwT=0; imS.tm1=0; imS.tm2=0;
+  imS.fill=0; imS.cushion=0; imS.partFlash=false;
+  log('alarm','','FAULT RESET · clamp opened, screw retracted'); }
+function imEstop(){ imS.estopOK=!imS.estopOK;
+  if(!imS.estopOK){ imS.state='ESTOP'; log('alarm','active','E-STOP PRESSED · MOLD-LINE 5 safe state'); }
+  else { imS.state='IDLE'; imS.faultCode=''; log('alarm','','E-STOP RELEASED'); } }
+function imSpecial(){                                    // purge shot + cooling flow check
+  const dT=(imS.moldT-30)*0.30*imEff('cool.flow');
+  log('alarm','info','PURGE/FLOW CHECK · actual barrel '+imS.T.map(t=>t.toFixed(0)).join('/')+'°C vs TC '
+    +imS.tc.map(t=>t.toFixed(0)).join('/')+'°C'
+    +(Math.abs(imS.T[1]-imS.tc[1])>10?' — ⚠ zone 2 disagrees, TC suspect!':'')
+    +' · cooling ΔT '+dT.toFixed(1)+'°C'+(imEff('cool.flow')<0.5?' — ⚠ almost no water moving':''));
+}
+function tint(t){ return t<60?'#2b3a2b':t<150?'#7a6a2c':t<230?'#c96a2a':'#ff5252'; }
+function imRenderMold(){
+  $('im-clampcar').setAttribute('transform',`translate(${imS.clampX.toFixed(1)} 0)`);
+  $('im-screwpos').setAttribute('transform',`translate(${(-imS.screw).toFixed(1)} 0)`);
+  const po=$('im-partout');
+  po.setAttribute('opacity',imS.partAge<2.4?'1':'0.15');
+  po.setAttribute('fill',imS.partQ==='burned'?'#8a4a2a':imS.partQ==='flash'?'#c9a35a':'#33d17a');
+  $('im-tonnage').textContent=imS.clampF.toFixed(0)+' t';
+  $('im-cushion').textContent='CUSHION '+imS.cushion.toFixed(1);
+  $('im-cushion').style.fill=imS.cushion<=1&&imS.state!=='IDLE'?'var(--red)':'var(--cyan)';
+  $('im-moldT').textContent='MOLD '+imS.moldT.toFixed(0)+'°C';
+  $('im-moldT').style.fill=imS.moldT>65?'var(--red)':'var(--cyan)';
+}
+function imRenderHeat(){
+  for(let z=0;z<3;z++){
+    const el=$('im-z'+(z+1)); const c=tint(imS.T[z]);
+    if(el._c!==c){ el.setAttribute('fill',c); el._c=c; }
+    $('im-t'+(z+1)).textContent=imS.tc[z].toFixed(0)+'°C';
+    $('im-t'+(z+1)).style.fill=(imS.tc[z]>205&&imS.tc[z]<235)?'var(--green)':'var(--amber)';
+  }
+  setPipe('imw-coolin',(imS.moldT-25)*imEff('cool.flow'),imEff('cool.flow')>0.5?2:0);
+  setPipe('imw-coolout',(imS.moldT-25)*imEff('cool.flow'),imEff('cool.flow')>0.5?2:0);
+  $('im-moldtemp').textContent=imS.moldT.toFixed(0)+'°C';
+  $('im-moldtemp').style.fill=imS.moldT>65?'var(--red)':'var(--cyan)';
+}
+function imRenderElec(){
+  $('imw-24').style.stroke='var(--green)';
+  $('imw-estop').style.stroke=imS.estopOK?'var(--green)':'var(--red)';
+  for(let z=0;z<3;z++) $('imw-h'+(z+1)).style.stroke=imS.heatOn[z]?'var(--green)':'var(--edge)';
+  $('im-hamps').textContent=imS.heaterAmps.toFixed(1)+' A';
+  lamp('imi-run',imS.state!=='IDLE'&&imS.state!=='FAULTED'&&imS.state!=='ESTOP','#33d17a');
+  lamp('imi-fault',imS.state==='FAULTED','#ff5252');
+}
+function imRungs(){ return [
+  {y:150,label:'HEATERS EN (Q0.0)',on:imS.estopOK&&imS.heatOn.some(h=>h),conds:[['E-STOP OK',imS.estopOK?1:0],['ANY TC<218',imS.heatOn.some(h=>h)?1:0]]},
+  {y:210,label:'CLAMP SOL (Q0.1)',on:imS.clampT>0,conds:[['CYCLE',imS.state!=='IDLE'?1:0],['NOT FAULT',imS.state!=='FAULTED'?1:0]]},
+  {y:270,label:'INJECT FWD (Q0.2)',on:imS.state==='INJECT',conds:[['TONNAGE OK',imS.clampF>=175?1:0],['MELT OK',imS.tc.every(t=>t>=208&&t<=232)?1:0]]},
+  {y:330,label:'SHORT-SHOT FLT',on:imS.faultCode==='ALM-4402',conds:[['PACK',imS.state==='PACK'?1:0],['CUSHION≤1',imS.cushion<=1?1:0]]},
+  {y:390,label:'MELT-WINDOW FLT',on:imS.faultCode==='ALM-4401',conds:[['TC OUT 208-232',imS.tc.some(t=>t<208||t>232)?1:0]]},
+];}
+function imRenderPLC(){
+  $('im-state').textContent=imS.state;
+  $('im-state').style.fill=imS.state==='FAULTED'?'var(--red)':'var(--green)';
+  $('im-tm1').textContent='T-CYC '+imS.tm1.toFixed(1);
+  $('im-tm2').textContent='T-CLAMP '+imS.tm2.toFixed(1)+'/4.0';
+  paintLadder('im-ladder',imRungs());
+}
+function imRenderHMI(){
+  $('im-goodhmi').textContent=imS.good;
+  $('im-melthmi').textContent='MELT '+imS.tc[1].toFixed(0)+'°C · SP 220';
+  lamp('imlamp-run',imS.state!=='IDLE'&&imS.state!=='FAULTED'&&imS.state!=='ESTOP','#33d17a');
+  lamp('imlamp-fault',imS.state==='FAULTED','#ff5252');
+  lamp('imlamp-estop',imS.estopOK,'#33d17a');
+  const b=$('im-banner'), t=$('im-bannertext');
+  if(!imS.estopOK){ b.setAttribute('fill','#3a1717'); b.setAttribute('stroke','#7a2c2c'); t.setAttribute('fill','#ff5252'); t.textContent='⛔ E-STOP ACTIVE'; }
+  else if(imS.state==='FAULTED'){ b.setAttribute('fill','#3a1717'); b.setAttribute('stroke','#7a2c2c'); t.setAttribute('fill','#ff5252'); t.textContent='⛔ '+imS.faultCode; }
+  else if(imS.state==='IDLE'){ b.setAttribute('fill','#12351f'); b.setAttribute('stroke','#2c7a48'); t.setAttribute('fill','#33d17a'); t.textContent='SYSTEM READY'; }
+  else { b.setAttribute('fill','#16283a'); b.setAttribute('stroke','#2c5a8a'); t.setAttribute('fill','#4aa3ff'); t.textContent='CYCLE RUNNING · '+imS.state; }
+}
+const imTP={
+  PSU5:{d:'dmm',name:'24V PSU',get:()=>[24,'VDC','']},
+  ESTOP5:{d:'dmm',name:'E-stop chain',get:()=>[imS.estopOK?24:0,'VDC',imS.estopOK?'':'⛔ open']},
+  K5:{d:'dmm',name:'heater contactor',get:()=>[imS.heatOn.some(h=>h)?230:0,'VAC',imS.heaterAmps.toFixed(1)+' A total']},
+  HTR2:{d:'dmm',name:'zone-2 heater band',get:()=>{const a=imS.heatOn[1]?imEff('htr.z2')*8:0;
+    return [a,'A',(imS.heatOn[1]&&a<1)?'⚠ contactor calling for heat, band draws NOTHING — open element!':''];}},
+  TC2:{d:'dmm',name:'zone-2 thermocouple',get:()=>[(imS.tc[1]*0.0405).toFixed(2),'mV','reads '+imS.tc[1].toFixed(0)+'°C'
+    +(Math.abs(imEff('tc2.offset'))>10?' — ⚠ band area looks hotter than that; verify with thermal':'')]},
+  CLAMPG:{d:'press',name:'clamp circuit gauge',get:()=>[imS.clampF*1.05,'bar',imS.clampF.toFixed(0)+' t'
+    +(imEff('clamp.eff')<0.96&&imS.clampF>100?' — a touch shy of the 200t plate':'')]},
+  NOZZLE:{d:'press',name:'injection pressure',get:()=>[imS.state==='INJECT'?165:imS.state==='PACK'?120:0,'bar','']},
+  RING:{d:'press',name:'check-ring / cushion',get:()=>[imS.cushion,'mm cushion',
+    (imEff('ring.leak')>0.2&&imS.good+0>=0)?'⚠ cushion collapses shot after shot — melt leaking back past the ring?':'']},
+  SCREW:{d:'thermal',name:'barrel mid (Z2 area)',get:()=>[imS.T[1],'°C','ACTUAL surface temperature']},
+  BARREL1:{d:'thermal',name:'zone 1 band',get:()=>[imS.T[0],'°C','']},
+  BARREL2:{d:'thermal',name:'zone 2 band',get:()=>[imS.T[1],'°C',
+    Math.abs(imS.T[1]-imS.tc[1])>10?'⚠ camera disagrees with the TC reading':'']},
+  BARREL3:{d:'thermal',name:'zone 3 band',get:()=>[imS.T[2],'°C','']},
+  MOLDT:{d:'thermal',name:'mold block',get:()=>[imS.moldT,'°C',imS.moldT>60?'⚠ running hot — cooling?':'']},
+  MOLD:{d:'thermal',name:'mold halves',get:()=>[imS.moldT,'°C','']},
+  COOLIN:{d:'thermal',name:'cooling inlet',get:()=>[29,'°C','']},
+  COOLOUT:{d:'thermal',name:'cooling outlet',get:()=>{const dT=(imS.moldT-30)*0.30*imEff('cool.flow');
+    return [29+dT,'°C',(imS.moldT>55&&dT<3)?'⚠ mold is hot but the water is not carrying heat away — flow blocked':''];}},
+  HOPPER:{d:'thermal',name:'hopper throat',get:()=>[38,'°C',imEff('hopper.ok')<1?'⚠ material hangs up — tap the hopper and watch a shot':'']},
+  PUMP5:{d:'press',name:'clamp pump',get:()=>[imS.clampT>0?190:15,'bar','']},
+  CLAMP:{d:'press',name:'moving platen',get:()=>[imS.clampF*1.05,'bar','']},
+};
+function imIO(){ return [
+  ['AI1 TC ZONE-1',imS.tc[0].toFixed(0)+'°C / true '+imS.T[0].toFixed(0)],
+  ['AI2 TC ZONE-2',imS.tc[1].toFixed(0)+'°C / true '+imS.T[1].toFixed(0)],
+  ['AI3 TC ZONE-3',imS.tc[2].toFixed(0)+'°C / true '+imS.T[2].toFixed(0)],
+  ['AI4 MOLD TEMP',imS.moldT.toFixed(0)+'°C'],
+  ['AI5 CUSHION',imS.cushion.toFixed(1)+' mm'],['AI6 TONNAGE',imS.clampF.toFixed(0)+' t'],
+  ['Q0.0 HEATERS',imS.heatOn.some(h=>h)?1:0],['Q0.1 CLAMP',imS.clampT>0?1:0],
+  ['Q0.2 INJECT',imS.state==='INJECT'?1:0],
+];}
+const imFAULTLIB=[
+  {id:'HTR2', key:'htr.z2',     spec:{mode:'set',value:0},    part:'HTRP',
+   complaint:'"Middle of the barrel won\'t come up to temp — melt-window alarm on every startup."'},
+  {id:'TC2',  key:'tc2.offset', spec:{mode:'set',value:-25},  part:'TC2P', vary:[-30,-20],
+   complaint:'"One melt alarm at shift start, then it ran — but parts come out brown and brittle while the controller swears 220."'},
+  {id:'RING', key:'ring.leak',  spec:{mode:'set',value:0.5},  part:'RINGP', vary:[0.4,0.65],
+   complaint:'"Short-shot alarm every single cycle — screw bottoms out, zero cushion left."'},
+  {id:'COOL', key:'cool.flow',  spec:{mode:'set',value:0.15}, part:'COOLP', vary:[0.05,0.25],
+   complaint:'"Runs fine for a few shots, then parts stick and it faults on eject. Mold feels like a stove."'},
+  {id:'CLAMP',key:'clamp.eff',  spec:{mode:'set',value:0.92}, part:'CLAMPP', vary:[0.9,0.94],
+   complaint:'"QC is rejecting for flash on the parting line. No alarms — tonnage reads fine on the screen."'},
+  {id:'HOPPER',key:'hopper.ok', spec:{mode:'set',value:0.5},  part:'HOPPRP',
+   complaint:'"Random short shots — one in two, maybe. Then it runs clean for an hour. Material? Machine?"'},
+];
+const imPARTCOST={HTRP:120,TC2P:90,RINGP:800,COOLP:150,CLAMPP:900,HOPPRP:60};
+const imREPAIRS=[['HTRP','Replace zone-2 heater band'],['TC2P','Replace zone-2 thermocouple'],
+  ['RINGP','Replace screw check ring'],['COOLP','Descale / flush mold cooling circuit'],
+  ['CLAMPP','Service clamp (seals & toggle)'],['HOPPRP','Fit hopper vibrator / clear bridge']];
+
+/* =========================================================================
    MACHINE REGISTRY + SHELL — one active machine drives the shared cockpit.
    ========================================================================= */
 function pressStep(dt){
@@ -4925,6 +5950,29 @@ const MACHINES={
       ['ZENC','⑤ Z encoder drift — leaning stacks (SENSOR)','zenc.offset',{mode:'set',value:18}]],
     canCycle:()=>rbS.state==='IDLE',
   },
+  molder:{ id:'molder', name:'MOLD-LINE 5', sub:'hydraulic injection molder · ★★★★',
+    layers:[['mold','Machine','clamp · screw'],['heat','Heat/Cool','zones · water'],
+            ['elec','Electrical','heaters · safety'],['plc','PLC Logic','I/O · ladder'],['hmi','HMI','operator panel']],
+    titles:{mold:'MACHINE · CLAMP & INJECTION',heat:'PROCESS · HEATING + COOLING',elec:'ELECTRICAL · HEATER CABINET',plc:'PLC · I/O + LADDER',hmi:'HMI · OPERATOR PANEL'},
+    instruments:[['none','✋ Select'],['dmm','🔌 Multimeter'],['press','🛢 Pressure'],['thermal','🌡 Thermal']],
+    special:{label:'⚙ Purge shot & flow check',fn:imSpecial},
+    faults:imFaults, step:imStep,
+    top:()=>({state:imS.state,fault:imS.faultCode,good:imS.good,weak:imS.weak,cycleT:imS.cycleT,cost:imS.cost,estopOK:imS.estopOK}),
+    render:{mold:imRenderMold,heat:imRenderHeat,elec:imRenderElec,plc:imRenderPLC,hmi:imRenderHMI},
+    TP:imTP, startCycle:imStart, reset:imReset, estop:imEstop, io:imIO,
+    resetCounters:()=>{imS.good=0;imS.weak=0;imS.cost=0;},
+    dotMap:{'ALM-4401':['plc','heat'],'ALM-4402':['plc','mold'],'ALM-4403':['plc','heat'],'ALM-4404':['plc','mold']},
+    faultlib:imFAULTLIB, partcost:imPARTCOST, doublePool:['HTR2','TC2','RING','COOL'],
+    partkey:{HTRP:'htr.z2',TC2P:'tc2.offset',RINGP:'ring.leak',COOLP:'cool.flow',CLAMPP:'clamp.eff',HOPPRP:'hopper.ok'},
+    repairs:imREPAIRS,
+    injects:[['HTR2','① Burned-out zone-2 heater band (ELEC)','htr.z2',{mode:'set',value:0}],
+      ['TC2','② Zone-2 thermocouple drift −25°C (SENSOR)','tc2.offset',{mode:'set',value:-25}],
+      ['RING','③ Worn screw check ring (MECH)','ring.leak',{mode:'set',value:0.5}],
+      ['COOL','④ Blocked mold cooling (PROC)','cool.flow',{mode:'set',value:0.15}],
+      ['CLAMP','⑤ Tired clamp — flash (HYD)','clamp.eff',{mode:'set',value:0.92}],
+      ['HOPPER','⑥ Hopper bridging — random shorts (MAT)','hopper.ok',{mode:'set',value:0.5}]],
+    canCycle:()=>imS.state==='IDLE',
+  },
 };
 let MACHINE=MACHINES.press;
 const INSTRUMENT_NAMES={dmm:'Multimeter',press:'Pressure gauge',thermal:'Thermal camera',tach:'Tachometer',vac:'Vacuum gauge'};
@@ -5014,6 +6062,13 @@ const HINTS={
   BRG:['A MECHANICAL element is binding and loading the motor.','Overcurrent trips + one spot glows on the thermal camera — find the hot bearing.'],
   ENC:['The belt is fine — a FEEDBACK DEVICE is dead.','Chalk-mark test: true speed normal, encoder says zero. Replace the encoder.'],
   GATE:['The diverter ACTUATOR is lazy, not the sensors.','PE-2 pulses correctly in the I/O table but the gate wallows — watch its swing speed.']},
+ molder:{
+  HTR2:['One HEATING element is dead — the controller cannot fix what has no power.','K5 pulls in and two zones draw current; clamp an ammeter on the zone-2 band.'],
+  TC2:['Nothing is broken — a temperature SENSOR is lying and the controller obeys it.','Point the thermal camera at zone 2 and compare with the TC readout, or run a purge check.'],
+  RING:['Melt is escaping BACKWARD inside the barrel during injection.','Watch the cushion value shot-to-shot — a healthy shot holds several mm.'],
+  COOL:['Heat is going INTO the mold faster than the water takes it out.','Compare cooling inlet vs outlet temperature while the mold is hot — no ΔT means no flow.'],
+  CLAMP:['The mold is being held shut with less force than the screen believes.','Watch the clamp gauge at pack — flash appears when tonnage sits just under the plate rating.'],
+  HOPPER:['The machine is fine — the MATERIAL feed starves intermittently.','Random zero-cushion shots with a healthy ring; watch the hopper throat during a shot.']},
  robot:{
   CUP:['The GRIPPER holds at rest but not under motion.','Vacuum is fine standing still and collapses during fast X travel — the cup lip leaks.'],
   XDRV:['One AXIS is underperforming its command.','X drive display shows commanded vs actual velocity — a big gap is a failing drive.'],
@@ -5023,7 +6078,7 @@ const HINTS={
 };
 function bestOf(id){ try{ return JSON.parse(localStorage.getItem(id+'.best')||'null'); }catch(e){ return null; } }
 function gradeOK(id){ const b=bestOf(id); return !!(b && ['A','B','C'].includes(b.grade)); }
-const REQUIRES={press:'conveyor', robot:'press'};
+const REQUIRES={press:'conveyor', robot:'press', molder:'robot'};
 
 const career={active:false,idx:0,plan:[],budget:START_BUDGET,ticketTime:0,shiftTime:0,
   ticketParts:0,wrongThis:0,partsTotal:0,downCost:0,hintCost:0,lastGood:0,fixed:0,
@@ -5279,27 +6334,28 @@ buildGauge();
    The whole floor at once: all three machines step simultaneously in AUTO,
    hidden faults (some DEGRADING over time) land on any machine, work orders
    queue, and the score is FLEET UPTIME. The endgame. */
-const plant={on:false,t:0,dur:360,nextAt:12,open:{press:null,conveyor:null,robot:null},
-  down:{press:0,conveyor:0,robot:0},fixed:0,wrong:0,parts:0,wo:0};
-const DEGRADERS={BRG:1,FILTER:1,CUP:1,BELT:1,CYLSEAL:1};
+const plant={on:false,t:0,dur:360,nextAt:12,open:{press:null,conveyor:null,robot:null,molder:null},
+  down:{press:0,conveyor:0,robot:0,molder:0},fixed:0,wrong:0,parts:0,wo:0};
+const DEGRADERS={BRG:1,FILTER:1,CUP:1,BELT:1,CYLSEAL:1,COOL:1,RING:1};
 function xpAdd(n){ try{ const x=JSON.parse(localStorage.getItem('xp')||'{"fixed":0}');
   x.fixed+=n; localStorage.setItem('xp',JSON.stringify(x)); }catch(e){} }
 function rankName(){ let f=0; try{ f=(JSON.parse(localStorage.getItem('xp')||'{}').fixed)||0; }catch(e){}
   return f>=120?'Plant Wizard ('+f+')':f>=60?'Master Tech ('+f+')':f>=25?'Journeyman ('+f+')':f>=10?'Technician ('+f+')':'Apprentice ('+f+')'; }
 function startPlant(){
   if(career.active){ log('alarm','info','Finish the career shift first.'); return; }
-  if(!(gradeOK('conveyor')&&gradeOK('press')&&gradeOK('robot'))){
-    log('alarm','info','🔒 PLANT MODE unlocks at grade C+ on all three machines.'); return; }
+  if(!(gradeOK('conveyor')&&gradeOK('press')&&gradeOK('robot')&&gradeOK('molder'))){
+    log('alarm','info','🔒 PLANT MODE unlocks at grade C+ on all four machines.'); return; }
   plant.on=true; plant.t=0; plant.nextAt=12; plant.fixed=0; plant.wrong=0; plant.parts=0; plant.wo=0;
-  plant.open={press:null,conveyor:null,robot:null}; plant.down={press:0,conveyor:0,robot:0};
+  plant.open={press:null,conveyor:null,robot:null,molder:null};
+  plant.down={press:0,conveyor:0,robot:0,molder:0};
   for(const id in MACHINES){ const M=MACHINES[id];
     for(const k in M.faults) delete M.faults[k]; M.reset(); M.resetCounters(); }
   S.auto=true;
-  startCycle(); cvStart(); rbStart();
+  startCycle(); cvStart(); rbStart(); imStart();
   $('plantcard').style.display='block'; $('wocard').style.display='none';
   $('btn-inject').disabled=true; $('btn-inject').style.opacity=.4;
   $('btn-plant').style.borderColor='var(--red)';
-  log('alarm','ok','🏭 PLANT SHIFT · 6:00 on the clock · all three machines in AUTO · keep them running');
+  log('alarm','ok','🏭 PLANT SHIFT · 6:00 on the clock · all four machines in AUTO · keep them running');
 }
 function plantTick(dt){
   plant.t+=dt;
@@ -5364,7 +6420,7 @@ function plantEnd(){
   $('sm-title').textContent='PLANT SHIFT COMPLETE';
   $('sm-table').innerHTML=[
     ['Fleet uptime',(fleet*100).toFixed(1)+'%'],
-    ['SORT-LINE 2 / PRESS-LINE 3 / PICK-CELL 4',(up.conveyor*100).toFixed(0)+'% · '+(up.press*100).toFixed(0)+'% · '+(up.robot*100).toFixed(0)+'%'],
+    ['SORT-2 / PRESS-3 / CELL-4 / MOLD-5',(up.conveyor*100).toFixed(0)+'% · '+(up.press*100).toFixed(0)+'% · '+(up.robot*100).toFixed(0)+'% · '+(up.molder*100).toFixed(0)+'%'],
     ['Work orders fixed',plant.fixed+' / '+plant.wo],
     ['Wrong parts',plant.wrong],['Parts spend','$'+plant.parts],
     ['Technician rank',rankName()],
@@ -5528,6 +6584,10 @@ function updateSound(now){
     if(rbS.sol||rbS.blankoff){ hum=0.028; humF=120; }
     if(rbS.sol&&rbS.vac>-60&&rbEff('cup.leak')>8) hiss=0.04;
     if(Math.abs(rbS.xv)>10){ whine=0.018; whineF=200+Math.abs(rbS.xv); } }
+  else if(MACHINE.id==='molder'){
+    if(imS.heatOn.some(h=>h)){ hum=0.03; humF=100; }
+    if(imS.state==='INJECT'){ whine=0.03; whineF=420; }
+    if(imS.moldT>70) hiss=0.02; }
   setG(N.hum,hum); N.hum.o.frequency.setTargetAtTime(humF,AC.currentTime,0.1);
   setG(N.whine,whine); N.whine.o.frequency.setTargetAtTime(whineF,AC.currentTime,0.1);
   setG(N.squeal,squeal); setG(N.relief,relief); setG(N.hiss,hiss);
@@ -5622,7 +6682,7 @@ $('machine-sel').onchange=e=>switchMachine(e.target.value);
     t.querySelector('#resume-btn').onclick=()=>{ t.remove(); resumeShift(); };
   }
 })();
-log('alarm','ok','Workstation online · 3 machines on the floor · ▶ START SHIFT for career mode, or CYCLE to free-play');
+log('alarm','ok','Workstation online · 4 machines on the floor · ▶ START SHIFT for career mode, or CYCLE to free-play');
 renderIO();
 requestAnimationFrame(loop);
 </script>

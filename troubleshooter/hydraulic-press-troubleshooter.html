@@ -117,7 +117,7 @@ table.io .a{color:var(--dim);width:42%}
 .injector button.armed{border-color:var(--red);color:var(--red)}
 .injector .x{position:absolute;top:6px;right:8px;color:var(--dim);background:none;border:none;font-size:14px;width:auto;padding:0}
 /* career work-order card */
-.wocard{position:absolute;top:10px;right:10px;width:250px;background:var(--panel2);border:1px solid var(--blue);
+.wocard{position:absolute;top:60px;right:10px;width:250px;background:var(--panel2);border:1px solid var(--blue);
   border-radius:6px;padding:10px;z-index:9;box-shadow:0 6px 24px #000a}
 .wohead{display:flex;justify-content:space-between;font-size:10px;color:var(--blue);font-weight:700;letter-spacing:.5px}
 .wo-machine{font-size:12px;font-weight:700;color:var(--red);margin:5px 0 3px}
@@ -142,6 +142,13 @@ table.io .a{color:var(--dim);width:42%}
 .sm-log{max-height:150px;overflow:auto;font-size:10px;text-align:left;color:var(--dim);
   background:#05080b;border-radius:5px;padding:8px;margin-top:8px}
 .sm-log div{padding:2px 0;border-bottom:1px solid #1a232c}
+/* tutorial */
+.tut-hl{filter:drop-shadow(0 0 9px var(--blue)) drop-shadow(0 0 3px var(--blue));outline:2px solid var(--blue);outline-offset:2px;border-radius:4px}
+.tutcard{position:absolute;bottom:14px;left:14px;width:400px;background:var(--panel2);border:1px solid var(--blue);
+  border-radius:8px;padding:12px 14px;z-index:25;box-shadow:0 8px 30px #000b}
+.tutcard h4{margin:0 0 6px;font-size:10px;color:var(--blue);letter-spacing:1px}
+.tutcard p{margin:0 0 10px;font-size:12px;line-height:1.55;color:var(--ink)}
+.tutcard .row{display:flex;gap:6px}
 /* status pill */
 .pill{padding:3px 9px;border-radius:11px;font-size:11px;font-weight:700;letter-spacing:.5px}
 .pill.idle{background:#1b2530;color:var(--dim)}
@@ -203,6 +210,8 @@ svg text{transition:fill .18s ease}
       <button class="btn go"    id="btn-auto">AUTO</button>
       <button class="btn stop"  id="btn-estop">■ E-STOP</button>
       <button class="btn reset" id="btn-reset">↻ RESET</button>
+      <button class="btn"       id="btn-tut" title="guided first ticket">🎓</button>
+      <button class="btn"       id="btn-snd" title="sound on/off">🔊</button>
       <button class="btn"       id="btn-career" style="border-color:var(--blue);color:var(--blue)">▶ START SHIFT</button>
       <button class="btn"       id="btn-inject">⚙ INSTRUCTOR</button>
     </div>
@@ -2541,7 +2550,7 @@ svg text{transition:fill .18s ease}
   <text x="609" y="392" text-anchor="middle" font-size="7.5" fill="#44525f">PLC LINK ● OK</text>
 
   <!-- hint line -->
-  <text x="450" y="423" text-anchor="middle" font-size="9" fill="#5f6c7a">F2 = RESET COUNT · F4 = ALARM ACK · SCAN 4 ms</text>
+  <text x="450" y="423" text-anchor="middle" font-size="9" fill="#5f6c7a">PLC LINK OK · SCAN 4 ms</text>
 
   <!-- membrane keys -->
   <g>
@@ -3647,6 +3656,15 @@ svg text{transition:fill .18s ease}
     </div>
   </div>
 
+  <div class="tutcard" id="tutcard" style="display:none">
+    <h4 id="tut-head">🎓 TUTORIAL · 1/9</h4>
+    <p id="tut-text"></p>
+    <div class="row">
+      <button class="btn go" id="tut-next" style="flex:1">NEXT ▸</button>
+      <button class="btn" id="tut-skip" style="flex:0 0 auto;font-size:11px">skip</button>
+    </div>
+  </div>
+
   <div class="injector" id="injector" style="display:none">
     <button class="x" id="inj-x">×</button>
     <h4>⚙ INSTRUCTOR · INJECT FAULT</h4>
@@ -3674,7 +3692,12 @@ svg text{transition:fill .18s ease}
       <div><span>FIXED</span><b id="wo-fixed">0/8</b></div>
     </div>
     <div class="wo-status" id="wo-status">Diagnose → pick the replacement part → RESET → ▶ CYCLE to verify.</div>
+    <div style="display:flex;gap:5px;margin-top:6px">
+      <button class="btn" id="wo-hint1" style="flex:1;font-size:10px" title="OEM support names the LAYER the root cause lives in">📞 Hint $150</button>
+      <button class="btn" id="wo-hint2" style="flex:1;font-size:10px" title="Field engineer points at the subsystem">📞 Hint $400</button>
+    </div>
     <button class="btn" id="wo-abandon" style="width:100%;font-size:11px;margin-top:6px">Give up on this ticket (skip, downtime penalty)</button>
+    <button class="btn" id="wo-end" style="width:100%;font-size:11px;margin-top:6px;border-color:var(--red);color:var(--red)">■ End shift early</button>
   </div>
 
   <!-- CAREER: end-of-shift summary -->
@@ -3684,7 +3707,8 @@ svg text{transition:fill .18s ease}
       <div class="grade" id="sm-grade">A</div>
       <table id="sm-table"></table>
       <div id="sm-log" class="sm-log"></div>
-      <button class="btn go" id="sm-again" style="width:100%;margin-top:10px">▶ START NEW SHIFT</button>
+      <button class="btn" id="sm-copy" style="width:100%;margin-top:10px;font-size:11px">📋 Copy challenge link (race this exact shift)</button>
+      <button class="btn go" id="sm-again" style="width:100%;margin-top:6px">▶ START NEW SHIFT</button>
       <button class="btn" id="sm-close" style="width:100%;margin-top:6px">Close (free-play sandbox)</button>
     </div>
   </div>
@@ -3964,6 +3988,7 @@ function loop(now){
     acc-=DT;
   }
   render();
+  updateSound(now); tutTick();
   requestAnimationFrame(loop);
 }
 
@@ -4191,6 +4216,7 @@ function probe(tp){
     return;
   }
   const [v,u,hint]=d.get();
+  tut.lastProbe=tp;
   const disp = (typeof v==='number')? (Math.abs(v)>=100?v.toFixed(0):v.toFixed(1)) : v;
   setRead(d.name, disp, u, hint||'reading nominal');
   logProbe(d.name, disp+' '+u);
@@ -4362,11 +4388,13 @@ const FAULTLIB=[
    complaint:'"Can\'t make full tonnage. Pressure climbs then stalls, and it bleeds off on the hold. Pump sounds strained."'},
   {id:'PUMP',  key:'pump.slip',    spec:{mode:'set',value:0.009},     part:'PUMP', vary:[0.009,0.013],
    complaint:'"Can\'t build full pressure under load — weak parts, pressure-not-reached faults. Just like last quarter."'},
+  {id:'RELIEF',key:'relief.crack',  spec:{mode:'offset',value:-35},    part:'RELIEFP', vary:[-45,-30],
+   complaint:'"Presses up to a point then just flat-lines — same number every time, like it hit a ceiling."'},
 ];
-const PARTCOST={FILTER:40,PT110:300,LS402WIRE:80,CYLSEAL:600,PUMP:1500,OIL:200,SPOOL:250,COILA:60};
+const PARTCOST={FILTER:40,PT110:300,LS402WIRE:80,CYLSEAL:600,PUMP:1500,OIL:200,SPOOL:250,COILA:60,RELIEFP:30};
 // entries safe to combine in a double-fault ticket (LS402 excluded: verification would be
 // stochastic; PUMP excluded: keeps a perfect-play shift affordable within the budget)
-const DOUBLE_POOL=['FILTER','PT110','OIL','CYLSEAL','SPOOL','COILA'];
+const DOUBLE_POOL=['FILTER','PT110','OIL','CYLSEAL','SPOOL','COILA','RELIEF'];
 
 /* =========================================================================
    MACHINE 2 — SORT-LINE 2 (belt conveyor sortation). Same engine philosophy:
@@ -4374,7 +4402,7 @@ const DOUBLE_POOL=['FILTER','PT110','OIL','CYLSEAL','SPOOL','COILA'];
    drive/belt/box physics plus an independent PLC scan. Nothing is scripted.
    ========================================================================= */
 const cvP={ belt:{slip:0.02}, vfd:{derate:1.0, iTrip:14, cmdHz:45}, enc:{gain:1.0},
-            pe2:{gain:1.0}, bearing:{fric:1.0} };
+            pe2:{gain:1.0}, bearing:{fric:1.0}, gate:{speed:300} };
 const cvFaults={};
 function cvEff(path){ const [c,k]=path.split('.'); let v=cvP[c][k]; const f=cvFaults[path];
   if(!f) return v;
@@ -4401,14 +4429,19 @@ function cvStep(dt){
   else cvS.ocT=0;
   // feed boxes
   if(cvS.toSpawn>0 && cvS.state==='RUN'){ cvS.spawnT-=dt;
-    if(cvS.spawnT<=0){ cvS.boxes.push({x:100}); cvS.toSpawn--; cvS.spawnT=1.2; } }
+    if(cvS.spawnT<=0){
+      const tones=[['#b8862a','#8a6d35'],['#a1762b','#7a5c28'],['#c19a4e','#93773a'],['#8f6d33','#6b5226']];
+      const t=tones[Math.floor(rnd()*tones.length)];
+      cvS.boxes.push({x:100, w:30+rnd()*12, h:20+rnd()*10, f:t[0], st:t[1]});
+      cvS.toSpawn--; cvS.spawnT=1.2; } }
   // carry boxes
   const adv=cvS.beltV*CV_PXM*dt;
   for(const b of cvS.boxes) b.x+=adv;
   cvS.treadOff=(cvS.treadOff+adv)%24;
   // divert gate kinematics
-  if(cvS.gateT>0){ cvS.gateT-=dt; cvS.gateA=Math.min(40,cvS.gateA+300*dt); }
-  else cvS.gateA=Math.max(0,cvS.gateA-300*dt);
+  const gspd=cvEff('gate.speed');
+  if(cvS.gateT>0){ cvS.gateT-=dt; cvS.gateA=Math.min(40,cvS.gateA+gspd*dt); }
+  else cvS.gateA=Math.max(0,cvS.gateA-gspd*dt);
   // divert capture window / discharge overshoot
   cvS.boxes=cvS.boxes.filter(b=>{
     if(cvS.gateA>25 && b.x>=608 && b.x<=655){ cvS.sorted++; return false; }
@@ -4444,6 +4477,7 @@ function cvScan(){
         if(cvS.batchT>8.5){ cvS.weak++;
           log('alarm','info','ALM-2400 (advisory) LOW THROUGHPUT · batch took '+cvS.batchT.toFixed(1)+'s (nominal <8.5s)'); }
         log('alarm','ok','BATCH COMPLETE · 5/5 sorted in '+cvS.batchT.toFixed(1)+'s');
+        if(S.auto) setTimeout(()=>{ if(MACHINE.id==='conveyor'&&cvS.state==='IDLE') cvStart(); },800);
       }
       break; }
     case 'FAULTED': case 'ESTOP': cvS.run=false; break;
@@ -4468,7 +4502,7 @@ function cvSpecial(){                                    // chalk-mark ground-tr
 function cvRenderMech(){
   $('cv-belt-tread').setAttribute('stroke-dashoffset',(-cvS.treadOff).toFixed(1));
   $('cv-boxes').innerHTML=cvS.boxes.map(b=>
-    `<rect x="${(b.x-18).toFixed(1)}" y="304" width="36" height="26" rx="2" fill="#b8862a" stroke="#8a6d35"/>`).join('');
+    `<rect x="${(b.x-b.w/2).toFixed(1)}" y="${(330-b.h).toFixed(1)}" width="${b.w.toFixed(0)}" height="${b.h.toFixed(0)}" rx="2" fill="${b.f}" stroke="${b.st}"/>`).join('');
   $('cv-gate').setAttribute('transform',`rotate(${(-cvS.gateA).toFixed(1)} 620 300)`);
   lamp('cv-pe1',cvS.pe1,'#33d17a'); lamp('cv-pe2',cvS.pe2,'#33d17a'); lamp('cv-pe3',cvS.pe3,'#33d17a');
   $('cv-motor-glyph').textContent=cvS.hz>1?'⟳':'M';
@@ -4550,10 +4584,13 @@ const cvFAULTLIB=[
    complaint:'"Drive trips on overcurrent a little while after we start. Something smells hot down there."'},
   {id:'ENC',  key:'enc.gain',    spec:{mode:'set',value:0},    part:'ENCP',
    complaint:'"Slip alarm every single run — but I stood there and watched, the belt is NOT slipping."'},
+  {id:'GATE', key:'gate.speed',  spec:{mode:'set',value:55},   part:'GATEP', vary:[45,70],
+   complaint:'"Sort misses again — but I saw the gate TRY to swing, it just wallows out too slow."'},
 ];
-const cvPARTCOST={BELTP:350,PE2P:90,VFDP:250,BRGP:180,ENCP:120};
+const cvPARTCOST={BELTP:350,PE2P:90,VFDP:250,BRGP:180,ENCP:120,GATEP:140};
 const cvREPAIRS=[['BELTP','Replace & re-tension belt'],['PE2P','Clean/replace photo-eye PE-2'],
-  ['VFDP','Service VFD cooling (clear derate)'],['BRGP','Replace head pulley bearing'],['ENCP','Replace belt encoder']];
+  ['VFDP','Service VFD cooling (clear derate)'],['BRGP','Replace head pulley bearing'],['ENCP','Replace belt encoder'],
+  ['GATEP','Rebuild divert gate actuator']];
 
 /* =========================================================================
    MACHINE 3 — PICK-CELL 4 (2-axis gantry + vacuum gripper). Faults are data
@@ -4633,7 +4670,8 @@ function rbScan(){
       break;
     case 'Z_UP2': if(rbS.Z<=2){ rbS.state='HOME'; rbS.xt=0; } break;
     case 'HOME': if(rbS.X<=2){ rbS.state='IDLE'; rbS.good++; rbS.nestPart=true;
-        log('alarm','ok','CYCLE COMPLETE · part placed ('+rbS.placed+' total)'); }
+        log('alarm','ok','CYCLE COMPLETE · part placed ('+rbS.placed+' total)');
+        if(S.auto) setTimeout(()=>{ if(MACHINE.id==='robot'&&rbS.state==='IDLE') rbStart(); },600); }
       break;
     case 'FAULTED': case 'ESTOP': break;
   }
@@ -4789,11 +4827,12 @@ const MACHINES={
     dotMap:{'ALM-1102':['plc','hyd'],'ALM-3300':['plc','mech'],'ALM-2205':['plc','elec']},
     faultlib:FAULTLIB, partcost:PARTCOST, doublePool:DOUBLE_POOL,
     partkey:{FILTER:'filter.R',PT110:'pt110.offset',LS402WIRE:'ls402.wiring',CYLSEAL:'cyl.gLeak',
-             PUMP:'pump.slip',OIL:'cyl.beta',SPOOL:'valve.gMain',COILA:'coilA.R'},
+             PUMP:'pump.slip',OIL:'cyl.beta',SPOOL:'valve.gMain',COILA:'coilA.R',RELIEFP:'relief.crack'},
     repairs:[['FILTER','Replace filter element FLT-201'],['PT110','Recalibrate/replace transducer PT-110'],
       ['LS402WIRE','Replace LS-402 flex cable / connector'],['CYLSEAL','Reseal cylinder CYL-401 (piston seal)'],
       ['PUMP','Replace worn pump P-101'],['OIL','Bleed air / change hydraulic oil'],
-      ['SPOOL','Free / replace DCV DV-301 spool'],['COILA','Replace SOL-A solenoid coil']],
+      ['SPOOL','Free / replace DCV DV-301 spool'],['COILA','Replace SOL-A solenoid coil'],
+      ['RELIEFP','Adjust & reseal relief valve RV-501']],
     injects:[['FILTER','① Clog pressure filter (HYD)','filter.R',{mode:'scale',value:2000}],
       ['PT110','② Transducer drift +20bar (SENSOR)','pt110.offset',{mode:'offset',value:20}],
       ['LS402','③ Intermittent LS-402 wire (ELEC)','ls402.wiring',{mode:'set',value:0.5}],
@@ -4801,7 +4840,8 @@ const MACHINES={
       ['PUMP','⑤ Worn pump — sags under load (HYD)','pump.slip',{mode:'set',value:0.009}],
       ['OIL','⑥ Air in oil — spongy/slow (HYD)','cyl.beta',{mode:'set',value:140}],
       ['SPOOL','⑦ Sticky DCV spool (VALVE)','valve.gMain',{mode:'scale',value:0.0012}],
-      ['COILA','⑧ Open SOL-A coil (ELEC)','coilA.R',{mode:'set',value:1e9}]],
+      ['COILA','⑧ Open SOL-A coil (ELEC)','coilA.R',{mode:'set',value:1e9}],
+      ['RELIEF','⑨ Relief valve set low (VALVE)','relief.crack',{mode:'offset',value:-35}]],
     canCycle:()=>S.plc.state==='IDLE',
   },
   conveyor:{ id:'conveyor', name:'SORT-LINE 2', sub:'belt conveyor sortation line · ★',
@@ -4816,14 +4856,15 @@ const MACHINES={
     TP:cvTP, startCycle:cvStart, reset:cvReset, estop:cvEstop, io:cvIO,
     resetCounters:()=>{cvS.good=0;cvS.weak=0;cvS.cost=0;cvS.sorted=0;},
     dotMap:{'ALM-2301':['plc','mech'],'ALM-2302':['plc','mech'],'ALM-2304':['plc','mech'],'ALM-2305':['plc','elec']},
-    faultlib:cvFAULTLIB, partcost:cvPARTCOST, doublePool:['PE2','VFDDER','BRG','ENC'],
-    partkey:{BELTP:'belt.slip',PE2P:'pe2.gain',VFDP:'vfd.derate',BRGP:'bearing.fric',ENCP:'enc.gain'},
+    faultlib:cvFAULTLIB, partcost:cvPARTCOST, doublePool:['PE2','VFDDER','BRG','ENC','GATE'],
+    partkey:{BELTP:'belt.slip',PE2P:'pe2.gain',VFDP:'vfd.derate',BRGP:'bearing.fric',ENCP:'enc.gain',GATEP:'gate.speed'},
     repairs:cvREPAIRS,
     injects:[['BELT','① Worn/loose belt — slips (MECH)','belt.slip',{mode:'set',value:0.55}],
       ['PE2','② Dirty photo-eye PE-2 (SENSOR)','pe2.gain',{mode:'set',value:0}],
       ['VFDDER','③ VFD thermal derate (DRIVE)','vfd.derate',{mode:'set',value:0.55}],
       ['BRG','④ Seizing head bearing (MECH)','bearing.fric',{mode:'set',value:6}],
-      ['ENC','⑤ Dead belt encoder (SENSOR)','enc.gain',{mode:'set',value:0}]],
+      ['ENC','⑤ Dead belt encoder (SENSOR)','enc.gain',{mode:'set',value:0}],
+      ['GATE','⑥ Sluggish divert gate (PNEU)','gate.speed',{mode:'set',value:55}]],
     canCycle:()=>cvS.state==='IDLE',
   },
   robot:{ id:'robot', name:'PICK-CELL 4', sub:'2-axis gantry · vacuum gripper · ★★★',
@@ -4918,8 +4959,39 @@ function switchMachine(id){
    ========================================================================= */
 const DOWNRATE=12, START_BUDGET=5000;
 
+// OEM support hints: [layer-level, subsystem-level] per fault id
+const HINTS={
+ press:{
+  FILTER:['The root cause is on the HYDRAULIC SUPPLY side, upstream of the valve.','Compare pressure BEFORE and AFTER the inline filtration — a delta is a restriction.'],
+  PT110:['Nothing is mechanically wrong — a FEEDBACK DEVICE is lying to the PLC.','Verify the pressure transducer against a reference gauge at a known pressure (try zero).'],
+  LS402:['It is ELECTRICAL and intermittent — think wiring, not components.','Watch I0.4 during a full-stroke cycle and wiggle-test the field cable at the flex loop.'],
+  CYLSEAL:['The loss is INSIDE the actuator, not the supply.','Dead-head the pump: if it makes full pressure blocked, the leak is across the piston.'],
+  PUMP:['The supply itself cannot make pressure UNDER LOAD.','Dead-head the pump: if it cannot reach relief even blocked, condemn the pump.'],
+  OIL:['The fluid itself is the problem — compressibility.','Pressure builds unusually SLOWLY everywhere; check for aeration/foam in the reservoir.'],
+  SPOOL:['The restriction is in the VALVE, not the filter.','Filter ΔP is normal but flow is starved downstream — check the DCV spool.'],
+  COILA:['Command is present but an ACTUATOR never engages.','24V arrives at a solenoid coil but nothing pulls in — check coil continuity.'],
+  RELIEF:['A pressure CEILING is set wrong, not a component failure.','Watch PG-101: it pins rock-steady at the same low value every time — check the relief setting.']},
+ conveyor:{
+  BELT:['MECHANICAL power transmission is slipping.','Encoder under-speed AND boxes genuinely slow — compare chalk-mark test with drive Hz.'],
+  PE2:['A SENSOR is blind; the logic never gets its confirm.','Box physically in the PE-2 beam but the input stays 0 — check the optics.'],
+  VFDDER:['The DRIVE is protecting itself — no fault, just less output.','VFD display shows fewer Hz than commanded; check drive cooling/derate status.'],
+  BRG:['A MECHANICAL element is binding and loading the motor.','Overcurrent trips + one spot glows on the thermal camera — find the hot bearing.'],
+  ENC:['The belt is fine — a FEEDBACK DEVICE is dead.','Chalk-mark test: true speed normal, encoder says zero. Replace the encoder.'],
+  GATE:['The diverter ACTUATOR is lazy, not the sensors.','PE-2 pulses correctly in the I/O table but the gate wallows — watch its swing speed.']},
+ robot:{
+  CUP:['The GRIPPER holds at rest but not under motion.','Vacuum is fine standing still and collapses during fast X travel — the cup lip leaks.'],
+  XDRV:['One AXIS is underperforming its command.','X drive display shows commanded vs actual velocity — a big gap is a failing drive.'],
+  VACPUMP:['The vacuum SOURCE is weak everywhere.','Blank-off test: cap the cup — if the pump still cannot pull spec, rebuild it.'],
+  CURT:['A SAFETY device is falsely tripping.','Stops correlate with axis motion, nobody in the cell — check curtain alignment.'],
+  ZENC:['No alarm — a position FEEDBACK is skewed.','Compare AI2 Z-encoder vs true position in the I/O table at the bottom of stroke.']},
+};
+function bestOf(id){ try{ return JSON.parse(localStorage.getItem(id+'.best')||'null'); }catch(e){ return null; } }
+function gradeOK(id){ const b=bestOf(id); return !!(b && ['A','B','C'].includes(b.grade)); }
+const REQUIRES={press:'conveyor', robot:'press'};
+
 const career={active:false,idx:0,plan:[],budget:START_BUDGET,ticketTime:0,shiftTime:0,
-  ticketParts:0,wrongThis:0,partsTotal:0,downCost:0,lastGood:0,fixed:0,seeded:null,open:false,results:[]};
+  ticketParts:0,wrongThis:0,partsTotal:0,downCost:0,hintCost:0,lastGood:0,fixed:0,
+  seeded:null,open:false,results:[],seed:0};
 
 // one seeded fault INSTANCE: library entry + severity rolled for this ticket
 function rollInstance(lib){
@@ -4945,10 +5017,16 @@ function buildShiftPlan(){
 const ticketLabel=t=>t.faults.map(f=>f.id).join('+');
 const seededStillActive=()=>career.seeded.faults.some(f=>MACHINE.faults[f.key]);
 
-function startShift(){
-  _seed=(Date.now()&0x7fffffff)||1337;                     // fresh procedural seed per shift
+function startShift(seed, bypassLock){
+  const req=REQUIRES[MACHINE.id];
+  if(req && !bypassLock && !gradeOK(req)){
+    log('alarm','info','🔒 '+MACHINE.name+' shifts unlock at grade C or better on '+MACHINES[req].name+'. (Free-play is open — challenge links also bypass.)');
+    return;
+  }
+  _seed=career.seed=(seed||((Date.now()&0x7fffffff)||1337));   // procedural seed (shareable)
   career.active=true; career.idx=0; career.plan=buildShiftPlan();
-  career.budget=START_BUDGET; career.partsTotal=0; career.downCost=0; career.fixed=0; career.results=[];
+  career.budget=START_BUDGET; career.partsTotal=0; career.downCost=0; career.hintCost=0; career.fixed=0; career.results=[];
+  career.shiftTime=0;
   for(const k in MACHINE.faults) delete MACHINE.faults[k];
   MACHINE.resetCounters();
   $('machine-sel').disabled=true;
@@ -4964,6 +5042,7 @@ function nextTicket(){
   career.seeded=career.plan[career.idx];
   for(const f of career.seeded.faults) MACHINE.faults[f.key]=f.spec;   // HIDDEN — player must diagnose
   career.open=true; career.ticketTime=0; career.ticketParts=0; career.wrongThis=0; career.lastGood=MACHINE.top().good;
+  saveShift();
   $('repair-part').value='';
   $('wo-status').className='wo-status';
   $('wo-status').textContent='Machine down. CYCLE to observe the symptom, diagnose with instruments, pick the part, then CYCLE to verify.';
@@ -5006,7 +5085,29 @@ function abandonTicket(){
   for(const k in MACHINE.faults) delete MACHINE.faults[k];
   career.open=false; career.idx++; nextTicket();
 }
+function saveShift(){
+  try{ localStorage.setItem('shift.save',JSON.stringify({m:MACHINE.id,seed:career.seed,idx:career.idx,
+    budget:career.budget,partsTotal:career.partsTotal,downCost:career.downCost,hintCost:career.hintCost,
+    fixed:career.fixed,results:career.results,shiftTime:career.shiftTime})); }catch(e){}
+}
+function resumeShift(){
+  let sv=null; try{ sv=JSON.parse(localStorage.getItem('shift.save')||'null'); }catch(e){}
+  if(!sv) return;
+  switchMachine(sv.m);
+  _seed=sv.seed;
+  career.active=true; career.seed=sv.seed; career.plan=buildShiftPlan();   // same seed -> same plan
+  Object.assign(career,{idx:sv.idx,budget:sv.budget,partsTotal:sv.partsTotal,downCost:sv.downCost,
+    hintCost:sv.hintCost||0,fixed:sv.fixed,results:sv.results,shiftTime:sv.shiftTime||0});
+  MACHINE.resetCounters();
+  $('machine-sel').disabled=true;
+  $('injector').style.display='none'; $('btn-inject').disabled=true; $('btn-inject').style.opacity=.4;
+  $('btn-career').textContent='■ END SHIFT'; $('btn-career').style.borderColor='var(--red)'; $('btn-career').style.color='var(--red)';
+  $('shiftmodal').style.display='none'; $('wocard').style.display='block';
+  log('alarm','ok','▶ SHIFT RESUMED on '+MACHINE.name+' · ticket '+(career.idx+1)+'/'+career.plan.length);
+  nextTicket();
+}
 function endShift(){
+  try{ localStorage.removeItem('shift.save'); }catch(e){}
   career.active=false; career.open=false;
   $('wocard').style.display='none';
   $('machine-sel').disabled=false;
@@ -5017,7 +5118,7 @@ function endShift(){
   const ff=solved.filter(r=>r.firstFix).length;
   const ffRate=solved.length? ff/solved.length : 0;
   const avgMTTR=solved.length? solved.reduce((a,r)=>a+r.time,0)/solved.length : 0;
-  const total=career.downCost+career.partsTotal;
+  const total=career.downCost+career.partsTotal+career.hintCost;
   let grade='D', gc='var(--red)';
   if(solved.length===career.plan.length && ffRate>=0.85 && avgMTTR<40){ grade='A'; gc='var(--green)'; }
   else if(ffRate>=0.7 && solved.length>=career.plan.length-1){ grade='B'; gc='var(--cyan)'; }
@@ -5043,8 +5144,15 @@ function endShift(){
     ['Downtime cost', '$'+career.downCost.toFixed(0)],
     ['TOTAL COST', '$'+total.toFixed(0)],
   ];
+  if(career.hintCost>0) rows.splice(4,0,['OEM support calls','$'+career.hintCost]);
   if(best) rows.push(['Personal best ('+shifts+' shift'+(shifts>1?'s':'')+')',
     best.grade+' · $'+best.cost+(best._new?'  ★ NEW':'')]);
+  rows.push(['Shift seed','#'+career.seed]);
+  // progression unlocks
+  if(['A','B','C'].includes(grade)){
+    for(const [m,req] of Object.entries(REQUIRES)) if(req===MACHINE.id)
+      log('alarm','ok','🔓 '+MACHINES[m].name+' career shifts UNLOCKED');
+  }
   $('sm-table').innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
   $('sm-log').innerHTML=career.results.map((r,i)=>`<div>${r.skipped?'⏭':'✅'} #${i+1} ${r.nasty?'⚠ ':''}${r.id} · ${r.time.toFixed(0)}s · $${r.parts} · ${r.wrong} wrong ${r.firstFix?'· first-fix':''}</div>`).join('');
   $('shiftmodal').style.display='flex';
@@ -5078,7 +5186,27 @@ function fmt(s){ const m=Math.floor(s/60), ss=Math.floor(s%60); return (m<10?'0'
 
 $('btn-career').onclick=()=>{ if(career.active) endShift(); else startShift(); };
 $('wo-abandon').onclick=abandonTicket;
+$('wo-end').onclick=()=>endShift();
+function buyHint(tier){
+  if(!career.active||!career.open) return;
+  const cost=tier===1?150:400;
+  if(career.budget<cost){ log('alarm','active','Not enough budget for OEM support.'); return; }
+  const active=career.seeded.faults.find(f=>MACHINE.faults[f.key]);
+  if(!active){ log('alarm','info','OEM support: "Sounds fixed to us — run a verify cycle."'); return; }
+  career.budget-=cost; career.hintCost+=cost;
+  const h=(HINTS[MACHINE.id]&&HINTS[MACHINE.id][active.id])||['No data.','No data.'];
+  log('alarm','info','📞 OEM SUPPORT ($'+cost+'): "'+h[tier-1]+'"');
+  saveShift();
+}
+$('wo-hint1').onclick=()=>buyHint(1);
+$('wo-hint2').onclick=()=>buyHint(2);
 $('sm-again').onclick=()=>{ $('shiftmodal').style.display='none'; startShift(); };
+$('sm-copy').onclick=()=>{
+  const url=location.href.split('#')[0]+'#m='+MACHINE.id+'&s='+career.seed;
+  const done=()=>{ $('sm-copy').textContent='✓ Copied — send it to a rival'; setTimeout(()=>$('sm-copy').textContent='📋 Copy challenge link (race this exact shift)',2500); };
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done,()=>{ log('alarm','info','Challenge link: '+url); done(); });
+  else { log('alarm','info','Challenge link: '+url); done(); }
+};
 $('sm-close').onclick=()=>{ $('shiftmodal').style.display='none'; };
 
 // build the HMI analog gauge (ticks + green setpoint marker) once
@@ -5097,20 +5225,144 @@ function buildGauge(){
 }
 buildGauge();
 
-// dismissible first-run tip
+// dismissible first-run tip (shown until dismissed once)
 (function(){
+  try{ if(localStorage.getItem('tip.seen')==='1') return; }catch(e){}
   const tip=document.createElement('div'); tip.className='toast';
   tip.innerHTML='<button aria-label="dismiss">×</button><b>Tip:</b> press <span class="k">▶ START SHIFT</span> for the game, '
     +'or free-play with <span class="k">⚙ INSTRUCTOR</span>. Shortcuts: <span class="k">1-5</span> layers · '
     +'<span class="k">C</span> cycle · <span class="k">R</span> reset · <span class="k">S</span> shift.';
   $('main').appendChild(tip);
-  const close=()=>tip.remove();
-  tip.querySelector('button').onclick=close; setTimeout(close,11000);
+  const close=()=>{ tip.remove(); try{localStorage.setItem('tip.seen','1');}catch(e){} };
+  tip.querySelector('button').onclick=close; setTimeout(()=>tip.remove(),14000);
 })();
 
+/* ================================ SOUND ================================
+   Web Audio, no assets. Machine loops are DIAGNOSTIC: VFD whine pitch tracks
+   Hz, bearing squeal grows with friction, relief screams when pinned, a
+   leaking cup hisses. Lazy init on first user gesture (autoplay policy). */
+let AC=null, sndMaster=null, sndNodes=null;
+let sndOn=(function(){ try{ return localStorage.getItem('snd')!=='off'; }catch(e){ return true; } })();
+function initAudio(){ if(AC) return; try{
+  AC=new (window.AudioContext||window.webkitAudioContext)();
+  sndMaster=AC.createGain(); sndMaster.gain.value=sndOn?1:0; sndMaster.connect(AC.destination);
+  const mkOsc=(type,freq)=>{ const o=AC.createOscillator(); o.type=type; o.frequency.value=freq;
+    const g=AC.createGain(); g.gain.value=0; o.connect(g); g.connect(sndMaster); o.start(); return {o,g}; };
+  const nb=AC.createBuffer(1,AC.sampleRate,AC.sampleRate);
+  const dd=nb.getChannelData(0); for(let i=0;i<dd.length;i++) dd[i]=Math.random()*2-1;
+  const mkNoise=(f0,q)=>{ const src=AC.createBufferSource(); src.buffer=nb; src.loop=true;
+    const bp=AC.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=f0; bp.Q.value=q;
+    const g=AC.createGain(); g.gain.value=0; src.connect(bp); bp.connect(g); g.connect(sndMaster); src.start(); return {g,bp}; };
+  sndNodes={ hum:mkOsc('sawtooth',85), whine:mkOsc('triangle',300),
+             squeal:mkNoise(2800,8), relief:mkOsc('sine',1850), hiss:mkNoise(6000,0.8) };
+}catch(e){ AC=null; } }
+function setG(n,v){ if(AC&&n) n.g.gain.setTargetAtTime(v,AC.currentTime,0.08); }
+let _sndT=0,_lastFault='';
+function updateSound(now){
+  if(!AC||!sndNodes||now-_sndT<50) return; _sndT=now;
+  const N=sndNodes; let hum=0,humF=85,whine=0,whineF=300,squeal=0,relief=0,hiss=0;
+  if(MACHINE.id==='press'){ if(S.motor){hum=0.045;humF=88;} if(S.Ppump>203) relief=0.016; }
+  else if(MACHINE.id==='conveyor'){
+    if(cvS.hz>1){ whine=0.028; whineF=160+cvS.hz*11; hum=0.02; humF=60+cvS.hz; }
+    const fr=cvEff('bearing.fric'); if(cvS.hz>5&&fr>2) squeal=Math.min(0.05,(fr-1)*0.01); }
+  else if(MACHINE.id==='robot'){
+    if(rbS.sol||rbS.blankoff){ hum=0.028; humF=120; }
+    if(rbS.sol&&rbS.vac>-60&&rbEff('cup.leak')>8) hiss=0.04;
+    if(Math.abs(rbS.xv)>10){ whine=0.018; whineF=200+Math.abs(rbS.xv); } }
+  setG(N.hum,hum); N.hum.o.frequency.setTargetAtTime(humF,AC.currentTime,0.1);
+  setG(N.whine,whine); N.whine.o.frequency.setTargetAtTime(whineF,AC.currentTime,0.1);
+  setG(N.squeal,squeal); setG(N.relief,relief); setG(N.hiss,hiss);
+  const f=MACHINE.top().fault||'';
+  if(f&&f!==_lastFault&&f!=='E-STOP') chirp();
+  _lastFault=f;
+}
+function chirp(){ if(!AC) return;
+  const o=AC.createOscillator(), g=AC.createGain(); o.type='square';
+  o.connect(g); g.connect(sndMaster); const t=AC.currentTime;
+  o.frequency.setValueAtTime(880,t); o.frequency.setValueAtTime(659,t+0.12);
+  g.gain.setValueAtTime(0.05,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.4);
+  o.start(t); o.stop(t+0.45); }
+document.addEventListener('pointerdown',()=>initAudio(),{once:true});
+$('btn-snd').textContent=sndOn?'🔊':'🔇';
+$('btn-snd').onclick=()=>{ sndOn=!sndOn; initAudio();
+  if(sndMaster) sndMaster.gain.setTargetAtTime(sndOn?1:0,AC.currentTime,0.05);
+  $('btn-snd').textContent=sndOn?'🔊':'🔇';
+  try{ localStorage.setItem('snd',sndOn?'on':'off'); }catch(e){} };
+
+/* ============================== TUTORIAL ==============================
+   A guided first ticket on the press: the clogged-filter scenario, walking
+   the real diagnose→repair→verify loop with live-condition step advance. */
+const tut={on:false,i:-1,startGood:0,lastProbe:''};
+const TUT_STEPS=[
+ {t:'Welcome to the floor. This guided ticket walks a REAL diagnosis on PRESS-LINE 3. Rule #1: the alarm tells you what LIMIT was violated — never WHY. Instruments tell you why.',next:true},
+ {t:'A fault is loaded (hidden). Press ▶ CYCLE and watch the machine try to work.',sel:'#btn-cycle',done:()=>S.plc.state!=='IDLE'},
+ {t:'Watch the ram… it is CRAWLING. The PLC gives it 6 seconds to reach bottom. Wait for the alarm.',done:()=>S.plc.state==='FAULTED'},
+ {t:'ALM-1102 EXTEND TIMEOUT. A rookie swaps the valve — but the solenoid IS energized (check Electrical later). The command is fine; the muscle is not. Select the Pressure gauge.',sel:'[data-i="press"]',done:()=>instrument==='press'},
+ {t:'Probe PG-101 — the gauge right at the pump outlet.',sel:'[data-tp="PG101"]',done:()=>tut.lastProbe==='PG101'},
+ {t:'~210 bar, PINNED at the relief ceiling. The pump is pushing as hard as it can. Now probe PG-102, after the filter.',sel:'[data-tp="PG102"]',done:()=>tut.lastProbe==='PG102'},
+ {t:'PG-102 is sagging — pressure is being LOST between the two gauges. Only one thing lives there. Probe the FILTER.',sel:'[data-tp="FILTER"]',done:()=>tut.lastProbe==='FILTER'},
+ {t:'Huge ΔP across FLT-201 — a clogged element. That is the ROOT CAUSE. Pick "Replace filter element FLT-201" and PERFORM REPAIR.',sel:'#repair-part',done:()=>!faults['filter.R']},
+ {t:'Now prove it: ↻ RESET, then ▶ CYCLE. A repair is only done when a clean cycle verifies it.',sel:'#btn-reset',done:()=>S.good>tut.startGood},
+ {t:'Clean cycle — root-caused, not masked. You are ready. Complaints lie, alarms mislead, instruments do not. ▶ START SHIFT when ready (SORT-LINE 2 is your proving ground).',next:true},
+];
+let _tutHl=null;
+function tutHighlight(sel){
+  if(_tutHl){ _tutHl.classList.remove('tut-hl'); _tutHl=null; }
+  if(sel){ const el=document.querySelector(sel); if(el){ el.classList.add('tut-hl'); _tutHl=el; } }
+}
+function startTutorial(){
+  if(career.active){ log('alarm','info','Finish the shift first.'); return; }
+  switchMachine('press');
+  for(const k in faults) delete faults[k];
+  doReset(); faults['filter.R']={mode:'scale',value:2000};
+  tut.on=true; tut.i=-1; tut.startGood=S.good; tut.lastProbe='';
+  $('tutcard').style.display='block';
+  tutAdvance();
+}
+function tutAdvance(){
+  tut.i++;
+  if(tut.i>=TUT_STEPS.length){ endTutorial(); return; }
+  const st=TUT_STEPS[tut.i];
+  $('tut-head').textContent='🎓 TUTORIAL · '+(tut.i+1)+'/'+TUT_STEPS.length;
+  $('tut-text').textContent=st.t;
+  $('tut-next').style.display=st.next?'block':'none';
+  tutHighlight(st.sel||null);
+}
+function endTutorial(){ tut.on=false; tutHighlight(null); $('tutcard').style.display='none';
+  for(const k in faults) delete faults[k];
+  log('alarm','ok','🎓 Tutorial complete — SORT-LINE 2 career shifts are open.'); }
+function tutTick(){
+  if(!tut.on) return;
+  const st=TUT_STEPS[tut.i];
+  if(st&&st.done&&st.done()) tutAdvance();
+}
+$('btn-tut').onclick=startTutorial;
+$('tut-next').onclick=tutAdvance;
+$('tut-skip').onclick=endTutorial;
+
 // boot
+MACHINE=MACHINES.conveyor;                                   // ★ machine is the entry point
 buildTabs(); buildInstruments(); buildRepairs(); buildSpecial(); buildInjector();
+$('machine-sel').value='conveyor'; $('wo-sub').textContent=MACHINE.sub;
+selectLayer(MACHINE.layers[0][0]);
 $('machine-sel').onchange=e=>switchMachine(e.target.value);
+// challenge link: #m=<machine>&s=<seed> races the exact same shift (bypasses locks)
+(function(){
+  const h=new URLSearchParams(location.hash.slice(1));
+  const m=h.get('m'), sd=parseInt(h.get('s'),10);
+  if(m&&MACHINES[m]&&sd){ switchMachine(m); setTimeout(()=>startShift(sd,true),400);
+    log('alarm','ok','🏁 CHALLENGE SHIFT loaded · seed #'+sd); return; }
+  // otherwise: offer to resume an interrupted shift
+  let sv=null; try{ sv=JSON.parse(localStorage.getItem('shift.save')||'null'); }catch(e){}
+  if(sv&&MACHINES[sv.m]){
+    const t=document.createElement('div'); t.className='toast';
+    t.innerHTML='<button aria-label="dismiss">×</button><b>Interrupted shift found</b> on '+MACHINES[sv.m].name+
+      ' (ticket '+(sv.idx+1)+'). <button class="btn go" id="resume-btn" style="margin-left:8px;padding:3px 10px;font-size:11px">▶ RESUME</button>';
+    $('main').appendChild(t);
+    t.querySelector('button[aria-label]').onclick=()=>{ t.remove(); try{localStorage.removeItem('shift.save');}catch(e){} };
+    t.querySelector('#resume-btn').onclick=()=>{ t.remove(); resumeShift(); };
+  }
+})();
 log('alarm','ok','Workstation online · 3 machines on the floor · ▶ START SHIFT for career mode, or CYCLE to free-play');
 renderIO();
 requestAnimationFrame(loop);

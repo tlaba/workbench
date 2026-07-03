@@ -88,7 +88,7 @@ text{font-family:var(--mono);fill:var(--ink)}
   border-radius:4px;padding:6px;font-family:var(--mono);font-size:11px;margin-bottom:5px}
 /* ---- drawer ---- */
 .drawer{grid-area:drawer;background:var(--panel);border:1px solid var(--edge);border-radius:6px;
-  display:flex;flex-direction:column;overflow:hidden}
+  display:flex;flex-direction:column;overflow:hidden;max-height:236px}
 .dtabs{display:flex;border-bottom:1px solid var(--edge)}
 .dtab{background:transparent;border:none;border-right:1px solid var(--edge);color:var(--dim);
   padding:7px 14px;font-size:11px;font-weight:600;letter-spacing:.5px}
@@ -142,6 +142,12 @@ table.io .a{color:var(--dim);width:42%}
 .sm-log{max-height:150px;overflow:auto;font-size:10px;text-align:left;color:var(--dim);
   background:#05080b;border-radius:5px;padding:8px;margin-top:8px}
 .sm-log div{padding:2px 0;border-bottom:1px solid #1a232c}
+/* fx: thermal camera, alarm strobe, vibration */
+svg.thermal-mode{filter:saturate(.3) brightness(.72)}
+.main.alarm-strobe{animation:strobe 1.1s ease-in-out infinite}
+@keyframes strobe{0%,100%{box-shadow:inset 0 0 0 0 rgba(255,82,82,0)}45%{box-shadow:inset 0 0 42px 6px rgba(255,82,82,.28)}}
+.vib{animation:vibr .12s linear infinite}
+@keyframes vibr{25%{transform:translate(.8px,-.5px)}75%{transform:translate(-.8px,.5px)}}
 /* tutorial */
 .tut-hl{filter:drop-shadow(0 0 9px var(--blue)) drop-shadow(0 0 3px var(--blue));outline:2px solid var(--blue);outline-offset:2px;border-radius:4px}
 .tutcard{position:absolute;bottom:14px;left:14px;width:400px;background:var(--panel2);border:1px solid var(--blue);
@@ -210,6 +216,7 @@ svg text{transition:fill .18s ease}
       <button class="btn go"    id="btn-auto">AUTO</button>
       <button class="btn stop"  id="btn-estop">■ E-STOP</button>
       <button class="btn reset" id="btn-reset">↻ RESET</button>
+      <button class="btn"       id="btn-plant" title="PLANT MODE — run the whole floor (unlocks at grade C+ on all machines)">🏭</button>
       <button class="btn"       id="btn-tut" title="guided first ticket">🎓</button>
       <button class="btn"       id="btn-snd" title="sound on/off">🔊</button>
       <button class="btn"       id="btn-career" style="border-color:var(--blue);color:var(--blue)">▶ START SHIFT</button>
@@ -3603,7 +3610,7 @@ svg text{transition:fill .18s ease}
 
   <!-- ============ INSTRUMENT PANEL ============ -->
   <div class="instr">
-    <h3>INSTRUMENTS</h3>
+    <h3>INSTRUMENTS <button id="btn-zoom" title="auto-zoom to probed component" style="float:right;background:none;border:1px solid var(--edge);border-radius:4px;color:var(--cyan);cursor:pointer;font-size:11px;padding:1px 7px">🔍 zoom</button></h3>
     <div class="itools" id="itools">
       <button class="itool on" data-i="none">✋ Select</button>
       <button class="itool" data-i="dmm">🔌 Multimeter</button>
@@ -3680,6 +3687,18 @@ svg text{transition:fill .18s ease}
     <div class="help" style="margin-top:6px">Each fault is a single data override on one component. Symptoms emerge from physics + the PLC scan — nothing is scripted.</div>
   </div>
 
+  <!-- PLANT MODE: fleet triage card -->
+  <div class="wocard" id="plantcard" style="display:none;border-color:var(--amber)">
+    <div class="wohead"><span style="color:var(--amber)">🏭 PLANT SHIFT</span><span id="pl-clock">06:00</span></div>
+    <div id="pl-rows" style="margin:6px 0"></div>
+    <div class="wo-grid">
+      <div><span>FIXED</span><b id="pl-fixed" class="green">0</b></div>
+      <div><span>PARTS + WRONG</span><b id="pl-parts">$0 · 0✗</b></div>
+    </div>
+    <div class="wo-status" id="pl-status">Keep all three machines running. Faults will come to you.</div>
+    <button class="btn" id="pl-end" style="width:100%;font-size:11px;margin-top:6px;border-color:var(--red);color:var(--red)">■ End plant shift</button>
+  </div>
+
   <!-- CAREER: work-order card -->
   <div class="wocard" id="wocard" style="display:none">
     <div class="wohead"><span id="wo-ticket">TICKET 1/8</span><span id="wo-shift">SHIFT 00:00</span></div>
@@ -3748,6 +3767,7 @@ const faults = {};   // e.g. faults['filter.R']={mode:'scale',value:2000}
 function eff(path){
   const [c,k]=path.split('.'); let v=P[c][k]; const f=faults[path];
   if(!f) return v;
+  if(f.mode==='ramp') return f.from+(f.to-f.from)*Math.max(0,Math.min(1,(plant.t-f.start)/f.dur));
   if(f.mode==='scale')  return v*f.value;
   if(f.mode==='offset') return v+f.value;
   if(f.mode==='set')    return f.value;
@@ -3983,11 +4003,13 @@ let acc=0, last=performance.now();
 function loop(now){
   let d=(now-last)/1000; last=now; if(d>0.25)d=0.25; acc+=d;
   while(acc>=DT){
-    MACHINE.step(DT);
+    if(plant.on){ pressStep(DT); cvStep(DT); rbStep(DT); plantTick(DT); }
+    else MACHINE.step(DT);
     if(career.active&&career.open){ career.ticketTime+=DT; career.shiftTime+=DT; }  // career downtime clock
     acc-=DT;
   }
   render();
+  updateFX(Math.min(0.1,(now-(loop._t||now))/1000)); loop._t=now;
   updateSound(now); tutTick();
   requestAnimationFrame(loop);
 }
@@ -4042,6 +4064,7 @@ function render(){
     : `<span style="color:var(--dim)">phase:</span> <span style="color:var(--cyan)">${st}</span>`;
 
   if(career.active) renderCareer();
+  if(plant.on) renderPlant();
 }
 
 function renderHyd(){
@@ -4217,6 +4240,7 @@ function probe(tp){
   }
   const [v,u,hint]=d.get();
   tut.lastProbe=tp;
+  if(zoomOn){ const svg=activeSvg(); const el=svg&&svg.querySelector(`[data-tp="${tp}"]`); if(el) zoomTo(el); }
   const disp = (typeof v==='number')? (Math.abs(v)>=100?v.toFixed(0):v.toFixed(1)) : v;
   setRead(d.name, disp, u, hint||'reading nominal');
   logProbe(d.name, disp+' '+u);
@@ -4266,6 +4290,7 @@ setInterval(renderIO,150);
    ========================================================================= */
 // layer tabs
 function selectLayer(layer){
+  zoomReset(); fxP=[];
   activeLayer=layer;
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.layer===layer));
   document.querySelectorAll('svg.layer').forEach(s=>
@@ -4331,6 +4356,7 @@ $('btn-repair').onclick=()=>{
     document.querySelectorAll('.injector [data-f]').forEach(x=>x.classList.remove('armed')); }
   else { log('alarm','info','Replaced '+p+' but it was NOT the fault. Parts cost incurred. Keep diagnosing.'); if(!career.active) S.cost+=180; }
   if(career.active) career.onRepair(p, wasFault);
+  if(plant.on) plant.onRepair(p, wasFault);
 };
 // drawer tabs
 document.querySelectorAll('.dtab').forEach(t=>t.onclick=()=>{
@@ -4339,6 +4365,14 @@ document.querySelectorAll('.dtab').forEach(t=>t.onclick=()=>{
 });
 
 $('briefbody').innerHTML=`
+<b style="color:var(--amber)">🏭 PLANT MODE:</b> the endgame — unlock all three machines at grade C+, then run the WHOLE
+floor at once: every machine steps simultaneously in AUTO, hidden faults (some <b>degrading over time</b>) land
+anywhere, work orders queue, and you are scored on <b>fleet uptime</b>.
+<br><br>
+<b style="color:var(--cyan)">👁 SEEING &amp; HEARING:</b> probing auto-zooms the schematic to the component (🔍 toggle); the
+Thermal camera now shows an actual heat-glow overlay; failing bearings visibly vibrate, leaking seals drip,
+chafed wiring sparks at full stroke; faulted machines strobe red.
+<br><br>
 <b style="color:var(--blue)">▶ THREE MACHINES:</b> the dropdown in the top-left switches between <b>SORT-LINE 2</b> (belt
 conveyor · ★), <b>PRESS-LINE 3</b> (hydraulic press · ★★) and <b>PICK-CELL 4</b> (gantry robot · ★★★) — each with its own
 physics, PLC program, instruments, fault library and per-machine personal best.
@@ -4406,6 +4440,7 @@ const cvP={ belt:{slip:0.02}, vfd:{derate:1.0, iTrip:14, cmdHz:45}, enc:{gain:1.
 const cvFaults={};
 function cvEff(path){ const [c,k]=path.split('.'); let v=cvP[c][k]; const f=cvFaults[path];
   if(!f) return v;
+  if(f.mode==='ramp') return f.from+(f.to-f.from)*Math.max(0,Math.min(1,(plant.t-f.start)/f.dur));
   if(f.mode==='scale') return v*f.value;
   if(f.mode==='offset') return v+f.value;
   if(f.mode==='set') return f.value;
@@ -4477,7 +4512,7 @@ function cvScan(){
         if(cvS.batchT>8.5){ cvS.weak++;
           log('alarm','info','ALM-2400 (advisory) LOW THROUGHPUT · batch took '+cvS.batchT.toFixed(1)+'s (nominal <8.5s)'); }
         log('alarm','ok','BATCH COMPLETE · 5/5 sorted in '+cvS.batchT.toFixed(1)+'s');
-        if(S.auto) setTimeout(()=>{ if(MACHINE.id==='conveyor'&&cvS.state==='IDLE') cvStart(); },800);
+        if(S.auto) setTimeout(()=>{ if((MACHINE.id==='conveyor'||plant.on)&&cvS.state==='IDLE') cvStart(); },800);
       }
       break; }
     case 'FAULTED': case 'ESTOP': cvS.run=false; break;
@@ -4603,6 +4638,7 @@ const rbP={ xdrv:{vmax:260, drag:1}, zdrv:{vmax:220}, vac:{pumpMax:-82},
 const rbFaults={};
 function rbEff(path){ const [c,k]=path.split('.'); let v=rbP[c][k]; const f=rbFaults[path];
   if(!f) return v;
+  if(f.mode==='ramp') return f.from+(f.to-f.from)*Math.max(0,Math.min(1,(plant.t-f.start)/f.dur));
   if(f.mode==='scale') return v*f.value;
   if(f.mode==='offset') return v+f.value;
   if(f.mode==='set') return f.value;
@@ -4671,7 +4707,7 @@ function rbScan(){
     case 'Z_UP2': if(rbS.Z<=2){ rbS.state='HOME'; rbS.xt=0; } break;
     case 'HOME': if(rbS.X<=2){ rbS.state='IDLE'; rbS.good++; rbS.nestPart=true;
         log('alarm','ok','CYCLE COMPLETE · part placed ('+rbS.placed+' total)');
-        if(S.auto) setTimeout(()=>{ if(MACHINE.id==='robot'&&rbS.state==='IDLE') rbStart(); },600); }
+        if(S.auto) setTimeout(()=>{ if((MACHINE.id==='robot'||plant.on)&&rbS.state==='IDLE') rbStart(); },600); }
       break;
     case 'FAULTED': case 'ESTOP': break;
   }
@@ -5018,6 +5054,7 @@ const ticketLabel=t=>t.faults.map(f=>f.id).join('+');
 const seededStillActive=()=>career.seeded.faults.some(f=>MACHINE.faults[f.key]);
 
 function startShift(seed, bypassLock){
+  if(plant.on){ log('alarm','info','End the plant shift first.'); return; }
   const req=REQUIRES[MACHINE.id];
   if(req && !bypassLock && !gradeOK(req)){
     log('alarm','info','🔒 '+MACHINE.name+' shifts unlock at grade C or better on '+MACHINES[req].name+'. (Free-play is open — challenge links also bypass.)');
@@ -5067,7 +5104,7 @@ career.onRepair=function(partValue, wasFault){
 };
 function closeTicket(){
   career.downCost += career.ticketTime*DOWNRATE;
-  career.fixed++;
+  career.fixed++; xpAdd(1);
   career.results.push({id:ticketLabel(career.seeded), time:career.ticketTime, nasty:career.seeded.nasty,
     wrong:career.wrongThis, parts:career.ticketParts, firstFix:career.wrongThis===0});
   log('alarm','ok','✅ TICKET '+(career.idx+1)+' CLOSED · '+ticketLabel(career.seeded)+' · '+
@@ -5147,6 +5184,7 @@ function endShift(){
   if(career.hintCost>0) rows.splice(4,0,['OEM support calls','$'+career.hintCost]);
   if(best) rows.push(['Personal best ('+shifts+' shift'+(shifts>1?'s':'')+')',
     best.grade+' · $'+best.cost+(best._new?'  ★ NEW':'')]);
+  rows.push(['Technician rank',rankName()]);
   rows.push(['Shift seed','#'+career.seed]);
   // progression unlocks
   if(['A','B','C'].includes(grade)){
@@ -5236,6 +5274,227 @@ buildGauge();
   const close=()=>{ tip.remove(); try{localStorage.setItem('tip.seen','1');}catch(e){} };
   tip.querySelector('button').onclick=close; setTimeout(()=>tip.remove(),14000);
 })();
+
+/* ============================== PLANT MODE ==============================
+   The whole floor at once: all three machines step simultaneously in AUTO,
+   hidden faults (some DEGRADING over time) land on any machine, work orders
+   queue, and the score is FLEET UPTIME. The endgame. */
+const plant={on:false,t:0,dur:360,nextAt:12,open:{press:null,conveyor:null,robot:null},
+  down:{press:0,conveyor:0,robot:0},fixed:0,wrong:0,parts:0,wo:0};
+const DEGRADERS={BRG:1,FILTER:1,CUP:1,BELT:1,CYLSEAL:1};
+function xpAdd(n){ try{ const x=JSON.parse(localStorage.getItem('xp')||'{"fixed":0}');
+  x.fixed+=n; localStorage.setItem('xp',JSON.stringify(x)); }catch(e){} }
+function rankName(){ let f=0; try{ f=(JSON.parse(localStorage.getItem('xp')||'{}').fixed)||0; }catch(e){}
+  return f>=120?'Plant Wizard ('+f+')':f>=60?'Master Tech ('+f+')':f>=25?'Journeyman ('+f+')':f>=10?'Technician ('+f+')':'Apprentice ('+f+')'; }
+function startPlant(){
+  if(career.active){ log('alarm','info','Finish the career shift first.'); return; }
+  if(!(gradeOK('conveyor')&&gradeOK('press')&&gradeOK('robot'))){
+    log('alarm','info','🔒 PLANT MODE unlocks at grade C+ on all three machines.'); return; }
+  plant.on=true; plant.t=0; plant.nextAt=12; plant.fixed=0; plant.wrong=0; plant.parts=0; plant.wo=0;
+  plant.open={press:null,conveyor:null,robot:null}; plant.down={press:0,conveyor:0,robot:0};
+  for(const id in MACHINES){ const M=MACHINES[id];
+    for(const k in M.faults) delete M.faults[k]; M.reset(); M.resetCounters(); }
+  S.auto=true;
+  startCycle(); cvStart(); rbStart();
+  $('plantcard').style.display='block'; $('wocard').style.display='none';
+  $('btn-inject').disabled=true; $('btn-inject').style.opacity=.4;
+  $('btn-plant').style.borderColor='var(--red)';
+  log('alarm','ok','🏭 PLANT SHIFT · 6:00 on the clock · all three machines in AUTO · keep them running');
+}
+function plantTick(dt){
+  plant.t+=dt;
+  for(const id in MACHINES){
+    const st=MACHINES[id].top().state;
+    if(st==='FAULTED'||st==='ESTOP') plant.down[id]+=dt;
+    const of=plant.open[id];
+    if(of){
+      const cleared=!MACHINES[id].faults[of.inst.key];
+      const good=MACHINES[id].top().good;
+      if(cleared&&of.goodMark===null) of.goodMark=good;
+      if(of.goodMark!==null&&good>of.goodMark){
+        plant.open[id]=null; plant.fixed++; xpAdd(1);
+        log('alarm','ok','✅ WO-'+of.n+' CLOSED · '+MACHINES[id].name+' · '+of.inst.id+' verified back in production');
+      }
+    }
+  }
+  const openN=Object.values(plant.open).filter(Boolean).length;
+  if(plant.t>=plant.nextAt&&openN<3){
+    const free=Object.keys(MACHINES).filter(id=>!plant.open[id]);
+    const id=free[Math.floor(rnd()*free.length)];
+    const lib=MACHINES[id].faultlib[Math.floor(rnd()*MACHINES[id].faultlib.length)];
+    const inst=rollInstance(lib);
+    if(DEGRADERS[lib.id]&&typeof inst.spec.value==='number'){
+      const base=inst.spec.value;
+      inst.spec={mode:'ramp',from:base*0.55,to:base*1.7,start:plant.t,dur:90};   // it gets WORSE while you dither
+    }
+    MACHINES[id].faults[inst.key]=inst.spec;
+    plant.wo++; plant.open[id]={inst,n:plant.wo,goodMark:null};
+    log('alarm','info','🏭 WO-'+plant.wo+' · '+MACHINES[id].name+' · operator: '+inst.complaint
+      +(DEGRADERS[lib.id]?'  (⚠ degrading — it will worsen)':''));
+    plant.nextAt=plant.t+38+rnd()*32;
+  }
+  if(plant.t>=plant.dur) plantEnd();
+}
+plant.onRepair=function(part,wasFault){
+  const cost=MACHINE.partcost[part]||0; plant.parts+=cost;
+  if(!wasFault){ plant.wrong++;
+    $('pl-status').textContent='✗ Wrong part on '+MACHINE.name+' — $'+cost+' wasted.'; }
+  else $('pl-status').textContent='Part replaced on '+MACHINE.name+' — RESET & let it verify a clean cycle.';
+};
+function plantEnd(){
+  if(!plant.on) return;
+  plant.on=false; S.auto=false;
+  $('plantcard').style.display='none';
+  $('btn-inject').disabled=false; $('btn-inject').style.opacity=1;
+  $('btn-plant').style.borderColor='var(--edge)';
+  const up={}; let fleet=0;
+  for(const id in MACHINES){ up[id]=Math.max(0,1-plant.down[id]/plant.dur); fleet+=up[id]/3; }
+  let grade='D', gc='var(--red)';
+  if(fleet>=0.90&&plant.wrong===0){ grade='A'; gc='var(--green)'; }
+  else if(fleet>=0.82){ grade='B'; gc='var(--cyan)'; }
+  else if(fleet>=0.70){ grade='C'; gc='var(--amber)'; }
+  let best=null,shifts=1;
+  try{ const prev=JSON.parse(localStorage.getItem('plant.best')||'null'); shifts=(prev?prev.shifts:0)+1;
+    const RANK={A:4,B:3,C:2,D:1};
+    best=prev&&prev.grade?{grade:prev.grade,up:prev.up}:null;
+    if(!best||RANK[grade]>RANK[best.grade]||(RANK[grade]===RANK[best.grade]&&fleet*100>best.up)) best={grade,up:+(fleet*100).toFixed(1)};
+    localStorage.setItem('plant.best',JSON.stringify({...best,shifts}));
+  }catch(e){}
+  $('sm-grade').textContent=grade; $('sm-grade').style.color=gc;
+  $('sm-title').textContent='PLANT SHIFT COMPLETE';
+  $('sm-table').innerHTML=[
+    ['Fleet uptime',(fleet*100).toFixed(1)+'%'],
+    ['SORT-LINE 2 / PRESS-LINE 3 / PICK-CELL 4',(up.conveyor*100).toFixed(0)+'% · '+(up.press*100).toFixed(0)+'% · '+(up.robot*100).toFixed(0)+'%'],
+    ['Work orders fixed',plant.fixed+' / '+plant.wo],
+    ['Wrong parts',plant.wrong],['Parts spend','$'+plant.parts],
+    ['Technician rank',rankName()],
+    ['Personal best ('+shifts+' plant shift'+(shifts>1?'s':'')+')',best?best.grade+' · '+best.up+'%':'—'],
+  ].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join('');
+  $('sm-log').innerHTML='';
+  $('shiftmodal').style.display='flex';
+  for(const id in MACHINES){ const M=MACHINES[id]; for(const k in M.faults) delete M.faults[k]; M.reset(); }
+  log('alarm',grade==='A'?'ok':'info','🏁 Plant shift done · fleet uptime '+(fleet*100).toFixed(1)+'% · grade '+grade);
+}
+const PL_DOT={IDLE:'#7d8fa1',FAULTED:'#ff5252',ESTOP:'#ff5252'};
+function renderPlant(){
+  if(!plant.on) return;
+  const left=Math.max(0,plant.dur-plant.t);
+  $('pl-clock').textContent=fmt(left);
+  $('pl-fixed').textContent=plant.fixed;
+  $('pl-parts').textContent='$'+plant.parts+' · '+plant.wrong+'✗';
+  let rows='';
+  for(const id in MACHINES){ const M=MACHINES[id], st=M.top().state;
+    const dot=PL_DOT[st]||'#33d17a';
+    const up=Math.max(0,1-plant.down[id]/plant.dur)*100;
+    const wo=plant.open[id];
+    rows+=`<div style="display:flex;align-items:center;gap:6px;padding:4px 6px;background:#05080b;border:1px solid ${MACHINE.id===id?'var(--blue)':'var(--edge)'};border-radius:4px;margin-bottom:4px">
+      <span style="width:9px;height:9px;border-radius:50%;background:${dot};box-shadow:0 0 5px ${dot}"></span>
+      <span style="flex:1;font-size:10px">${M.name}${wo?' <span style="color:var(--amber)">WO-'+wo.n+'</span>':''}</span>
+      <span style="font-size:10px;color:${up>85?'var(--green)':'var(--amber)'}">${up.toFixed(0)}%</span>
+      <button class="btn" style="font-size:9px;padding:2px 7px" onclick="switchMachine('${id}')">GO</button></div>`;
+  }
+  const el=$('pl-rows'); if(el._h!==rows){ el.innerHTML=rows; el._h=rows; }
+}
+$('btn-plant').onclick=()=>{ if(plant.on) plantEnd(); else startPlant(); };
+$('pl-end').onclick=()=>plantEnd();
+
+/* ============================ VISUAL FX =================================
+   Probe-zoom cinematics, thermal-camera overlay, particles (drips/sparks),
+   component vibration, alarm strobe. All drawn into a runtime <g class="fx">
+   appended to the active layer svg — zero impact on the art contracts. */
+let zoomOn=(function(){ try{ return localStorage.getItem('zoom')!=='off'; }catch(e){ return true; } })();
+$('btn-zoom').style.opacity=zoomOn?1:.45;
+$('btn-zoom').onclick=()=>{ zoomOn=!zoomOn; $('btn-zoom').style.opacity=zoomOn?1:.45;
+  try{ localStorage.setItem('zoom',zoomOn?'on':'off'); }catch(e){} };
+
+function activeSvg(){ return document.querySelector(`svg.layer.on[data-machine="${MACHINE.id}"]`); }
+// map an element's on-screen center to the svg's 900x560 viewBox coords (meet letterboxing)
+function svgCoords(el,svg){
+  const r=el.getBoundingClientRect(), c=svg.getBoundingClientRect();
+  const sc=Math.min(c.width/900,c.height/560);
+  const ox=(c.width-900*sc)/2, oy=(c.height-560*sc)/2;
+  return [ (r.left+r.width/2-c.left-ox)/sc, (r.top+r.height/2-c.top-oy)/sc ];
+}
+let _zoomAnim=null,_zoomSvg=null,_zoomTimer=null;
+function zoomTo(el){
+  const svg=activeSvg(); if(!svg||!el) return;
+  const [cx,cy]=svgCoords(el,svg);
+  animateViewBox(svg,[Math.max(0,Math.min(450,cx-225)),Math.max(0,Math.min(280,cy-140)),450,280]);
+  clearTimeout(_zoomTimer); _zoomTimer=setTimeout(()=>zoomReset(),1700);
+}
+function zoomReset(){ clearTimeout(_zoomTimer);
+  if(_zoomSvg) animateViewBox(_zoomSvg,[0,0,900,560]); }
+function animateViewBox(svg,to){
+  if(_zoomAnim) cancelAnimationFrame(_zoomAnim);
+  _zoomSvg=svg;
+  const from=(svg.getAttribute('viewBox')||'0 0 900 560').split(' ').map(Number);
+  const t0=performance.now(), D=280;
+  (function step(t){
+    const k=Math.min(1,(t-t0)/D), e=1-Math.pow(1-k,3);
+    svg.setAttribute('viewBox',from.map((f,i)=>(f+(to[i]-f)*e).toFixed(1)).join(' '));
+    if(k<1) _zoomAnim=requestAnimationFrame(step); else _zoomAnim=null;
+  })(t0);
+}
+
+// particles: {x,y,vx,vy,life,r,col}
+let fxP=[], _fxSpawnT=0;
+function fxLayer(svg){
+  let g=svg.querySelector('g.fx');
+  if(!g){ g=document.createElementNS('http://www.w3.org/2000/svg','g'); g.setAttribute('class','fx');
+    g.style.pointerEvents='none'; svg.appendChild(g); }
+  return g;
+}
+function fxAnchor(tp){ const svg=activeSvg(); if(!svg) return null;
+  const el=svg.querySelector(`[data-tp="${tp}"]`); if(!el) return null;
+  return svgCoords(el,svg);
+}
+function updateFX(dt){
+  const svg=activeSvg(); if(!svg) return;
+  const g=fxLayer(svg);
+  _fxSpawnT+=dt;
+  // spawn conditions (emergent-state driven)
+  if(_fxSpawnT>0.14){
+    _fxSpawnT=0;
+    if(MACHINE.id==='press'&&activeLayer==='hyd'&&eff('cyl.gLeak')>0.005&&S.solAen){
+      const a=fxAnchor('RODLINE'); if(a&&fxP.length<40&&rnd()<0.5)
+        fxP.push({x:a[0]+(rnd()*8-4),y:a[1]+6,vx:0,vy:40+rnd()*30,life:1.6,r:2.2,col:'rgba(150,120,60,.8)'});
+    }
+    if(MACHINE.id==='press'&&activeLayer==='elec'&&eff('ls402.wiring')<1&&S.pos>=CONTACT-4){
+      const a=fxAnchor('LS402')||[612,428];
+      if(rnd()<0.6) for(let i=0;i<4;i++)
+        fxP.push({x:a[0],y:a[1],vx:rnd()*120-60,vy:-rnd()*80,life:0.3,r:1.3,col:'rgba(255,220,120,.95)'});
+    }
+    if(MACHINE.id==='robot'&&activeLayer==='vac'&&rbS.sol&&rbEff('cup.leak')>8){
+      const a=fxAnchor('VCUP'); if(a&&rnd()<0.7)
+        fxP.push({x:a[0]+(rnd()*10-5),y:a[1],vx:rnd()*20-10,vy:-25-rnd()*20,life:0.8,r:2.5,col:'rgba(160,200,220,.35)'});
+    }
+  }
+  for(const pt of fxP){ pt.x+=pt.vx*dt; pt.y+=pt.vy*dt; pt.vy+=(pt.col[5]==='2'?0:120)*dt; pt.life-=dt; }
+  fxP=fxP.filter(pt=>pt.life>0);
+  // vibration classes (state-driven, only cheap targets)
+  const vibTargets=[];
+  if(MACHINE.id==='conveyor'&&cvS.hz>5&&cvEff('bearing.fric')>2) vibTargets.push('BEARING');
+  if(MACHINE.id==='press'&&S.Ppump>203) vibTargets.push('PUMP');
+  svg.querySelectorAll('.vib').forEach(e=>{ if(!vibTargets.includes(e.dataset.tp)) e.classList.remove('vib'); });
+  for(const tp of vibTargets){ const el=svg.querySelector(`[data-tp="${tp}"]`);
+    if(el&&!el.classList.contains('vib')&&!el.getAttribute('transform')) el.classList.add('vib'); }
+  // thermal overlay
+  let heat='';
+  if(instrument==='thermal'){
+    svg.classList.add('thermal-mode');
+    for(const k in MACHINE.TP){ const d=MACHINE.TP[k]; if(d.d!=='thermal') continue;
+      const a=fxAnchor(k); if(!a) continue;
+      const t=d.get()[0]; const al=Math.max(0,Math.min(0.8,(t-34)/95));
+      if(al>0.02) heat+=`<circle cx="${a[0].toFixed(0)}" cy="${a[1].toFixed(0)}" r="46" fill="rgba(255,110,30,${(al*0.55).toFixed(2)})"/>
+        <circle cx="${a[0].toFixed(0)}" cy="${a[1].toFixed(0)}" r="20" fill="rgba(255,200,80,${(al*0.75).toFixed(2)})"/>`;
+    }
+  } else svg.classList.remove('thermal-mode');
+  const parts=fxP.map(pt=>`<circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="${pt.r}" fill="${pt.col}"/>`).join('');
+  const html=heat+parts;
+  if(g._h!==html){ g.innerHTML=html; g._h=html; }
+  // alarm strobe on the active machine
+  $('main').classList.toggle('alarm-strobe', MACHINE.top().state==='FAULTED');
+}
 
 /* ================================ SOUND ================================
    Web Audio, no assets. Machine loops are DIAGNOSTIC: VFD whine pitch tracks

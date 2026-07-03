@@ -29,6 +29,14 @@ https://tlaba.github.io/workbench/ (auto-deploys from `main` via GitHub Pages)
 - **Resume** — an interrupted shift is saved locally and offered on return.
 - **🔊 Sound** — diagnostic audio: VFD whine tracks Hz, a failing bearing squeals,
   a pinned relief valve screams, a leaking vacuum cup hisses.
+- **🏭 Plant Mode (endgame)** — unlock all three machines, then run the whole
+  floor simultaneously: faults (some **degrading in real time**) land on any
+  machine, work orders queue, and you're scored on **fleet uptime**.
+- **👁 Visual diagnosis** — probe auto-zoom cinematics, a real thermal-camera
+  heat-glow overlay, vibrating bearings, dripping seals, sparking wiring, and
+  a red alarm strobe on faulted machines.
+- **Technician rank** — lifetime fixed-ticket count ranks you Apprentice →
+  Technician → Journeyman → Master Tech → Plant Wizard.
 
 | File | What it is |
 |---|---|

@@ -205,6 +205,7 @@ svg text{transition:fill .18s ease}
         <option value="conveyor">SORT-LINE 2</option>
         <option value="press" selected>PRESS-LINE 3</option>
         <option value="robot">PICK-CELL 4</option>
+        <option value="molder">MOLD-LINE 5</option>
       </select><br><small id="wo-sub">150-ton downstroke hydraulic press · ★★</small></div>
     <div class="metric"><b id="m-state"><span class="pill idle">IDLE</span></b><span>machine</span></div>
     <div class="metric"><b id="m-cycles">0</b><span>good / <span id="m-weak">0</span> weak</span></div>
@@ -3606,6 +3607,104 @@ svg text{transition:fill .18s ease}
   </g>
 </svg>
 
+
+    <!-- ================= MOLDER · MOLD-LINE 5 ================= -->
+    <svg class="layer" data-machine="molder" data-layer="mold" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
+      <text class="lbl" x="30" y="30">MOLD-LINE 5 · MACHINE ELEVATION</text>
+      <rect x="60" y="420" width="780" height="40" fill="#242c36" stroke="#3a4a58"/>
+      <rect x="330" y="180" width="30" height="240" fill="#3d4754" stroke="#4a5866"/>
+      <text class="lbl" x="300" y="170">FIXED PLATEN</text>
+      <g id="im-clampcar" class="tp" data-tp="CLAMP">
+        <rect x="150" y="180" width="30" height="240" fill="#3d4754" stroke="#4a5866"/>
+        <rect x="180" y="230" width="60" height="140" fill="#1f5f8b" stroke="#14456b"/>
+      </g>
+      <rect x="270" y="230" width="60" height="140" fill="#1f5f8b" stroke="#14456b" class="tp" data-tp="MOLD"/>
+      <line x1="60" y1="210" x2="360" y2="210" stroke="#8a97a5" stroke-width="6"/>
+      <line x1="60" y1="390" x2="360" y2="390" stroke="#8a97a5" stroke-width="6"/>
+      <rect x="40" y="250" width="60" height="100" fill="#242c36" stroke="#3a4a58" class="tp" data-tp="PUMP5"/>
+      <text class="lbl" x="40" y="240">CLAMP CYL</text>
+      <circle cx="120" cy="440" r="8" fill="#233" stroke="#33d1c9" class="tp" data-tp="CLAMPG"/><text class="lbl" x="100" y="470">CLAMPG</text>
+      <rect x="360" y="270" width="360" height="60" fill="#4a5866" stroke="#3a4a58" class="tp" data-tp="SCREW"/>
+      <g id="im-screwpos"><rect x="470" y="282" width="260" height="36" fill="#8a97a5" stroke="#5c6a78"/></g>
+      <circle cx="380" cy="300" r="7" fill="#233" stroke="#33d1c9" class="tp" data-tp="NOZZLE"/><text class="lbl" x="366" y="260">NOZZLE</text>
+      <circle cx="440" cy="300" r="7" fill="#233" stroke="#33d1c9" class="tp" data-tp="RING"/><text class="lbl" x="426" y="352">RING</text>
+      <path d="M660 270 L640 200 L720 200 L700 270 Z" fill="#3d4754" stroke="#4a5866" class="tp" data-tp="HOPPER"/>
+      <text class="lbl" x="650" y="190">HOPPER</text>
+      <rect id="im-partout" x="290" y="430" width="26" height="18" rx="2" fill="#33d17a" opacity="0.15"/>
+      <text class="lbl" x="272" y="472">PARTS CHUTE</text>
+      <rect x="600" y="440" width="240" height="80" rx="4" fill="#05080b" stroke="#3a4a58"/>
+      <text id="im-tonnage" class="val" x="614" y="470" style="font-size:16px">0 t</text>
+      <text id="im-cushion" class="val" x="614" y="492" style="font-size:12px">CUSHION 0.0</text>
+      <text id="im-moldT" class="val" x="614" y="510" style="font-size:12px">MOLD 30°C</text>
+    </svg>
+    <svg class="layer" data-machine="molder" data-layer="heat" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
+      <text class="lbl" x="30" y="30">MOLD-LINE 5 · HEATING &amp; COOLING</text>
+      <rect x="120" y="120" width="660" height="80" fill="#4a5866" stroke="#3a4a58"/>
+      <rect id="im-z1" x="600" y="112" width="150" height="96" fill="#2b3a2b" stroke="#5c4622" class="tp" data-tp="BARREL1"/>
+      <rect id="im-z2" x="400" y="112" width="150" height="96" fill="#2b3a2b" stroke="#5c4622" class="tp" data-tp="BARREL2"/>
+      <rect id="im-z3" x="200" y="112" width="150" height="96" fill="#2b3a2b" stroke="#5c4622" class="tp" data-tp="BARREL3"/>
+      <text class="lbl" x="655" y="105">Z1 rear</text><text class="lbl" x="452" y="105">Z2 mid</text><text class="lbl" x="252" y="105">Z3 front</text>
+      <text id="im-t1" class="val" x="655" y="240" style="font-size:15px">25°C</text>
+      <text id="im-t2" class="val" x="455" y="240" style="font-size:15px">25°C</text>
+      <text id="im-t3" class="val" x="255" y="240" style="font-size:15px">25°C</text>
+      <rect x="440" y="150" width="14" height="20" fill="#c9a35a" class="tp" data-tp="TC2"/><text class="lbl" x="420" y="266">TC2</text>
+      <rect x="500" y="150" width="16" height="16" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="HTR2"/><text class="lbl" x="492" y="290">HTR2 term</text>
+      <rect x="240" y="360" width="180" height="110" fill="#3d4754" stroke="#4a5866" class="tp" data-tp="MOLDT"/>
+      <text class="lbl" x="280" y="350">MOLD BLOCK</text>
+      <text id="im-moldtemp" class="val" x="300" y="420" style="font-size:18px">30°C</text>
+      <path id="imw-coolin" class="pipe" d="M100 400 L240 400"/>
+      <path id="imw-coolout" class="pipe" d="M420 430 L560 430"/>
+      <circle cx="150" cy="400" r="7" fill="#233" stroke="#33d1c9" class="tp" data-tp="COOLIN"/><text class="lbl" x="120" y="380">COOL IN</text>
+      <circle cx="500" cy="430" r="7" fill="#233" stroke="#33d1c9" class="tp" data-tp="COOLOUT"/><text class="lbl" x="470" y="460">COOL OUT</text>
+    </svg>
+    <svg class="layer" data-machine="molder" data-layer="elec" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
+      <text class="lbl" x="30" y="30">MOLD-LINE 5 · HEATER CABINET</text>
+      <rect x="40" y="60" width="90" height="50" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="PSU5"/><text class="lbl" x="52" y="90">24V PSU</text>
+      <line id="imw-24" class="wire" x1="130" y1="85" x2="230" y2="85"/>
+      <rect x="230" y="60" width="80" height="50" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="ESTOP5"/><text class="lbl" x="240" y="90">E-STOP</text>
+      <line id="imw-estop" class="wire" x1="310" y1="85" x2="420" y2="85"/>
+      <rect x="60" y="200" width="110" height="90" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="K5"/>
+      <text class="lbl" x="72" y="222">K5 HEATERS</text>
+      <circle id="imi-run" cx="80" cy="260" r="6" fill="#2b3a2b"/><text class="lbl" x="92" y="264">RUN</text>
+      <circle id="imi-fault" cx="140" cy="260" r="6" fill="#2b3a2b"/><text class="lbl" x="152" y="264">FLT</text>
+      <line id="imw-h1" class="wire" x1="170" y1="220" x2="420" y2="220"/><text class="lbl" x="430" y="224">Z1 band</text>
+      <line id="imw-h2" class="wire" x1="170" y1="250" x2="420" y2="250"/><text class="lbl" x="430" y="254">Z2 band</text>
+      <line id="imw-h3" class="wire" x1="170" y1="280" x2="420" y2="280"/><text class="lbl" x="430" y="284">Z3 band</text>
+      <rect x="600" y="200" width="140" height="60" rx="4" fill="#05080b" stroke="#3a4a58"/>
+      <text class="lbl" x="612" y="222">HEATER LOAD</text>
+      <text id="im-hamps" class="val" x="612" y="248" style="font-size:18px">0.0 A</text>
+      <rect x="60" y="380" width="120" height="50" fill="#16202b" stroke="#3a4a58" class="tp" data-tp="TC2E"/>
+      <text class="lbl" x="68" y="410">TC TERMINALS</text>
+    </svg>
+    <svg class="layer" data-machine="molder" data-layer="plc" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
+      <text class="lbl" x="30" y="28">SEQUENCER STATE</text>
+      <rect x="30" y="40" width="250" height="40" rx="4" fill="#05080b" stroke="#3a4a58"/>
+      <text class="val" id="im-state" x="42" y="66" style="font-size:16px">IDLE</text>
+      <text class="lbl" x="320" y="28">TIMERS</text>
+      <rect x="320" y="40" width="280" height="40" rx="4" fill="#05080b" stroke="#3a4a58"/>
+      <text class="lbl" id="im-tm1" x="330" y="58">T-CYC 0.0</text>
+      <text class="lbl" id="im-tm2" x="330" y="74">T-CLAMP 0.0/4.0</text>
+      <rect x="15" y="125" width="870" height="290" fill="#05080b" stroke="#2a3744"/>
+      <g id="im-ladder"></g>
+    </svg>
+    <svg class="layer" data-machine="molder" data-layer="hmi" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
+      <rect x="120" y="30" width="660" height="500" rx="10" fill="#0a1017" stroke="#2a3744" stroke-width="2"/>
+      <text class="lbl" x="380" y="58">MOLDVIEW 600</text>
+      <rect id="im-banner" x="140" y="70" width="620" height="56" rx="4" fill="#12351f" stroke="#2c7a48"/>
+      <text id="im-bannertext" x="160" y="106" style="font-size:19px;font-weight:700" fill="#33d17a">SYSTEM READY</text>
+      <text class="lbl" x="160" y="160">STATION</text><text x="160" y="192" style="font-size:22px" fill="#c9d6e2">MOLD-LINE 5</text>
+      <text class="lbl" x="160" y="250">GOOD PARTS</text>
+      <text id="im-goodhmi" x="160" y="320" style="font-size:52px;font-weight:800" fill="#33d1c9">0</text>
+      <text class="lbl" x="160" y="370">MELT</text>
+      <text id="im-melthmi" x="160" y="404" style="font-size:22px" fill="#ffb020">MELT 0°C · SP 220</text>
+      <g>
+        <circle id="imlamp-run" cx="600" cy="220" r="14" fill="#2b3a2b" stroke="#3a4a58"/><text class="lbl" x="625" y="225">RUN</text>
+        <circle id="imlamp-fault" cx="600" cy="270" r="14" fill="#2b3a2b" stroke="#3a4a58"/><text class="lbl" x="625" y="275">FAULT</text>
+        <circle id="imlamp-estop" cx="600" cy="320" r="14" fill="#2b3a2b" stroke="#3a4a58"/><text class="lbl" x="625" y="325">E-STOP OK</text>
+      </g>
+      <text class="lbl" x="160" y="500">Press ▶ CYCLE to clamp &amp; shoot one part.</text>
+    </svg>
+
   </div>
 
   <!-- ============ INSTRUMENT PANEL ============ -->
@@ -4003,7 +4102,7 @@ let acc=0, last=performance.now();
 function loop(now){
   let d=(now-last)/1000; last=now; if(d>0.25)d=0.25; acc+=d;
   while(acc>=DT){
-    if(plant.on){ pressStep(DT); cvStep(DT); rbStep(DT); plantTick(DT); }
+    if(plant.on){ pressStep(DT); cvStep(DT); rbStep(DT); imStep(DT); plantTick(DT); }
     else MACHINE.step(DT);
     if(career.active&&career.open){ career.ticketTime+=DT; career.shiftTime+=DT; }  // career downtime clock
     acc-=DT;
@@ -4365,7 +4464,7 @@ document.querySelectorAll('.dtab').forEach(t=>t.onclick=()=>{
 });
 
 $('briefbody').innerHTML=`
-<b style="color:var(--amber)">🏭 PLANT MODE:</b> the endgame — unlock all three machines at grade C+, then run the WHOLE
+<b style="color:var(--amber)">🏭 PLANT MODE:</b> the endgame — unlock all FOUR machines at grade C+, then run the WHOLE
 floor at once: every machine steps simultaneously in AUTO, hidden faults (some <b>degrading over time</b>) land
 anywhere, work orders queue, and you are scored on <b>fleet uptime</b>.
 <br><br>
@@ -4373,9 +4472,11 @@ anywhere, work orders queue, and you are scored on <b>fleet uptime</b>.
 Thermal camera now shows an actual heat-glow overlay; failing bearings visibly vibrate, leaking seals drip,
 chafed wiring sparks at full stroke; faulted machines strobe red.
 <br><br>
-<b style="color:var(--blue)">▶ THREE MACHINES:</b> the dropdown in the top-left switches between <b>SORT-LINE 2</b> (belt
-conveyor · ★), <b>PRESS-LINE 3</b> (hydraulic press · ★★) and <b>PICK-CELL 4</b> (gantry robot · ★★★) — each with its own
-physics, PLC program, instruments, fault library and per-machine personal best.
+<b style="color:var(--blue)">▶ FOUR MACHINES:</b> the dropdown in the top-left switches between <b>SORT-LINE 2</b> (belt
+conveyor · ★), <b>PRESS-LINE 3</b> (hydraulic press · ★★), <b>PICK-CELL 4</b> (gantry robot · ★★★) and <b>MOLD-LINE 5</b>
+(injection molder · ★★★★ — barrel heater zones under TC control, screw & check ring, mold cooling; short shots,
+burned parts and flash all emerge from the process physics) — each with its own physics, PLC program, instruments,
+fault library and per-machine personal best.
 <br><br>
 <b style="color:var(--blue)">▶ CAREER MODE:</b> press <b>START SHIFT</b> (top bar) for the game — work orders with hidden faults
 (shuffled order + randomized severity every shift, and the last two are ⚠ PRIORITY tickets with <b>two simultaneous
@@ -4834,6 +4935,234 @@ const rbREPAIRS=[['CUPP','Replace vacuum cup / bellows'],['XDRVP','Replace X ser
   ['VPUMPP','Rebuild vacuum pump'],['CURTP','Realign light curtain'],['ZENCP','Replace Z-axis encoder']];
 
 /* =========================================================================
+   MACHINE 4 — MOLD-LINE 5 (hydraulic-clamp injection molder). The new
+   physics dimension is THERMAL PROCESS CONTROL: three barrel heater zones
+   under PLC bang-bang control via thermocouples, mold cooling water, and
+   melt-quality consequences. Faults are data overrides via imEff; short
+   shots, burned parts, flash and eject-sticking all emerge.
+   ========================================================================= */
+const imP={ htr:{z1:1,z2:1,z3:1}, tc2:{offset:0}, ring:{leak:0},
+            cool:{flow:1}, clamp:{eff:1}, hopper:{ok:1} };
+const imFaults={};
+function imEff(path){ const [c,k]=path.split('.'); let v=imP[c][k]; const f=imFaults[path];
+  if(!f) return v;
+  if(f.mode==='ramp') return f.from+(f.to-f.from)*Math.max(0,Math.min(1,(plant.t-f.start)/f.dur));
+  if(f.mode==='scale') return v*f.value;
+  if(f.mode==='offset') return v+f.value;
+  if(f.mode==='set') return f.value;
+  return v; }
+const imS={ state:'IDLE', faultCode:'', estopOK:true,
+  T:[220,220,220], tc:[220,220,220], heatOn:[false,true,false], heaterAmps:0,   // machine left at temp
+  moldT:30, clampX:0, clampT:0, clampF:0, screw:0, screwT:0, fill:0, cushion:0,
+  shotBridged:false, partFlash:false, partQ:'', partAge:9,
+  good:0, weak:0, cycleT:0, cost:0, tm1:0, tm2:0, plcAcc:0 };
+
+function imStep(dt){
+  // barrel zone thermodynamics: heater power in, ambient loss out
+  for(let z=0; z<3; z++){
+    const hp=imEff('htr.z'+(z+1))*(imS.heatOn[z]?1:0);
+    imS.T[z]+=(hp*22-(imS.T[z]-25)*0.10)*dt;
+    imS.tc[z]=imS.T[z]+(z===1?imEff('tc2.offset'):0);   // the PLC only ever sees the TC
+  }
+  imS.heaterAmps=imS.heatOn.reduce((a,on,z)=>a+(on?imEff('htr.z'+(z+1))*8:0),0);
+  // mold cooling water pulls mold heat toward 30°C, scaled by flow
+  imS.moldT+=-(imS.moldT-30)*0.08*imEff('cool.flow')*dt;
+  // clamp carriage + tonnage
+  imS.clampX+=Math.max(-190*dt,Math.min(190*dt,imS.clampT-imS.clampX));
+  const fTarget=(imS.clampX>=139&&(imS.state==='CLAMP'||imS.state==='INJECT'||imS.state==='PACK'||imS.state==='COOL'))
+    ?200*imEff('clamp.eff'):0;
+  imS.clampF+=Math.max(-260*dt,Math.min(130*dt,fTarget-imS.clampF));
+  // screw: forward during injection; melt delivery loses across a worn check ring
+  const ds=Math.max(-160*dt,Math.min(78*dt,imS.screwT-imS.screw));
+  imS.screw+=ds;
+  if(imS.state==='INJECT'&&ds>0){
+    imS.fill+=ds*(1-imEff('ring.leak'))*(imS.shotBridged?0.45:1)*(105/90);
+    if(imS.fill>=100){ imS.screwT=imS.screw; imS.cushion=90-imS.screw; }
+  }
+  imS.partAge+=dt;
+  if(imS.state!=='IDLE'&&imS.state!=='FAULTED'&&imS.state!=='ESTOP') imS.cycleT+=dt;
+  if(imS.state==='FAULTED'||imS.state==='ESTOP') imS.cost+=dt*7;
+  imS.plcAcc+=dt; if(imS.plcAcc>=0.1){ imS.plcAcc-=0.1; imScan(); }
+}
+function imFault(code,msg){ imS.state='FAULTED'; imS.faultCode=code;
+  imS.screwT=imS.screw; log('alarm','active',code+' · '+msg); }
+function imScan(){
+  if(!imS.estopOK){ imS.state='ESTOP'; imS.faultCode='E-STOP'; imS.heatOn=[false,false,false]; return; }
+  // zone heat regulation runs in every state (bang-bang ±2°C on the TC reading)
+  for(let z=0;z<3;z++){
+    if(imS.tc[z]<218) imS.heatOn[z]=true; else if(imS.tc[z]>222) imS.heatOn[z]=false;
+  }
+  switch(imS.state){
+    case 'IDLE': break;
+    case 'CLAMP': imS.clampT=140; imS.tm2+=0.1;
+      if(imS.clampX>=139&&imS.clampF>=175&&imS.screw<=2){ imS.state='MELT_CHK'; }   // screw-recovery interlock
+      else if(imS.tm2>4){ imFault('ALM-4404','TONNAGE NOT REACHED · clamp cannot build force'); }
+      break;
+    case 'MELT_CHK':{
+      const out=imS.tc.some(t=>t<208||t>232);
+      if(out){ imFault('ALM-4401','MELT TEMP OUT OF WINDOW · zone TCs '+imS.tc.map(t=>t.toFixed(0)).join('/')); break; }
+      imS.shotBridged=(imEff('hopper.ok')<1&&rnd()<0.5);     // bridged hopper starves the shot
+      imS.fill=0; imS.cushion=0; imS.screwT=90; imS.tm1=0; imS.state='INJECT'; break; }
+    case 'INJECT': imS.tm1+=0.1;
+      if(imS.fill>=100||imS.screw>=89.5){ imS.cushion=Math.max(0,90-imS.screw);
+        imS.state='PACK'; imS.tm1=0; }
+      else if(imS.tm1>3){ imFault('ALM-4402','SHORT SHOT · screw stalled, no cushion'); }
+      break;
+    case 'PACK': imS.tm1+=0.1;
+      if(imS.tm1<0.15&&imS.cushion<=1){ imFault('ALM-4402','SHORT SHOT · screw bottomed, zero cushion'); break; }
+      imS.partFlash=(imS.clampF<192&&imS.fill>=97);
+      if(imS.tm1>=0.8){ imS.moldT+=9; imS.tm1=0; imS.state='COOL'; }
+      break;
+    case 'COOL':{ imS.tm1+=0.1;
+      const need=2.2*(1+Math.max(0,imS.moldT-42)/25);
+      if(imS.moldT>72){ imFault('ALM-4403','EJECT FAULT · part sticking, mold overtemperature'); break; }
+      if(imS.tm1>=need){ imS.state='OPEN'; imS.clampT=0; } break; }
+    case 'OPEN': if(imS.clampX<=2){ imS.state='EJECT'; } break;
+    case 'EJECT':{
+      const burned=imS.T[1]>240;
+      imS.partQ=burned?'burned':imS.partFlash?'flash':'good';
+      imS.partAge=0; imS.good++;
+      if(burned){ imS.weak++; log('alarm','info','ALM-4400 (advisory) PART DEGRADED · melt ran '+imS.T[1].toFixed(0)+'°C actual — brown/brittle'); }
+      else if(imS.partFlash){ imS.weak++; log('alarm','info','ALM-4405 (advisory) FLASH ON PARTING LINE · tonnage '+imS.clampF.toFixed(0)+'t at pack'); }
+      else log('alarm','ok','CYCLE COMPLETE · good part ('+imS.good+' total)');
+      imS.screwT=0; imS.state='IDLE';
+      if(S.auto&&(MACHINE.id==='molder'||plant.on)) setTimeout(()=>{ if(imS.state==='IDLE') imStart(); },600);
+      break; }
+    case 'FAULTED': case 'ESTOP': break;
+  }
+}
+function imStart(){ if(imS.state!=='IDLE')return;
+  imS.state='CLAMP'; imS.tm1=0; imS.tm2=0; imS.cycleT=0; imS.clampT=140; imS.screwT=0;
+  log('alarm','','CYCLE START · clamp & shoot'); }
+function imReset(){ if(!imS.estopOK)return;
+  imS.state='IDLE'; imS.faultCode=''; imS.clampT=0; imS.screwT=0; imS.tm1=0; imS.tm2=0;
+  imS.fill=0; imS.cushion=0; imS.partFlash=false;
+  log('alarm','','FAULT RESET · clamp opened, screw retracted'); }
+function imEstop(){ imS.estopOK=!imS.estopOK;
+  if(!imS.estopOK){ imS.state='ESTOP'; log('alarm','active','E-STOP PRESSED · MOLD-LINE 5 safe state'); }
+  else { imS.state='IDLE'; imS.faultCode=''; log('alarm','','E-STOP RELEASED'); } }
+function imSpecial(){                                    // purge shot + cooling flow check
+  const dT=(imS.moldT-30)*0.30*imEff('cool.flow');
+  log('alarm','info','PURGE/FLOW CHECK · actual barrel '+imS.T.map(t=>t.toFixed(0)).join('/')+'°C vs TC '
+    +imS.tc.map(t=>t.toFixed(0)).join('/')+'°C'
+    +(Math.abs(imS.T[1]-imS.tc[1])>10?' — ⚠ zone 2 disagrees, TC suspect!':'')
+    +' · cooling ΔT '+dT.toFixed(1)+'°C'+(imEff('cool.flow')<0.5?' — ⚠ almost no water moving':''));
+}
+function tint(t){ return t<60?'#2b3a2b':t<150?'#7a6a2c':t<230?'#c96a2a':'#ff5252'; }
+function imRenderMold(){
+  $('im-clampcar').setAttribute('transform',`translate(${imS.clampX.toFixed(1)} 0)`);
+  $('im-screwpos').setAttribute('transform',`translate(${(-imS.screw).toFixed(1)} 0)`);
+  const po=$('im-partout');
+  po.setAttribute('opacity',imS.partAge<2.4?'1':'0.15');
+  po.setAttribute('fill',imS.partQ==='burned'?'#8a4a2a':imS.partQ==='flash'?'#c9a35a':'#33d17a');
+  $('im-tonnage').textContent=imS.clampF.toFixed(0)+' t';
+  $('im-cushion').textContent='CUSHION '+imS.cushion.toFixed(1);
+  $('im-cushion').style.fill=imS.cushion<=1&&imS.state!=='IDLE'?'var(--red)':'var(--cyan)';
+  $('im-moldT').textContent='MOLD '+imS.moldT.toFixed(0)+'°C';
+  $('im-moldT').style.fill=imS.moldT>65?'var(--red)':'var(--cyan)';
+}
+function imRenderHeat(){
+  for(let z=0;z<3;z++){
+    const el=$('im-z'+(z+1)); const c=tint(imS.T[z]);
+    if(el._c!==c){ el.setAttribute('fill',c); el._c=c; }
+    $('im-t'+(z+1)).textContent=imS.tc[z].toFixed(0)+'°C';
+    $('im-t'+(z+1)).style.fill=(imS.tc[z]>205&&imS.tc[z]<235)?'var(--green)':'var(--amber)';
+  }
+  setPipe('imw-coolin',(imS.moldT-25)*imEff('cool.flow'),imEff('cool.flow')>0.5?2:0);
+  setPipe('imw-coolout',(imS.moldT-25)*imEff('cool.flow'),imEff('cool.flow')>0.5?2:0);
+  $('im-moldtemp').textContent=imS.moldT.toFixed(0)+'°C';
+  $('im-moldtemp').style.fill=imS.moldT>65?'var(--red)':'var(--cyan)';
+}
+function imRenderElec(){
+  $('imw-24').style.stroke='var(--green)';
+  $('imw-estop').style.stroke=imS.estopOK?'var(--green)':'var(--red)';
+  for(let z=0;z<3;z++) $('imw-h'+(z+1)).style.stroke=imS.heatOn[z]?'var(--green)':'var(--edge)';
+  $('im-hamps').textContent=imS.heaterAmps.toFixed(1)+' A';
+  lamp('imi-run',imS.state!=='IDLE'&&imS.state!=='FAULTED'&&imS.state!=='ESTOP','#33d17a');
+  lamp('imi-fault',imS.state==='FAULTED','#ff5252');
+}
+function imRungs(){ return [
+  {y:150,label:'HEATERS EN (Q0.0)',on:imS.estopOK&&imS.heatOn.some(h=>h),conds:[['E-STOP OK',imS.estopOK?1:0],['ANY TC<218',imS.heatOn.some(h=>h)?1:0]]},
+  {y:210,label:'CLAMP SOL (Q0.1)',on:imS.clampT>0,conds:[['CYCLE',imS.state!=='IDLE'?1:0],['NOT FAULT',imS.state!=='FAULTED'?1:0]]},
+  {y:270,label:'INJECT FWD (Q0.2)',on:imS.state==='INJECT',conds:[['TONNAGE OK',imS.clampF>=175?1:0],['MELT OK',imS.tc.every(t=>t>=208&&t<=232)?1:0]]},
+  {y:330,label:'SHORT-SHOT FLT',on:imS.faultCode==='ALM-4402',conds:[['PACK',imS.state==='PACK'?1:0],['CUSHION≤1',imS.cushion<=1?1:0]]},
+  {y:390,label:'MELT-WINDOW FLT',on:imS.faultCode==='ALM-4401',conds:[['TC OUT 208-232',imS.tc.some(t=>t<208||t>232)?1:0]]},
+];}
+function imRenderPLC(){
+  $('im-state').textContent=imS.state;
+  $('im-state').style.fill=imS.state==='FAULTED'?'var(--red)':'var(--green)';
+  $('im-tm1').textContent='T-CYC '+imS.tm1.toFixed(1);
+  $('im-tm2').textContent='T-CLAMP '+imS.tm2.toFixed(1)+'/4.0';
+  paintLadder('im-ladder',imRungs());
+}
+function imRenderHMI(){
+  $('im-goodhmi').textContent=imS.good;
+  $('im-melthmi').textContent='MELT '+imS.tc[1].toFixed(0)+'°C · SP 220';
+  lamp('imlamp-run',imS.state!=='IDLE'&&imS.state!=='FAULTED'&&imS.state!=='ESTOP','#33d17a');
+  lamp('imlamp-fault',imS.state==='FAULTED','#ff5252');
+  lamp('imlamp-estop',imS.estopOK,'#33d17a');
+  const b=$('im-banner'), t=$('im-bannertext');
+  if(!imS.estopOK){ b.setAttribute('fill','#3a1717'); b.setAttribute('stroke','#7a2c2c'); t.setAttribute('fill','#ff5252'); t.textContent='⛔ E-STOP ACTIVE'; }
+  else if(imS.state==='FAULTED'){ b.setAttribute('fill','#3a1717'); b.setAttribute('stroke','#7a2c2c'); t.setAttribute('fill','#ff5252'); t.textContent='⛔ '+imS.faultCode; }
+  else if(imS.state==='IDLE'){ b.setAttribute('fill','#12351f'); b.setAttribute('stroke','#2c7a48'); t.setAttribute('fill','#33d17a'); t.textContent='SYSTEM READY'; }
+  else { b.setAttribute('fill','#16283a'); b.setAttribute('stroke','#2c5a8a'); t.setAttribute('fill','#4aa3ff'); t.textContent='CYCLE RUNNING · '+imS.state; }
+}
+const imTP={
+  PSU5:{d:'dmm',name:'24V PSU',get:()=>[24,'VDC','']},
+  ESTOP5:{d:'dmm',name:'E-stop chain',get:()=>[imS.estopOK?24:0,'VDC',imS.estopOK?'':'⛔ open']},
+  K5:{d:'dmm',name:'heater contactor',get:()=>[imS.heatOn.some(h=>h)?230:0,'VAC',imS.heaterAmps.toFixed(1)+' A total']},
+  HTR2:{d:'dmm',name:'zone-2 heater band',get:()=>{const a=imS.heatOn[1]?imEff('htr.z2')*8:0;
+    return [a,'A',(imS.heatOn[1]&&a<1)?'⚠ contactor calling for heat, band draws NOTHING — open element!':''];}},
+  TC2:{d:'dmm',name:'zone-2 thermocouple',get:()=>[(imS.tc[1]*0.0405).toFixed(2),'mV','reads '+imS.tc[1].toFixed(0)+'°C'
+    +(Math.abs(imEff('tc2.offset'))>10?' — ⚠ band area looks hotter than that; verify with thermal':'')]},
+  CLAMPG:{d:'press',name:'clamp circuit gauge',get:()=>[imS.clampF*1.05,'bar',imS.clampF.toFixed(0)+' t'
+    +(imEff('clamp.eff')<0.96&&imS.clampF>100?' — a touch shy of the 200t plate':'')]},
+  NOZZLE:{d:'press',name:'injection pressure',get:()=>[imS.state==='INJECT'?165:imS.state==='PACK'?120:0,'bar','']},
+  RING:{d:'press',name:'check-ring / cushion',get:()=>[imS.cushion,'mm cushion',
+    (imEff('ring.leak')>0.2&&imS.good+0>=0)?'⚠ cushion collapses shot after shot — melt leaking back past the ring?':'']},
+  SCREW:{d:'thermal',name:'barrel mid (Z2 area)',get:()=>[imS.T[1],'°C','ACTUAL surface temperature']},
+  BARREL1:{d:'thermal',name:'zone 1 band',get:()=>[imS.T[0],'°C','']},
+  BARREL2:{d:'thermal',name:'zone 2 band',get:()=>[imS.T[1],'°C',
+    Math.abs(imS.T[1]-imS.tc[1])>10?'⚠ camera disagrees with the TC reading':'']},
+  BARREL3:{d:'thermal',name:'zone 3 band',get:()=>[imS.T[2],'°C','']},
+  MOLDT:{d:'thermal',name:'mold block',get:()=>[imS.moldT,'°C',imS.moldT>60?'⚠ running hot — cooling?':'']},
+  MOLD:{d:'thermal',name:'mold halves',get:()=>[imS.moldT,'°C','']},
+  COOLIN:{d:'thermal',name:'cooling inlet',get:()=>[29,'°C','']},
+  COOLOUT:{d:'thermal',name:'cooling outlet',get:()=>{const dT=(imS.moldT-30)*0.30*imEff('cool.flow');
+    return [29+dT,'°C',(imS.moldT>55&&dT<3)?'⚠ mold is hot but the water is not carrying heat away — flow blocked':''];}},
+  HOPPER:{d:'thermal',name:'hopper throat',get:()=>[38,'°C',imEff('hopper.ok')<1?'⚠ material hangs up — tap the hopper and watch a shot':'']},
+  PUMP5:{d:'press',name:'clamp pump',get:()=>[imS.clampT>0?190:15,'bar','']},
+  CLAMP:{d:'press',name:'moving platen',get:()=>[imS.clampF*1.05,'bar','']},
+};
+function imIO(){ return [
+  ['AI1 TC ZONE-1',imS.tc[0].toFixed(0)+'°C / true '+imS.T[0].toFixed(0)],
+  ['AI2 TC ZONE-2',imS.tc[1].toFixed(0)+'°C / true '+imS.T[1].toFixed(0)],
+  ['AI3 TC ZONE-3',imS.tc[2].toFixed(0)+'°C / true '+imS.T[2].toFixed(0)],
+  ['AI4 MOLD TEMP',imS.moldT.toFixed(0)+'°C'],
+  ['AI5 CUSHION',imS.cushion.toFixed(1)+' mm'],['AI6 TONNAGE',imS.clampF.toFixed(0)+' t'],
+  ['Q0.0 HEATERS',imS.heatOn.some(h=>h)?1:0],['Q0.1 CLAMP',imS.clampT>0?1:0],
+  ['Q0.2 INJECT',imS.state==='INJECT'?1:0],
+];}
+const imFAULTLIB=[
+  {id:'HTR2', key:'htr.z2',     spec:{mode:'set',value:0},    part:'HTRP',
+   complaint:'"Middle of the barrel won\'t come up to temp — melt-window alarm on every startup."'},
+  {id:'TC2',  key:'tc2.offset', spec:{mode:'set',value:-25},  part:'TC2P', vary:[-30,-20],
+   complaint:'"One melt alarm at shift start, then it ran — but parts come out brown and brittle while the controller swears 220."'},
+  {id:'RING', key:'ring.leak',  spec:{mode:'set',value:0.5},  part:'RINGP', vary:[0.4,0.65],
+   complaint:'"Short-shot alarm every single cycle — screw bottoms out, zero cushion left."'},
+  {id:'COOL', key:'cool.flow',  spec:{mode:'set',value:0.15}, part:'COOLP', vary:[0.05,0.25],
+   complaint:'"Runs fine for a few shots, then parts stick and it faults on eject. Mold feels like a stove."'},
+  {id:'CLAMP',key:'clamp.eff',  spec:{mode:'set',value:0.92}, part:'CLAMPP', vary:[0.9,0.94],
+   complaint:'"QC is rejecting for flash on the parting line. No alarms — tonnage reads fine on the screen."'},
+  {id:'HOPPER',key:'hopper.ok', spec:{mode:'set',value:0.5},  part:'HOPPRP',
+   complaint:'"Random short shots — one in two, maybe. Then it runs clean for an hour. Material? Machine?"'},
+];
+const imPARTCOST={HTRP:120,TC2P:90,RINGP:800,COOLP:150,CLAMPP:900,HOPPRP:60};
+const imREPAIRS=[['HTRP','Replace zone-2 heater band'],['TC2P','Replace zone-2 thermocouple'],
+  ['RINGP','Replace screw check ring'],['COOLP','Descale / flush mold cooling circuit'],
+  ['CLAMPP','Service clamp (seals & toggle)'],['HOPPRP','Fit hopper vibrator / clear bridge']];
+
+/* =========================================================================
    MACHINE REGISTRY + SHELL — one active machine drives the shared cockpit.
    ========================================================================= */
 function pressStep(dt){
@@ -4925,6 +5254,29 @@ const MACHINES={
       ['ZENC','⑤ Z encoder drift — leaning stacks (SENSOR)','zenc.offset',{mode:'set',value:18}]],
     canCycle:()=>rbS.state==='IDLE',
   },
+  molder:{ id:'molder', name:'MOLD-LINE 5', sub:'hydraulic injection molder · ★★★★',
+    layers:[['mold','Machine','clamp · screw'],['heat','Heat/Cool','zones · water'],
+            ['elec','Electrical','heaters · safety'],['plc','PLC Logic','I/O · ladder'],['hmi','HMI','operator panel']],
+    titles:{mold:'MACHINE · CLAMP & INJECTION',heat:'PROCESS · HEATING + COOLING',elec:'ELECTRICAL · HEATER CABINET',plc:'PLC · I/O + LADDER',hmi:'HMI · OPERATOR PANEL'},
+    instruments:[['none','✋ Select'],['dmm','🔌 Multimeter'],['press','🛢 Pressure'],['thermal','🌡 Thermal']],
+    special:{label:'⚙ Purge shot & flow check',fn:imSpecial},
+    faults:imFaults, step:imStep,
+    top:()=>({state:imS.state,fault:imS.faultCode,good:imS.good,weak:imS.weak,cycleT:imS.cycleT,cost:imS.cost,estopOK:imS.estopOK}),
+    render:{mold:imRenderMold,heat:imRenderHeat,elec:imRenderElec,plc:imRenderPLC,hmi:imRenderHMI},
+    TP:imTP, startCycle:imStart, reset:imReset, estop:imEstop, io:imIO,
+    resetCounters:()=>{imS.good=0;imS.weak=0;imS.cost=0;},
+    dotMap:{'ALM-4401':['plc','heat'],'ALM-4402':['plc','mold'],'ALM-4403':['plc','heat'],'ALM-4404':['plc','mold']},
+    faultlib:imFAULTLIB, partcost:imPARTCOST, doublePool:['HTR2','TC2','RING','COOL'],
+    partkey:{HTRP:'htr.z2',TC2P:'tc2.offset',RINGP:'ring.leak',COOLP:'cool.flow',CLAMPP:'clamp.eff',HOPPRP:'hopper.ok'},
+    repairs:imREPAIRS,
+    injects:[['HTR2','① Burned-out zone-2 heater band (ELEC)','htr.z2',{mode:'set',value:0}],
+      ['TC2','② Zone-2 thermocouple drift −25°C (SENSOR)','tc2.offset',{mode:'set',value:-25}],
+      ['RING','③ Worn screw check ring (MECH)','ring.leak',{mode:'set',value:0.5}],
+      ['COOL','④ Blocked mold cooling (PROC)','cool.flow',{mode:'set',value:0.15}],
+      ['CLAMP','⑤ Tired clamp — flash (HYD)','clamp.eff',{mode:'set',value:0.92}],
+      ['HOPPER','⑥ Hopper bridging — random shorts (MAT)','hopper.ok',{mode:'set',value:0.5}]],
+    canCycle:()=>imS.state==='IDLE',
+  },
 };
 let MACHINE=MACHINES.press;
 const INSTRUMENT_NAMES={dmm:'Multimeter',press:'Pressure gauge',thermal:'Thermal camera',tach:'Tachometer',vac:'Vacuum gauge'};
@@ -5014,6 +5366,13 @@ const HINTS={
   BRG:['A MECHANICAL element is binding and loading the motor.','Overcurrent trips + one spot glows on the thermal camera — find the hot bearing.'],
   ENC:['The belt is fine — a FEEDBACK DEVICE is dead.','Chalk-mark test: true speed normal, encoder says zero. Replace the encoder.'],
   GATE:['The diverter ACTUATOR is lazy, not the sensors.','PE-2 pulses correctly in the I/O table but the gate wallows — watch its swing speed.']},
+ molder:{
+  HTR2:['One HEATING element is dead — the controller cannot fix what has no power.','K5 pulls in and two zones draw current; clamp an ammeter on the zone-2 band.'],
+  TC2:['Nothing is broken — a temperature SENSOR is lying and the controller obeys it.','Point the thermal camera at zone 2 and compare with the TC readout, or run a purge check.'],
+  RING:['Melt is escaping BACKWARD inside the barrel during injection.','Watch the cushion value shot-to-shot — a healthy shot holds several mm.'],
+  COOL:['Heat is going INTO the mold faster than the water takes it out.','Compare cooling inlet vs outlet temperature while the mold is hot — no ΔT means no flow.'],
+  CLAMP:['The mold is being held shut with less force than the screen believes.','Watch the clamp gauge at pack — flash appears when tonnage sits just under the plate rating.'],
+  HOPPER:['The machine is fine — the MATERIAL feed starves intermittently.','Random zero-cushion shots with a healthy ring; watch the hopper throat during a shot.']},
  robot:{
   CUP:['The GRIPPER holds at rest but not under motion.','Vacuum is fine standing still and collapses during fast X travel — the cup lip leaks.'],
   XDRV:['One AXIS is underperforming its command.','X drive display shows commanded vs actual velocity — a big gap is a failing drive.'],
@@ -5023,7 +5382,7 @@ const HINTS={
 };
 function bestOf(id){ try{ return JSON.parse(localStorage.getItem(id+'.best')||'null'); }catch(e){ return null; } }
 function gradeOK(id){ const b=bestOf(id); return !!(b && ['A','B','C'].includes(b.grade)); }
-const REQUIRES={press:'conveyor', robot:'press'};
+const REQUIRES={press:'conveyor', robot:'press', molder:'robot'};
 
 const career={active:false,idx:0,plan:[],budget:START_BUDGET,ticketTime:0,shiftTime:0,
   ticketParts:0,wrongThis:0,partsTotal:0,downCost:0,hintCost:0,lastGood:0,fixed:0,
@@ -5279,27 +5638,28 @@ buildGauge();
    The whole floor at once: all three machines step simultaneously in AUTO,
    hidden faults (some DEGRADING over time) land on any machine, work orders
    queue, and the score is FLEET UPTIME. The endgame. */
-const plant={on:false,t:0,dur:360,nextAt:12,open:{press:null,conveyor:null,robot:null},
-  down:{press:0,conveyor:0,robot:0},fixed:0,wrong:0,parts:0,wo:0};
-const DEGRADERS={BRG:1,FILTER:1,CUP:1,BELT:1,CYLSEAL:1};
+const plant={on:false,t:0,dur:360,nextAt:12,open:{press:null,conveyor:null,robot:null,molder:null},
+  down:{press:0,conveyor:0,robot:0,molder:0},fixed:0,wrong:0,parts:0,wo:0};
+const DEGRADERS={BRG:1,FILTER:1,CUP:1,BELT:1,CYLSEAL:1,COOL:1,RING:1};
 function xpAdd(n){ try{ const x=JSON.parse(localStorage.getItem('xp')||'{"fixed":0}');
   x.fixed+=n; localStorage.setItem('xp',JSON.stringify(x)); }catch(e){} }
 function rankName(){ let f=0; try{ f=(JSON.parse(localStorage.getItem('xp')||'{}').fixed)||0; }catch(e){}
   return f>=120?'Plant Wizard ('+f+')':f>=60?'Master Tech ('+f+')':f>=25?'Journeyman ('+f+')':f>=10?'Technician ('+f+')':'Apprentice ('+f+')'; }
 function startPlant(){
   if(career.active){ log('alarm','info','Finish the career shift first.'); return; }
-  if(!(gradeOK('conveyor')&&gradeOK('press')&&gradeOK('robot'))){
-    log('alarm','info','🔒 PLANT MODE unlocks at grade C+ on all three machines.'); return; }
+  if(!(gradeOK('conveyor')&&gradeOK('press')&&gradeOK('robot')&&gradeOK('molder'))){
+    log('alarm','info','🔒 PLANT MODE unlocks at grade C+ on all four machines.'); return; }
   plant.on=true; plant.t=0; plant.nextAt=12; plant.fixed=0; plant.wrong=0; plant.parts=0; plant.wo=0;
-  plant.open={press:null,conveyor:null,robot:null}; plant.down={press:0,conveyor:0,robot:0};
+  plant.open={press:null,conveyor:null,robot:null,molder:null};
+  plant.down={press:0,conveyor:0,robot:0,molder:0};
   for(const id in MACHINES){ const M=MACHINES[id];
     for(const k in M.faults) delete M.faults[k]; M.reset(); M.resetCounters(); }
   S.auto=true;
-  startCycle(); cvStart(); rbStart();
+  startCycle(); cvStart(); rbStart(); imStart();
   $('plantcard').style.display='block'; $('wocard').style.display='none';
   $('btn-inject').disabled=true; $('btn-inject').style.opacity=.4;
   $('btn-plant').style.borderColor='var(--red)';
-  log('alarm','ok','🏭 PLANT SHIFT · 6:00 on the clock · all three machines in AUTO · keep them running');
+  log('alarm','ok','🏭 PLANT SHIFT · 6:00 on the clock · all four machines in AUTO · keep them running');
 }
 function plantTick(dt){
   plant.t+=dt;
@@ -5364,7 +5724,7 @@ function plantEnd(){
   $('sm-title').textContent='PLANT SHIFT COMPLETE';
   $('sm-table').innerHTML=[
     ['Fleet uptime',(fleet*100).toFixed(1)+'%'],
-    ['SORT-LINE 2 / PRESS-LINE 3 / PICK-CELL 4',(up.conveyor*100).toFixed(0)+'% · '+(up.press*100).toFixed(0)+'% · '+(up.robot*100).toFixed(0)+'%'],
+    ['SORT-2 / PRESS-3 / CELL-4 / MOLD-5',(up.conveyor*100).toFixed(0)+'% · '+(up.press*100).toFixed(0)+'% · '+(up.robot*100).toFixed(0)+'% · '+(up.molder*100).toFixed(0)+'%'],
     ['Work orders fixed',plant.fixed+' / '+plant.wo],
     ['Wrong parts',plant.wrong],['Parts spend','$'+plant.parts],
     ['Technician rank',rankName()],
@@ -5528,6 +5888,10 @@ function updateSound(now){
     if(rbS.sol||rbS.blankoff){ hum=0.028; humF=120; }
     if(rbS.sol&&rbS.vac>-60&&rbEff('cup.leak')>8) hiss=0.04;
     if(Math.abs(rbS.xv)>10){ whine=0.018; whineF=200+Math.abs(rbS.xv); } }
+  else if(MACHINE.id==='molder'){
+    if(imS.heatOn.some(h=>h)){ hum=0.03; humF=100; }
+    if(imS.state==='INJECT'){ whine=0.03; whineF=420; }
+    if(imS.moldT>70) hiss=0.02; }
   setG(N.hum,hum); N.hum.o.frequency.setTargetAtTime(humF,AC.currentTime,0.1);
   setG(N.whine,whine); N.whine.o.frequency.setTargetAtTime(whineF,AC.currentTime,0.1);
   setG(N.squeal,squeal); setG(N.relief,relief); setG(N.hiss,hiss);

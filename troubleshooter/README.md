@@ -1,7 +1,7 @@
-# Industrial Troubleshooting Sim — three machines, one workstation
+# Industrial Troubleshooting Sim — four machines, one workstation
 
 A realistic, multi-discipline troubleshooting game where faults are **emergent,
-not scripted**. Three machines share one diagnostic workstation — pick one from
+not scripted**. Four machines share one diagnostic workstation — pick one from
 the dropdown in the top bar:
 
 | Machine | What it is | Difficulty | Fault library |
@@ -9,6 +9,7 @@ the dropdown in the top bar:
 | **SORT-LINE 2** | belt conveyor sortation line (VFD, photo-eyes, divert gate, encoder) | ★ | slip, dirty photo-eye, VFD derate, seizing bearing, dead encoder |
 | **PRESS-LINE 3** | 150-ton hydraulic press across 5 layers | ★★ | the original 8 (filter, drift, wiring, seals, pump, air, spool, coil) |
 | **PICK-CELL 4** | 2-axis gantry robot with vacuum gripper | ★★★ | worn cup (drops parts), failing servo, worn pump, curtain intermittent, Z-encoder drift |
+| **MOLD-LINE 5** | hydraulic injection molder (heater zones, screw + check ring, mold cooling) | ★★★★ | dead heater band, lying thermocouple (burned parts), worn check ring (short shots), blocked cooling (creeping eject-stick), tired clamp (flash), hopper bridging |
 
 Each machine has its own physics, PLC program, instruments (tachometer on the
 conveyor, vacuum gauge on the robot), discriminator test (chalk-mark / dead-head
@@ -20,8 +21,8 @@ https://tlaba.github.io/workbench/ (auto-deploys from `main` via GitHub Pages)
 ## The game loop
 - **🎓 Tutorial** — a guided first ticket teaches the diagnose→repair→verify loop.
 - **Progression** — career shifts unlock in order: SORT-LINE 2 (★) → grade C
-  unlocks PRESS-LINE 3 (★★) → grade C unlocks PICK-CELL 4 (★★★). Free-play and
-  the instructor sandbox are always open on every machine.
+  unlocks PRESS-LINE 3 (★★) → PICK-CELL 4 (★★★) → MOLD-LINE 5 (★★★★). Free-play
+  and the instructor sandbox are always open on every machine.
 - **📞 Paid hints** — call OEM support mid-ticket: $150 names the layer the root
   cause lives in, $400 points at the subsystem. Comes out of your budget.
 - **🏁 Challenge links** — the shift summary gives a copyable link with the exact
@@ -29,7 +30,7 @@ https://tlaba.github.io/workbench/ (auto-deploys from `main` via GitHub Pages)
 - **Resume** — an interrupted shift is saved locally and offered on return.
 - **🔊 Sound** — diagnostic audio: VFD whine tracks Hz, a failing bearing squeals,
   a pinned relief valve screams, a leaking vacuum cup hisses.
-- **🏭 Plant Mode (endgame)** — unlock all three machines, then run the whole
+- **🏭 Plant Mode (endgame)** — unlock all four machines, then run the whole
   floor simultaneously: faults (some **degrading in real time**) land on any
   machine, work orders queue, and you're scored on **fleet uptime**.
 - **👁 Visual diagnosis** — probe auto-zoom cinematics, a real thermal-camera

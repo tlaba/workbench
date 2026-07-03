@@ -24,6 +24,9 @@ button{font-family:var(--mono);cursor:pointer}
 .top{grid-area:top;display:flex;align-items:center;gap:14px;background:var(--panel);
   border:1px solid var(--edge);border-radius:6px;padding:7px 12px}
 .wo{font-weight:700;color:var(--amber);letter-spacing:.5px}
+#machine-sel{background:var(--panel2);color:var(--amber);border:1px solid var(--edge);border-radius:4px;
+  font-family:var(--mono);font-weight:700;font-size:13px;padding:2px 6px;cursor:pointer}
+#machine-sel:disabled{opacity:.6;cursor:not-allowed}
 .wo small{color:var(--dim);font-weight:400;letter-spacing:0}
 .metric{display:flex;flex-direction:column;line-height:1.15}
 .metric b{font-size:15px}.metric span{color:var(--dim);font-size:10px;text-transform:uppercase;letter-spacing:.6px}
@@ -185,7 +188,11 @@ svg text{transition:fill .18s ease}
 
   <!-- ============ TOP STATUS BAR ============ -->
   <div class="top">
-    <div class="wo">WO-4471 · PRESS-LINE 3<br><small>150-ton downstroke hydraulic press</small></div>
+    <div class="wo"><select id="machine-sel">
+        <option value="conveyor">SORT-LINE 2</option>
+        <option value="press" selected>PRESS-LINE 3</option>
+        <option value="robot">PICK-CELL 4</option>
+      </select><br><small id="wo-sub">150-ton downstroke hydraulic press · ★★</small></div>
     <div class="metric"><b id="m-state"><span class="pill idle">IDLE</span></b><span>machine</span></div>
     <div class="metric"><b id="m-cycles">0</b><span>good / <span id="m-weak">0</span> weak</span></div>
     <div class="metric"><b id="m-timer">0.0s</b><span>cycle time</span></div>
@@ -226,7 +233,7 @@ svg text{transition:fill .18s ease}
     <div class="phase" id="layer-phase"></div>
 
     <!-- HYDRAULIC -->
-    <svg class="layer on" data-layer="hyd" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
+    <svg class="layer on" data-machine="press" data-layer="hyd" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
   <defs>
     <linearGradient id="hy-steelV" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#8a97a5"/><stop offset=".55" stop-color="#4a5866"/><stop offset="1" stop-color="#2c3844"/>
@@ -701,7 +708,7 @@ svg text{transition:fill .18s ease}
 </svg>
 
     <!-- ELECTRICAL -->
-    <svg class="layer" data-layer="elec" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
+    <svg class="layer" data-machine="press" data-layer="elec" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
   <defs>
     <linearGradient id="el-cab" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#48535f"/><stop offset=".55" stop-color="#2b333d"/><stop offset="1" stop-color="#1e252d"/>
@@ -1090,7 +1097,7 @@ svg text{transition:fill .18s ease}
 </svg>
 
     <!-- MECHANICAL -->
-    <svg class="layer" data-layer="mech" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
+    <svg class="layer" data-machine="press" data-layer="mech" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
   <defs>
     <linearGradient id="me-steelV" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#8a97a5"/><stop offset=".45" stop-color="#4a5866"/><stop offset="1" stop-color="#2c3844"/>
@@ -1388,7 +1395,7 @@ svg text{transition:fill .18s ease}
 </svg>
 
     <!-- PLC -->
-    <svg class="layer" data-layer="plc" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
+    <svg class="layer" data-machine="press" data-layer="plc" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
 <defs>
   <linearGradient id="pl-iron" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0" stop-color="#3d4754"/><stop offset="0.5" stop-color="#2d3641"/><stop offset="1" stop-color="#242c36"/>
@@ -1723,7 +1730,7 @@ svg text{transition:fill .18s ease}
 </svg>
 
     <!-- HMI -->
-    <svg class="layer" data-layer="hmi" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
+    <svg class="layer" data-machine="press" data-layer="hmi" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet">
   <defs>
     <linearGradient id="hm-iron" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#3d4754"/><stop offset="1" stop-color="#242c36"/>
@@ -1942,6 +1949,1647 @@ svg text{transition:fill .18s ease}
     <text x="798" y="376" text-anchor="middle" font-size="8" fill="#e0e6ec" letter-spacing="2">MODE</text>
   </g>
 </svg>
+
+    <!-- ================= CONVEYOR · SORT-LINE 2 ================= -->
+    <svg class="layer" data-machine="conveyor" data-layer="mech" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">
+  <defs>
+    <linearGradient id="cvg-m-steel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a97a5"/><stop offset=".55" stop-color="#4a5866"/><stop offset="1" stop-color="#2c3844"/></linearGradient>
+    <linearGradient id="cvg-m-steelh" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8a97a5"/><stop offset=".55" stop-color="#4a5866"/><stop offset="1" stop-color="#2c3844"/></linearGradient>
+    <linearGradient id="cvg-m-iron" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3d4754"/><stop offset="1" stop-color="#242c36"/></linearGradient>
+    <linearGradient id="cvg-m-blue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1f5f8b"/><stop offset="1" stop-color="#14456b"/></linearGradient>
+    <linearGradient id="cvg-m-yellow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8b93c"/><stop offset="1" stop-color="#b8862a"/></linearGradient>
+    <linearGradient id="cvg-m-belt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a1e24"/><stop offset="1" stop-color="#0c0f14"/></linearGradient>
+    <linearGradient id="cvg-m-brass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9a35a"/><stop offset="1" stop-color="#8a6d35"/></linearGradient>
+    <radialGradient id="cvg-m-pulley" cx=".35" cy=".35" r=".85"><stop offset="0" stop-color="#7b8894"/><stop offset=".6" stop-color="#45505c"/><stop offset="1" stop-color="#222a33"/></radialGradient>
+    <radialGradient id="cvg-m-roller" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#8b98a6"/><stop offset="1" stop-color="#39434f"/></radialGradient>
+    <radialGradient id="cvg-m-shadow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#000" stop-opacity=".42"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+  </defs>
+
+  <!-- floor -->
+  <ellipse cx="450" cy="507" rx="400" ry="11" fill="url(#cvg-m-shadow)"/>
+  <line x1="18" y1="505" x2="882" y2="505" stroke="#2a333d" stroke-width="3"/>
+  <g stroke="#222b34" stroke-width="1.5">
+    <line x1="60" y1="507" x2="48" y2="519"/><line x1="160" y1="507" x2="148" y2="519"/><line x1="260" y1="507" x2="248" y2="519"/><line x1="360" y1="507" x2="348" y2="519"/><line x1="460" y1="507" x2="448" y2="519"/><line x1="560" y1="507" x2="548" y2="519"/><line x1="660" y1="507" x2="648" y2="519"/><line x1="760" y1="507" x2="748" y2="519"/><line x1="850" y1="507" x2="838" y2="519"/>
+  </g>
+
+  <!-- title plate -->
+  <rect x="322" y="30" width="256" height="28" rx="4" fill="#0d1218" stroke="#26303b"/>
+  <line x1="326" y1="32" x2="574" y2="32" stroke="#ffffff" stroke-opacity=".08"/>
+  <text x="450" y="48" text-anchor="middle" font-size="12" letter-spacing="2" fill="#b8c4ce">SORT-LINE 2 · CONVEYOR CV-2</text>
+
+  <!-- background posts : photo-eyes + gate -->
+  <g>
+    <rect x="237" y="268" width="6" height="78" fill="#333d49" stroke="#1c242d" stroke-width="1"/>
+    <rect x="587" y="268" width="6" height="78" fill="#333d49" stroke="#1c242d" stroke-width="1"/>
+    <rect x="777" y="268" width="6" height="78" fill="#333d49" stroke="#1c242d" stroke-width="1"/>
+    <!-- gate post + rotary actuator -->
+    <rect x="604" y="236" width="14" height="110" fill="#2c3844" stroke="#1b232c"/>
+    <line x1="605" y1="237" x2="617" y2="237" stroke="#ffffff" stroke-opacity=".14"/>
+    <path d="M604,344 L590,352 L604,352 Z" fill="#2c3844"/>
+    <rect x="598" y="246" width="26" height="12" rx="2" fill="#333d49" stroke="#1c242d"/>
+    <line x1="604" y1="258" x2="604" y2="288" stroke="#3f6f8f" stroke-width="2.5"/>
+    <line x1="616" y1="258" x2="616" y2="288" stroke="#3f6f8f" stroke-width="2.5"/>
+    <rect x="588" y="222" width="66" height="15" rx="3" fill="#0d1218" stroke="#26303b"/>
+    <text x="621" y="233" text-anchor="middle" font-size="9" fill="#9fb0c0">DIVERT DG-1</text>
+  </g>
+
+  <!-- infeed chute -->
+  <polygon points="16,280 98,318 98,330 16,294" fill="url(#cvg-m-steelh)" stroke="#1e262e" stroke-width="1.5"/>
+  <line x1="16" y1="280" x2="98" y2="318" stroke="#ffffff" stroke-opacity=".14"/>
+  <line x1="17" y1="288" x2="97" y2="325" stroke="#e8b93c" stroke-width="2" opacity=".8"/>
+  <line x1="16" y1="292" x2="98" y2="329" stroke="#2c3844" stroke-width="3"/>
+  <line x1="30" y1="298" x2="30" y2="352" stroke="#333d49" stroke-width="4"/>
+  <line x1="30" y1="352" x2="80" y2="358" stroke="#333d49" stroke-width="4"/>
+  <!-- flow arrow -->
+  <line x1="120" y1="272" x2="172" y2="272" stroke="#3f5566" stroke-width="3"/>
+  <polygon points="172,265 184,272 172,279" fill="#3f5566"/>
+  <text x="146" y="262" text-anchor="middle" font-size="9" letter-spacing="2" fill="#44525f">FLOW</text>
+
+  <!-- conveyor frame rail -->
+  <rect x="88" y="344" width="724" height="30" fill="url(#cvg-m-iron)" stroke="#161d24" stroke-width="1.5"/>
+  <line x1="89" y1="345" x2="811" y2="345" stroke="#ffffff" stroke-opacity=".14"/>
+  <line x1="88" y1="371" x2="812" y2="371" stroke="#12181f" stroke-width="2"/>
+
+  <!-- legs -->
+  <g>
+    <rect x="146" y="374" width="18" height="122" fill="url(#cvg-m-yellow)" stroke="#6b5416" stroke-width="1.5"/>
+    <rect x="436" y="374" width="18" height="122" fill="url(#cvg-m-yellow)" stroke="#6b5416" stroke-width="1.5"/>
+    <rect x="696" y="374" width="18" height="122" fill="url(#cvg-m-yellow)" stroke="#6b5416" stroke-width="1.5"/>
+    <line x1="164" y1="400" x2="436" y2="470" stroke="#3a4550" stroke-width="5"/>
+    <line x1="454" y1="470" x2="696" y2="404" stroke="#3a4550" stroke-width="5"/>
+    <rect x="138" y="494" width="34" height="10" rx="2" fill="url(#cvg-m-iron)" stroke="#161d24"/>
+    <rect x="428" y="494" width="34" height="10" rx="2" fill="url(#cvg-m-iron)" stroke="#161d24"/>
+    <rect x="688" y="494" width="34" height="10" rx="2" fill="url(#cvg-m-iron)" stroke="#161d24"/>
+    <circle cx="145" cy="499" r="2" fill="#8a97a5"/><circle cx="165" cy="499" r="2" fill="#8a97a5"/>
+    <circle cx="435" cy="499" r="2" fill="#8a97a5"/><circle cx="455" cy="499" r="2" fill="#8a97a5"/>
+    <circle cx="695" cy="499" r="2" fill="#8a97a5"/><circle cx="715" cy="499" r="2" fill="#8a97a5"/>
+  </g>
+
+  <!-- tail take-up + tensioner screw -->
+  <rect x="78" y="338" width="52" height="42" rx="4" fill="url(#cvg-m-steel)" stroke="#1e262e" stroke-width="1.5"/>
+  <line x1="80" y1="340" x2="128" y2="340" stroke="#ffffff" stroke-opacity=".14"/>
+  <rect x="84" y="354" width="40" height="8" fill="#1a222b"/>
+  <line x1="34" y1="358" x2="84" y2="358" stroke="#9aa7b4" stroke-width="5"/>
+  <line x1="36" y1="358" x2="82" y2="358" stroke="#2c3844" stroke-width="5" stroke-dasharray="2 3"/>
+  <rect x="46" y="349" width="16" height="18" rx="2" fill="url(#cvg-m-brass)" stroke="#5f4a20"/>
+  <rect x="30" y="352" width="8" height="12" rx="2" fill="url(#cvg-m-brass)" stroke="#5f4a20"/>
+  <rect x="40" y="384" width="66" height="14" rx="3" fill="#0d1218" stroke="#26303b"/>
+  <text x="73" y="394" text-anchor="middle" font-size="8.5" fill="#9fb0c0">TAKE-UP</text>
+
+  <!-- idler rollers -->
+  <g stroke="#1b232c" stroke-width="1">
+    <circle cx="170" cy="352" r="8" fill="url(#cvg-m-roller)"/><circle cx="240" cy="352" r="8" fill="url(#cvg-m-roller)"/><circle cx="310" cy="352" r="8" fill="url(#cvg-m-roller)"/><circle cx="380" cy="352" r="8" fill="url(#cvg-m-roller)"/><circle cx="450" cy="352" r="8" fill="url(#cvg-m-roller)"/><circle cx="520" cy="352" r="8" fill="url(#cvg-m-roller)"/><circle cx="590" cy="352" r="8" fill="url(#cvg-m-roller)"/><circle cx="660" cy="352" r="8" fill="url(#cvg-m-roller)"/><circle cx="730" cy="352" r="8" fill="url(#cvg-m-roller)"/>
+  </g>
+
+  <!-- belt loop -->
+  <path d="M103,336.5 H797 A21.5,21.5 0 0 1 797,379.5 H103 A21.5,21.5 0 0 1 103,336.5 Z" fill="none" stroke="url(#cvg-m-belt)" stroke-width="13"/>
+  <line x1="103" y1="385" x2="797" y2="385" stroke="#20262e" stroke-width="1" stroke-dasharray="10 14"/>
+
+  <!-- pulleys -->
+  <circle cx="103" cy="358" r="21" fill="url(#cvg-m-pulley)" stroke="#161d24" stroke-width="1.5"/>
+  <circle cx="103" cy="358" r="6.5" fill="url(#cvg-m-brass)" stroke="#5f4a20"/>
+  <circle cx="797" cy="358" r="21" fill="url(#cvg-m-pulley)" stroke="#161d24" stroke-width="1.5"/>
+
+  <!-- belt tread (game animates stroke-dashoffset) -->
+  <line id="cv-belt-tread" x1="100" y1="330" x2="800" y2="330" stroke="#2c3641" stroke-width="6" stroke-dasharray="14 10"/>
+  <line x1="100" y1="326.5" x2="800" y2="326.5" stroke="#ffffff" stroke-opacity=".10" stroke-width="1"/>
+
+  <!-- encoder wheel riding return run -->
+  <line x1="122" y1="378" x2="168" y2="396" stroke="#39434f" stroke-width="5"/>
+  <circle cx="183" cy="399" r="12" fill="url(#cvg-m-roller)" stroke="#161d24" stroke-width="1.5"/>
+  <circle cx="183" cy="399" r="11" fill="none" stroke="#232b34" stroke-width="2" stroke-dasharray="2 3"/>
+  <circle cx="183" cy="399" r="3" fill="url(#cvg-m-brass)"/>
+  <rect x="167" y="411" width="34" height="26" rx="4" fill="url(#cvg-m-iron)" stroke="#161d24" stroke-width="1.5"/>
+  <line x1="169" y1="413" x2="199" y2="413" stroke="#ffffff" stroke-opacity=".14"/>
+  <circle cx="176" cy="420" r="2" fill="#56dfa8"/>
+  <path d="M201,426 C226,432 236,452 238,472" fill="none" stroke="#333d49" stroke-width="3"/>
+
+  <!-- photo-eye sensors -->
+  <g>
+    <line x1="240" y1="292" x2="240" y2="327" stroke="#ff5c5c" stroke-opacity=".35" stroke-width="1.5" stroke-dasharray="3 4"/>
+    <line x1="590" y1="292" x2="590" y2="327" stroke="#ff5c5c" stroke-opacity=".35" stroke-width="1.5" stroke-dasharray="3 4"/>
+    <line x1="780" y1="292" x2="780" y2="327" stroke="#ff5c5c" stroke-opacity=".35" stroke-width="1.5" stroke-dasharray="3 4"/>
+    <rect x="231" y="260" width="18" height="30" rx="3" fill="url(#cvg-m-steel)" stroke="#1e262e" stroke-width="1.2"/>
+    <rect x="581" y="260" width="18" height="30" rx="3" fill="url(#cvg-m-steel)" stroke="#1e262e" stroke-width="1.2"/>
+    <rect x="771" y="260" width="18" height="30" rx="3" fill="url(#cvg-m-steel)" stroke="#1e262e" stroke-width="1.2"/>
+    <circle cx="240" cy="285" r="3.5" fill="#182028" stroke="#0d1218"/>
+    <circle cx="590" cy="285" r="3.5" fill="#182028" stroke="#0d1218"/>
+    <circle cx="780" cy="285" r="3.5" fill="#182028" stroke="#0d1218"/>
+    <circle id="cv-pe1" cx="240" cy="270" r="5" fill="#24313a" stroke="#10161c"/>
+    <circle id="cv-pe2" cx="590" cy="270" r="5" fill="#24313a" stroke="#10161c"/>
+    <circle id="cv-pe3" cx="780" cy="270" r="5" fill="#24313a" stroke="#10161c"/>
+    <rect x="220" y="240" width="40" height="14" rx="3" fill="#0d1218" stroke="#26303b"/>
+    <text x="240" y="250" text-anchor="middle" font-size="8.5" fill="#9fb0c0">PE-1</text>
+    <rect x="570" y="240" width="40" height="14" rx="3" fill="#0d1218" stroke="#26303b"/>
+    <text x="590" y="250" text-anchor="middle" font-size="8.5" fill="#9fb0c0">PE-2</text>
+    <rect x="760" y="240" width="40" height="14" rx="3" fill="#0d1218" stroke="#26303b"/>
+    <text x="780" y="250" text-anchor="middle" font-size="8.5" fill="#9fb0c0">PE-3</text>
+  </g>
+
+  <!-- game-drawn boxes layer -->
+  <g id="cv-boxes"></g>
+
+  <!-- foreground guard rail -->
+  <g>
+    <rect x="110" y="354" width="580" height="18" fill="url(#cvg-m-yellow)" stroke="#6b5416" stroke-width="1.5"/>
+    <line x1="111" y1="355" x2="689" y2="355" stroke="#ffffff" stroke-opacity=".18"/>
+    <path d="M110,354 l14,18 h12 l-14,-18 Z M136,354 l14,18 h12 l-14,-18 Z" fill="#1a1e24" opacity=".85"/>
+    <path d="M664,372 l-14,-18 h-12 l14,18 Z M638,372 l-14,-18 h-12 l14,18 Z" fill="#1a1e24" opacity=".85"/>
+    <circle cx="200" cy="363" r="2.2" fill="#7a5f22"/><circle cx="300" cy="363" r="2.2" fill="#7a5f22"/><circle cx="400" cy="363" r="2.2" fill="#7a5f22"/><circle cx="500" cy="363" r="2.2" fill="#7a5f22"/><circle cx="600" cy="363" r="2.2" fill="#7a5f22"/>
+    <rect x="352" y="357" width="96" height="12" rx="2" fill="#0d1218" stroke="#26303b" stroke-width="1"/>
+    <text x="400" y="366" text-anchor="middle" font-size="8" fill="#9fb0c0">GUARD G-2</text>
+  </g>
+
+  <!-- divert gate (game rotates 0..40 about 620,300) -->
+  <g id="cv-gate" class="tp" data-tp="GATE">
+    <rect x="616" y="293" width="118" height="13" rx="5" fill="url(#cvg-m-steelh)" stroke="#1e262e" stroke-width="1.5"/>
+    <line x1="620" y1="294.5" x2="730" y2="294.5" stroke="#ffffff" stroke-opacity=".18"/>
+    <path d="M706,293 l10,13 h9 l-10,-13 Z M690,293 l10,13 h9 l-10,-13 Z" fill="#b8862a" opacity=".9"/>
+    <circle cx="620" cy="300" r="10" fill="url(#cvg-m-iron)" stroke="#161d24" stroke-width="1.5"/>
+    <circle cx="620" cy="300" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/>
+  </g>
+
+  <!-- discharge slide + tote -->
+  <polygon points="834,346 886,404 874,412 826,354" fill="url(#cvg-m-steelh)" stroke="#1e262e" stroke-width="1.5"/>
+  <line x1="834" y1="346" x2="886" y2="404" stroke="#ffffff" stroke-opacity=".12"/>
+  <line x1="861" y1="412" x2="861" y2="500" stroke="#333d49" stroke-width="4"/>
+  <rect x="826" y="468" width="60" height="34" rx="3" fill="url(#cvg-m-iron)" stroke="#161d24" stroke-width="1.5"/>
+  <line x1="828" y1="470" x2="884" y2="470" stroke="#ffffff" stroke-opacity=".12"/>
+
+  <!-- head-end gear reducer -->
+  <rect x="764" y="332" width="66" height="72" rx="7" fill="url(#cvg-m-iron)" stroke="#161d24" stroke-width="1.8"/>
+  <line x1="768" y1="334" x2="826" y2="334" stroke="#ffffff" stroke-opacity=".14"/>
+  <circle cx="797" cy="358" r="16" fill="url(#cvg-m-pulley)" stroke="#161d24" stroke-width="1.5"/>
+  <circle cx="797" cy="358" r="7" fill="url(#cvg-m-brass)" stroke="#5f4a20"/>
+  <circle cx="773" cy="341" r="2.2" fill="#8a97a5"/><circle cx="821" cy="341" r="2.2" fill="#8a97a5"/><circle cx="773" cy="395" r="2.2" fill="#8a97a5"/><circle cx="821" cy="395" r="2.2" fill="#8a97a5"/>
+  <line x1="800" y1="404" x2="770" y2="374" stroke="#39434f" stroke-width="4"/>
+
+  <!-- geared motor -->
+  <rect x="752" y="408" width="38" height="46" rx="4" fill="url(#cvg-m-iron)" stroke="#161d24" stroke-width="1.5"/>
+  <rect x="638" y="406" width="120" height="52" rx="9" fill="url(#cvg-m-blue)" stroke="#0e2f49" stroke-width="1.8"/>
+  <line x1="644" y1="408.5" x2="752" y2="408.5" stroke="#ffffff" stroke-opacity=".16"/>
+  <g stroke="#0e2f49" stroke-width="2">
+    <line x1="652" y1="410" x2="652" y2="454"/><line x1="664" y1="410" x2="664" y2="454"/><line x1="676" y1="410" x2="676" y2="454"/><line x1="720" y1="410" x2="720" y2="454"/><line x1="732" y1="410" x2="732" y2="454"/><line x1="744" y1="410" x2="744" y2="454"/>
+  </g>
+  <rect x="610" y="402" width="30" height="60" rx="5" fill="url(#cvg-m-steel)" stroke="#1e262e" stroke-width="1.5"/>
+  <line x1="616" y1="410" x2="616" y2="454" stroke="#242e38" stroke-width="2"/>
+  <line x1="623" y1="410" x2="623" y2="454" stroke="#242e38" stroke-width="2"/>
+  <line x1="630" y1="410" x2="630" y2="454" stroke="#242e38" stroke-width="2"/>
+  <circle cx="698" cy="431" r="14" fill="#0e1319" stroke="#2a3642" stroke-width="1.5"/>
+  <text id="cv-motor-glyph" x="698" y="437" text-anchor="middle" font-size="15" fill="#9fb0c0">M</text>
+  <rect x="646" y="466" width="104" height="14" rx="3" fill="#0d1218" stroke="#26303b"/>
+  <text x="698" y="476" text-anchor="middle" font-size="8.5" fill="#9fb0c0">M-2 · 2.2 kW · TEFC</text>
+
+  <!-- telemetry plate -->
+  <rect x="58" y="436" width="192" height="82" rx="6" fill="#0d1218" stroke="#232c36" stroke-width="1.5"/>
+  <line x1="62" y1="438.5" x2="246" y2="438.5" stroke="#ffffff" stroke-opacity=".08"/>
+  <circle cx="66" cy="444" r="2" fill="#4a5866"/><circle cx="242" cy="444" r="2" fill="#4a5866"/><circle cx="66" cy="510" r="2" fill="#4a5866"/><circle cx="242" cy="510" r="2" fill="#4a5866"/>
+  <text x="76" y="452" font-size="8" letter-spacing="1.5" fill="#6b7a89">LINE TELEMETRY</text>
+  <text x="76" y="471" font-size="10" fill="#7f8ea0">BELT</text>
+  <text id="cv-speed" x="238" y="471" text-anchor="end" font-size="12" fill="#56dfa8">0.00 m/s</text>
+  <text x="76" y="489" font-size="10" fill="#7f8ea0">ENC</text>
+  <text id="cv-enc" x="238" y="489" text-anchor="end" font-size="12" fill="#56dfa8">0 Hz</text>
+  <text x="76" y="507" font-size="10" fill="#7f8ea0">MOTOR</text>
+  <text id="cv-amps" x="238" y="507" text-anchor="end" font-size="12" fill="#56dfa8">0.0 A</text>
+
+  <!-- test points -->
+  <circle class="tp" data-tp="BELT" cx="450" cy="338" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/>
+  <circle class="tp" data-tp="TENS" cx="40" cy="376" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/>
+  <circle class="tp" data-tp="BEARING" cx="818" cy="358" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/>
+  <circle class="tp" data-tp="MOTORC" cx="648" cy="412" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/>
+  <circle class="tp" data-tp="ENC" cx="214" cy="416" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/>
+  <circle class="tp" data-tp="PE1" cx="218" cy="276" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/>
+  <circle class="tp" data-tp="PE2" cx="568" cy="276" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/>
+  <circle class="tp" data-tp="PE3" cx="758" cy="276" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/>
+</svg>
+    <svg class="layer" data-machine="conveyor" data-layer="elec" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">
+  <defs>
+    <linearGradient id="cvg-e-steel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a97a5"/><stop offset=".55" stop-color="#4a5866"/><stop offset="1" stop-color="#2c3844"/></linearGradient>
+    <linearGradient id="cvg-e-iron" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3d4754"/><stop offset="1" stop-color="#242c36"/></linearGradient>
+    <linearGradient id="cvg-e-blue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1f5f8b"/><stop offset="1" stop-color="#14456b"/></linearGradient>
+    <linearGradient id="cvg-e-yellow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8b93c"/><stop offset="1" stop-color="#b8862a"/></linearGradient>
+    <linearGradient id="cvg-e-panel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#67737f"/><stop offset="1" stop-color="#4a5560"/></linearGradient>
+    <linearGradient id="cvg-e-brass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9a35a"/><stop offset="1" stop-color="#8a6d35"/></linearGradient>
+    <radialGradient id="cvg-e-red" cx=".38" cy=".32" r=".85"><stop offset="0" stop-color="#ff7a66"/><stop offset=".45" stop-color="#d63c2c"/><stop offset="1" stop-color="#7e150c"/></radialGradient>
+    <radialGradient id="cvg-e-motor" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#2a76a8"/><stop offset="1" stop-color="#123d5f"/></radialGradient>
+  </defs>
+
+  <!-- header plate -->
+  <rect x="238" y="10" width="424" height="26" rx="4" fill="#0d1218" stroke="#26303b"/>
+  <text x="450" y="27" text-anchor="middle" font-size="11" letter-spacing="1.5" fill="#b8c4ce">DRIVE CABINET DC-2 · SORT-LINE 2 · 480V 3Ø</text>
+
+  <!-- open door -->
+  <rect x="8" y="56" width="20" height="470" rx="3" fill="#2c3844" stroke="#161d24" stroke-width="1.5"/>
+  <circle cx="18" cy="90" r="2.5" fill="#8a97a5"/><circle cx="18" cy="290" r="2.5" fill="#8a97a5"/><circle cx="18" cy="490" r="2.5" fill="#8a97a5"/>
+
+  <!-- cabinet body + back panel -->
+  <rect x="30" y="48" width="546" height="486" rx="6" fill="url(#cvg-e-iron)" stroke="#12181f" stroke-width="2"/>
+  <line x1="33" y1="50" x2="573" y2="50" stroke="#ffffff" stroke-opacity=".14"/>
+  <rect x="46" y="64" width="514" height="454" rx="3" fill="url(#cvg-e-panel)" stroke="#333d49" stroke-width="1.5"/>
+  <circle cx="40" cy="58" r="2.5" fill="#8a97a5"/><circle cx="566" cy="58" r="2.5" fill="#8a97a5"/><circle cx="40" cy="524" r="2.5" fill="#8a97a5"/><circle cx="566" cy="524" r="2.5" fill="#8a97a5"/>
+  <rect x="100" y="40" width="22" height="12" rx="3" fill="url(#cvg-e-steel)" stroke="#1e262e"/>
+  <rect x="222" y="526" width="160" height="14" rx="3" fill="#0d1218" stroke="#26303b"/>
+  <text x="302" y="536.5" text-anchor="middle" font-size="8.5" fill="#9fb0c0">DC-2 · SORT-LINE 2 · 480V</text>
+
+  <!-- wire ducts -->
+  <rect x="178" y="76" width="26" height="304" fill="#39434f" stroke="#232b34" stroke-width="1.5"/>
+  <g stroke="#2a333d" stroke-width="2"><line x1="182" y1="86" x2="200" y2="86"/><line x1="182" y1="106" x2="200" y2="106"/><line x1="182" y1="126" x2="200" y2="126"/><line x1="182" y1="146" x2="200" y2="146"/><line x1="182" y1="166" x2="200" y2="166"/><line x1="182" y1="186" x2="200" y2="186"/><line x1="182" y1="206" x2="200" y2="206"/><line x1="182" y1="226" x2="200" y2="226"/><line x1="182" y1="246" x2="200" y2="246"/><line x1="182" y1="266" x2="200" y2="266"/><line x1="182" y1="286" x2="200" y2="286"/><line x1="182" y1="306" x2="200" y2="306"/><line x1="182" y1="326" x2="200" y2="326"/><line x1="182" y1="346" x2="200" y2="346"/><line x1="182" y1="366" x2="200" y2="366"/></g>
+  <rect x="62" y="352" width="462" height="26" fill="#39434f" stroke="#232b34" stroke-width="1.5"/>
+  <g stroke="#2a333d" stroke-width="2"><line x1="80" y1="357" x2="80" y2="373"/><line x1="112" y1="357" x2="112" y2="373"/><line x1="144" y1="357" x2="144" y2="373"/><line x1="240" y1="357" x2="240" y2="373"/><line x1="272" y1="357" x2="272" y2="373"/><line x1="304" y1="357" x2="304" y2="373"/><line x1="336" y1="357" x2="336" y2="373"/><line x1="368" y1="357" x2="368" y2="373"/><line x1="400" y1="357" x2="400" y2="373"/><line x1="432" y1="357" x2="432" y2="373"/><line x1="464" y1="357" x2="464" y2="373"/><line x1="496" y1="357" x2="496" y2="373"/></g>
+
+  <!-- fused disconnect -->
+  <rect x="70" y="88" width="92" height="100" rx="5" fill="url(#cvg-e-yellow)" stroke="#6b5416" stroke-width="1.8"/>
+  <line x1="73" y1="90" x2="159" y2="90" stroke="#ffffff" stroke-opacity=".2"/>
+  <circle cx="116" cy="122" r="16" fill="#242c36" stroke="#12181f" stroke-width="1.5"/>
+  <rect x="104" y="118" width="24" height="8" rx="3" fill="url(#cvg-e-red)" stroke="#5e0f08" transform="rotate(-42 116 122)"/>
+  <rect x="80" y="150" width="13" height="28" rx="3" fill="#3d4754" stroke="#12181f"/>
+  <rect x="103" y="150" width="13" height="28" rx="3" fill="#3d4754" stroke="#12181f"/>
+  <rect x="126" y="150" width="13" height="28" rx="3" fill="#3d4754" stroke="#12181f"/>
+  <rect x="82" y="152" width="9" height="6" fill="url(#cvg-e-brass)"/><rect x="105" y="152" width="9" height="6" fill="url(#cvg-e-brass)"/><rect x="128" y="152" width="9" height="6" fill="url(#cvg-e-brass)"/>
+  <rect x="70" y="194" width="120" height="14" rx="3" fill="#0d1218" stroke="#26303b"/>
+  <text x="130" y="204.5" text-anchor="middle" font-size="8.5" fill="#9fb0c0">DS-1 · 30A FUSED</text>
+
+  <!-- VFD -->
+  <rect x="216" y="80" width="140" height="238" rx="6" fill="url(#cvg-e-iron)" stroke="#12181f" stroke-width="1.8"/>
+  <line x1="219" y1="82" x2="353" y2="82" stroke="#ffffff" stroke-opacity=".14"/>
+  <g stroke="#12181f" stroke-width="2"><line x1="228" y1="88" x2="228" y2="94"/><line x1="240" y1="88" x2="240" y2="94"/><line x1="252" y1="88" x2="252" y2="94"/><line x1="264" y1="88" x2="264" y2="94"/><line x1="276" y1="88" x2="276" y2="94"/><line x1="288" y1="88" x2="288" y2="94"/><line x1="300" y1="88" x2="300" y2="94"/><line x1="312" y1="88" x2="312" y2="94"/><line x1="324" y1="88" x2="324" y2="94"/><line x1="336" y1="88" x2="336" y2="94"/></g>
+  <rect x="230" y="102" width="112" height="56" rx="3" fill="#05080b" stroke="#1a232c" stroke-width="1.5"/>
+  <text id="cv-vfd-hz" x="236" y="134" font-size="20" fill="#56dfa8">0.0 Hz</text>
+  <text id="cv-vfd-amps" x="336" y="150" text-anchor="end" font-size="10" fill="#9fb0c0">0.0 A</text>
+  <circle id="cvi-run" cx="240" cy="174" r="4.5" fill="#1d2a22" stroke="#10161c"/>
+  <text x="250" y="178" font-size="8" fill="#7f8ea0">RUN</text>
+  <circle id="cvi-vfdfault" cx="292" cy="174" r="4.5" fill="#2a1d1d" stroke="#10161c"/>
+  <text x="302" y="178" font-size="8" fill="#7f8ea0">FAULT</text>
+  <g fill="#242c36" stroke="#12181f">
+    <rect x="232" y="192" width="24" height="16" rx="3"/><rect x="262" y="192" width="24" height="16" rx="3"/><rect x="292" y="192" width="24" height="16" rx="3"/>
+    <rect x="232" y="214" width="24" height="16" rx="3"/><rect x="262" y="214" width="24" height="16" rx="3"/><rect x="292" y="214" width="24" height="16" rx="3"/>
+  </g>
+  <text x="244" y="203.5" text-anchor="middle" font-size="8" fill="#7f8ea0">▲</text>
+  <text x="244" y="225.5" text-anchor="middle" font-size="8" fill="#7f8ea0">▼</text>
+  <text x="274" y="203.5" text-anchor="middle" font-size="7" fill="#7f8ea0">RUN</text>
+  <text x="274" y="225.5" text-anchor="middle" font-size="7" fill="#7f8ea0">STOP</text>
+  <text x="304" y="203.5" text-anchor="middle" font-size="7" fill="#7f8ea0">PRG</text>
+  <text x="304" y="225.5" text-anchor="middle" font-size="7" fill="#7f8ea0">ESC</text>
+  <text x="286" y="252" text-anchor="middle" font-size="9" letter-spacing="1" fill="#6b7a89">ACS-DRIVE 2.2 kW</text>
+  <g stroke="#12181f" stroke-width="3"><line x1="226" y1="262" x2="226" y2="310"/><line x1="238" y1="262" x2="238" y2="310"/><line x1="250" y1="262" x2="250" y2="310"/><line x1="262" y1="262" x2="262" y2="310"/><line x1="274" y1="262" x2="274" y2="310"/><line x1="286" y1="262" x2="286" y2="310"/><line x1="298" y1="262" x2="298" y2="310"/><line x1="310" y1="262" x2="310" y2="310"/><line x1="322" y1="262" x2="322" y2="310"/><line x1="334" y1="262" x2="334" y2="310"/><line x1="346" y1="262" x2="346" y2="310"/></g>
+  <rect x="216" y="324" width="90" height="14" rx="3" fill="#0d1218" stroke="#26303b"/>
+  <text x="261" y="334.5" text-anchor="middle" font-size="8.5" fill="#9fb0c0">VFD-2 · 480V</text>
+
+  <!-- 24VDC PSU -->
+  <rect x="396" y="80" width="110" height="104" rx="5" fill="url(#cvg-e-steel)" stroke="#1e262e" stroke-width="1.8"/>
+  <line x1="399" y1="82" x2="503" y2="82" stroke="#ffffff" stroke-opacity=".2"/>
+  <g stroke="#2c3844" stroke-width="2"><line x1="406" y1="92" x2="406" y2="130"/><line x1="414" y1="92" x2="414" y2="130"/><line x1="422" y1="92" x2="422" y2="130"/><line x1="430" y1="92" x2="430" y2="130"/><line x1="438" y1="92" x2="438" y2="130"/></g>
+  <rect x="452" y="94" width="44" height="26" rx="2" fill="#05080b" stroke="#1a232c"/>
+  <text x="474" y="106" text-anchor="middle" font-size="8" fill="#56dfa8">24.1 V</text>
+  <text x="474" y="116" text-anchor="middle" font-size="7" fill="#7f8ea0">DC OK</text>
+  <circle cx="452" cy="140" r="4" fill="#3fae62" stroke="#10161c"/>
+  <text x="461" y="144" font-size="8" fill="#7f8ea0">DC</text>
+  <g fill="url(#cvg-e-brass)" stroke="#5f4a20"><rect x="404" y="164" width="10" height="12" rx="2"/><rect x="420" y="164" width="10" height="12" rx="2"/><rect x="436" y="164" width="10" height="12" rx="2"/><rect x="452" y="164" width="10" height="12" rx="2"/></g>
+  <rect x="396" y="190" width="110" height="14" rx="3" fill="#0d1218" stroke="#26303b"/>
+  <text x="451" y="200.5" text-anchor="middle" font-size="8.5" fill="#9fb0c0">PSU-2 · 24VDC 5A</text>
+
+  <!-- E-stop -->
+  <rect x="396" y="222" width="110" height="118" rx="6" fill="url(#cvg-e-yellow)" stroke="#6b5416" stroke-width="1.8"/>
+  <line x1="399" y1="224" x2="503" y2="224" stroke="#ffffff" stroke-opacity=".2"/>
+  <circle cx="451" cy="272" r="28" fill="url(#cvg-e-steel)" stroke="#1e262e" stroke-width="1.5"/>
+  <circle cx="451" cy="272" r="22" fill="url(#cvg-e-red)" stroke="#5e0f08" stroke-width="1.5"/>
+  <ellipse cx="444" cy="264" rx="8" ry="5" fill="#ffffff" opacity=".22"/>
+  <text x="451" y="322" text-anchor="middle" font-size="9" font-weight="bold" letter-spacing="1" fill="#4a3a10">EMERGENCY STOP</text>
+  <circle cx="404" cy="230" r="2" fill="#7a5f22"/><circle cx="498" cy="230" r="2" fill="#7a5f22"/><circle cx="404" cy="332" r="2" fill="#7a5f22"/><circle cx="498" cy="332" r="2" fill="#7a5f22"/>
+
+  <!-- terminal strip -->
+  <rect x="62" y="398" width="462" height="10" fill="url(#cvg-e-steel)" stroke="#1e262e"/>
+  <g stroke="#232b34" stroke-width="1">
+    <rect x="70" y="388" width="20" height="32" fill="#4a5560"/><rect x="94" y="388" width="20" height="32" fill="#3d4754"/><rect x="118" y="388" width="20" height="32" fill="#4a5560"/><rect x="142" y="388" width="20" height="32" fill="#3d4754"/><rect x="166" y="388" width="20" height="32" fill="#4a5560"/><rect x="190" y="388" width="20" height="32" fill="#3d4754"/><rect x="214" y="388" width="20" height="32" fill="#4a5560"/><rect x="238" y="388" width="20" height="32" fill="#3d4754"/><rect x="262" y="388" width="20" height="32" fill="#4a5560"/><rect x="286" y="388" width="20" height="32" fill="#3d4754"/><rect x="310" y="388" width="20" height="32" fill="#4a5560"/><rect x="334" y="388" width="20" height="32" fill="#3d4754"/><rect x="358" y="388" width="20" height="32" fill="#4a5560"/><rect x="382" y="388" width="20" height="32" fill="#3d4754"/><rect x="406" y="388" width="20" height="32" fill="#4a5560"/><rect x="430" y="388" width="20" height="32" fill="#3d4754"/><rect x="454" y="388" width="20" height="32" fill="#4a5560"/><rect x="478" y="388" width="20" height="32" fill="#3d4754"/><rect x="502" y="388" width="20" height="32" fill="#4a5560"/>
+  </g>
+  <g fill="#8a97a5"><circle cx="80" cy="393" r="1.8"/><circle cx="104" cy="393" r="1.8"/><circle cx="128" cy="393" r="1.8"/><circle cx="152" cy="393" r="1.8"/><circle cx="176" cy="393" r="1.8"/><circle cx="200" cy="393" r="1.8"/><circle cx="224" cy="393" r="1.8"/><circle cx="248" cy="393" r="1.8"/><circle cx="272" cy="393" r="1.8"/><circle cx="296" cy="393" r="1.8"/><circle cx="320" cy="393" r="1.8"/><circle cx="344" cy="393" r="1.8"/><circle cx="368" cy="393" r="1.8"/><circle cx="392" cy="393" r="1.8"/><circle cx="416" cy="393" r="1.8"/><circle cx="440" cy="393" r="1.8"/><circle cx="464" cy="393" r="1.8"/><circle cx="488" cy="393" r="1.8"/><circle cx="512" cy="393" r="1.8"/></g>
+  <rect x="62" y="428" width="52" height="14" rx="3" fill="#0d1218" stroke="#26303b"/>
+  <text x="88" y="438.5" text-anchor="middle" font-size="8.5" fill="#9fb0c0">X2 · 24V</text>
+  <rect x="446" y="428" width="76" height="14" rx="3" fill="#0d1218" stroke="#26303b"/>
+  <text x="484" y="438.5" text-anchor="middle" font-size="8.5" fill="#9fb0c0">FIELD I/O</text>
+
+  <!-- ground bar -->
+  <rect x="130" y="456" width="120" height="8" fill="url(#cvg-e-brass)" stroke="#5f4a20"/>
+  <g stroke="#c9a35a" stroke-width="1.5"><line x1="150" y1="464" x2="150" y2="472"/><line x1="146" y1="472" x2="154" y2="472"/><line x1="190" y1="464" x2="190" y2="472"/><line x1="186" y1="472" x2="194" y2="472"/></g>
+  <text x="258" y="464" font-size="8" fill="#9fb0c0">PE</text>
+
+  <!-- conduit to motor -->
+  <path d="M556,364 C650,364 640,206 736,200" fill="none" stroke="#4a5560" stroke-width="10" stroke-linecap="round"/>
+  <path d="M556,364 C650,364 640,206 736,200" fill="none" stroke="#5f6c7a" stroke-width="10" stroke-linecap="round" stroke-dasharray="1 16" opacity=".7"/>
+
+  <!-- wires (game recolors strokes) -->
+  <path id="cvw-480" d="M110,8 V86 M116,188 V352 M116,352 H244 M244,352 V318" fill="none" stroke="#5a3030" stroke-width="3.5" stroke-linejoin="round"/>
+  <path id="cvw-vfd" d="M330,318 V364 H556 C650,364 640,206 736,200" fill="none" stroke="#31404e" stroke-width="4.5" stroke-linejoin="round"/>
+  <path id="cvw-24" d="M420,186 V210 H378 V386" fill="none" stroke="#7a6a33" stroke-width="2.5" stroke-linejoin="round"/>
+  <path id="cvw-estop" d="M451,342 V384 H494 V386" fill="none" stroke="#3d5a46" stroke-width="2.5" stroke-linejoin="round"/>
+
+  <!-- TEFC motor -->
+  <rect x="652" y="330" width="226" height="14" rx="3" fill="url(#cvg-e-iron)" stroke="#12181f" stroke-width="1.5"/>
+  <rect x="688" y="318" width="36" height="14" fill="url(#cvg-e-iron)" stroke="#12181f"/>
+  <rect x="806" y="318" width="36" height="14" fill="url(#cvg-e-iron)" stroke="#12181f"/>
+  <rect x="664" y="212" width="180" height="110" rx="14" fill="url(#cvg-e-motor)" stroke="#0e2f49" stroke-width="2"/>
+  <line x1="672" y1="216" x2="836" y2="216" stroke="#ffffff" stroke-opacity=".16"/>
+  <g stroke="#0e2f49" stroke-width="2.5"><line x1="684" y1="216" x2="684" y2="318"/><line x1="700" y1="216" x2="700" y2="318"/><line x1="716" y1="216" x2="716" y2="318"/><line x1="732" y1="216" x2="732" y2="318"/><line x1="792" y1="216" x2="792" y2="318"/><line x1="808" y1="216" x2="808" y2="318"/><line x1="824" y1="216" x2="824" y2="318"/></g>
+  <rect x="844" y="206" width="34" height="122" rx="6" fill="url(#cvg-e-steel)" stroke="#1e262e" stroke-width="1.5"/>
+  <g stroke="#242e38" stroke-width="2"><line x1="852" y1="222" x2="852" y2="312"/><line x1="860" y1="222" x2="860" y2="312"/><line x1="868" y1="222" x2="868" y2="312"/></g>
+  <rect x="746" y="246" width="52" height="34" rx="2" fill="url(#cvg-e-steel)" stroke="#1e262e"/>
+  <text x="772" y="260" text-anchor="middle" font-size="7" fill="#242c36">M-2 480V</text>
+  <text x="772" y="271" text-anchor="middle" font-size="7" fill="#242c36">4.2 FLA</text>
+  <rect x="712" y="176" width="56" height="36" rx="4" fill="url(#cvg-e-iron)" stroke="#12181f" stroke-width="1.8"/>
+  <line x1="715" y1="178" x2="765" y2="178" stroke="#ffffff" stroke-opacity=".14"/>
+  <circle cx="719" cy="183" r="1.8" fill="#8a97a5"/><circle cx="761" cy="183" r="1.8" fill="#8a97a5"/><circle cx="719" cy="205" r="1.8" fill="#8a97a5"/><circle cx="761" cy="205" r="1.8" fill="#8a97a5"/>
+  <rect x="646" y="240" width="20" height="26" rx="3" fill="url(#cvg-e-steel)" stroke="#1e262e"/>
+  <path d="M656,266 C650,300 640,330 648,376" fill="none" stroke="#333d49" stroke-width="2.5"/>
+  <rect x="700" y="348" width="130" height="14" rx="3" fill="#0d1218" stroke="#26303b"/>
+  <text x="765" y="358.5" text-anchor="middle" font-size="8.5" fill="#9fb0c0">M-2 · TEFC · ENC-1</text>
+
+  <!-- field junction box -->
+  <rect x="630" y="376" width="104" height="56" rx="5" fill="url(#cvg-e-iron)" stroke="#12181f" stroke-width="1.8"/>
+  <line x1="633" y1="378" x2="731" y2="378" stroke="#ffffff" stroke-opacity=".14"/>
+  <circle cx="638" cy="384" r="1.8" fill="#8a97a5"/><circle cx="726" cy="384" r="1.8" fill="#8a97a5"/><circle cx="638" cy="424" r="1.8" fill="#8a97a5"/><circle cx="726" cy="424" r="1.8" fill="#8a97a5"/>
+  <text x="682" y="400" text-anchor="middle" font-size="8.5" fill="#9fb0c0">JB-2</text>
+  <text x="682" y="412" text-anchor="middle" font-size="7.5" fill="#6b7a89">PE-1/2/3 · ENC</text>
+  <path d="M630,404 H560 C540,404 536,390 524,388" fill="none" stroke="#3a6b6b" stroke-width="2"/>
+  <path d="M734,404 C770,404 780,440 800,446 H880" fill="none" stroke="#3a6b6b" stroke-width="2"/>
+  <text x="806" y="440" font-size="7.5" fill="#6b7a89">TO PE-1/2/3</text>
+
+  <!-- test points -->
+  <circle class="tp" data-tp="E480C" cx="110" cy="30" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/>
+  <circle class="tp" data-tp="VFD" cx="230" cy="304" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/>
+  <circle class="tp" data-tp="PSUC" cx="498" cy="90" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/>
+  <circle class="tp" data-tp="ESTOPC" cx="412" cy="330" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/>
+  <circle class="tp" data-tp="MOTB" cx="756" cy="192" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/>
+</svg>
+    <svg class="layer" data-machine="conveyor" data-layer="plc" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">
+  <defs>
+    <linearGradient id="cvg-p-steel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a97a5"/><stop offset=".55" stop-color="#4a5866"/><stop offset="1" stop-color="#2c3844"/></linearGradient>
+    <linearGradient id="cvg-p-iron" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3d4754"/><stop offset="1" stop-color="#242c36"/></linearGradient>
+    <linearGradient id="cvg-p-blue" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1f5f8b"/><stop offset="1" stop-color="#14456b"/></linearGradient>
+    <linearGradient id="cvg-p-mod" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4c5865"/><stop offset="1" stop-color="#2e3843"/></linearGradient>
+  </defs>
+
+  <!-- ===== rack band ===== -->
+  <rect x="15" y="10" width="590" height="108" rx="6" fill="url(#cvg-p-iron)" stroke="#12181f" stroke-width="2"/>
+  <line x1="18" y1="12" x2="602" y2="12" stroke="#ffffff" stroke-opacity=".14"/>
+  <rect x="22" y="98" width="576" height="12" fill="#1b232c"/>
+  <circle cx="24" cy="19" r="2" fill="#8a97a5"/><circle cx="596" cy="19" r="2" fill="#8a97a5"/>
+
+  <!-- PSU module -->
+  <rect x="28" y="20" width="70" height="76" rx="3" fill="url(#cvg-p-blue)" stroke="#0e2f49" stroke-width="1.5"/>
+  <line x1="30" y1="21.5" x2="96" y2="21.5" stroke="#ffffff" stroke-opacity=".16"/>
+  <text x="63" y="32" text-anchor="middle" font-size="7.5" fill="#cfe3f2">PS 24VDC 5A</text>
+  <rect x="36" y="38" width="8" height="5" fill="#3fae62"/><text x="48" y="43" font-size="6.5" fill="#b6c9d8">PWR</text>
+  <rect x="36" y="47" width="8" height="5" fill="#274a36"/><text x="48" y="52" font-size="6.5" fill="#b6c9d8">DC</text>
+  <g stroke="#0e2f49" stroke-width="1.5"><line x1="36" y1="62" x2="90" y2="62"/><line x1="36" y1="68" x2="90" y2="68"/><line x1="36" y1="74" x2="90" y2="74"/><line x1="36" y1="80" x2="90" y2="80"/><line x1="36" y1="86" x2="90" y2="86"/></g>
+
+  <!-- CPU module -->
+  <rect x="104" y="20" width="88" height="76" rx="3" fill="url(#cvg-p-mod)" stroke="#1b232c" stroke-width="1.5"/>
+  <line x1="106" y1="21.5" x2="190" y2="21.5" stroke="#ffffff" stroke-opacity=".14"/>
+  <rect x="110" y="25" width="76" height="11" rx="2" fill="#0d1218"/>
+  <text x="148" y="33.5" text-anchor="middle" font-size="7.5" fill="#9fb0c0">CPU 214-2 DP</text>
+  <rect x="112" y="42" width="8" height="5" fill="#3fae62"/><text x="124" y="47" font-size="6.5" fill="#b6c9d8">RUN</text>
+  <rect x="112" y="51" width="8" height="5" fill="#4a2a22"/><text x="124" y="56" font-size="6.5" fill="#b6c9d8">SF</text>
+  <rect x="112" y="60" width="8" height="5" fill="#274a36"/><text x="124" y="65" font-size="6.5" fill="#b6c9d8">FRC</text>
+  <circle cx="166" cy="56" r="11" fill="#242c36" stroke="#12181f" stroke-width="1.5"/>
+  <rect x="163" y="48" width="6" height="16" rx="2" fill="#8a97a5" transform="rotate(35 166 56)"/>
+  <text x="166" y="76" text-anchor="middle" font-size="6" fill="#7f8ea0">RUN·STOP</text>
+  <rect x="112" y="82" width="70" height="8" rx="1" fill="#1b232c"/>
+  <text x="148" y="88.5" text-anchor="middle" font-size="6" fill="#56dfa8">MPI · DP ONLINE</text>
+
+  <!-- I/O modules -->
+  <g>
+    <rect x="198" y="20" width="60" height="76" rx="3" fill="url(#cvg-p-mod)" stroke="#1b232c" stroke-width="1.5"/>
+    <line x1="200" y1="21.5" x2="256" y2="21.5" stroke="#ffffff" stroke-opacity=".14"/>
+    <rect x="202" y="25" width="52" height="10" rx="2" fill="#0d1218"/>
+    <text x="228" y="32.5" text-anchor="middle" font-size="7" fill="#9fb0c0">DI16 24V</text>
+    <g fill="#2c5b3d"><rect x="206" y="42" width="6" height="4"/><rect x="216" y="42" width="6" height="4"/><rect x="226" y="42" width="6" height="4"/><rect x="236" y="42" width="6" height="4"/><rect x="206" y="50" width="6" height="4"/><rect x="216" y="50" width="6" height="4"/><rect x="226" y="50" width="6" height="4"/><rect x="236" y="50" width="6" height="4"/><rect x="206" y="58" width="6" height="4"/><rect x="216" y="58" width="6" height="4"/><rect x="226" y="58" width="6" height="4"/><rect x="236" y="58" width="6" height="4"/><rect x="206" y="66" width="6" height="4"/><rect x="216" y="66" width="6" height="4"/><rect x="226" y="66" width="6" height="4"/><rect x="236" y="66" width="6" height="4"/></g>
+    <text x="228" y="90" text-anchor="middle" font-size="6" fill="#7f8ea0">PE · GATE FB</text>
+  </g>
+  <g>
+    <rect x="264" y="20" width="60" height="76" rx="3" fill="url(#cvg-p-mod)" stroke="#1b232c" stroke-width="1.5"/>
+    <line x1="266" y1="21.5" x2="322" y2="21.5" stroke="#ffffff" stroke-opacity=".14"/>
+    <rect x="268" y="25" width="52" height="10" rx="2" fill="#0d1218"/>
+    <text x="294" y="32.5" text-anchor="middle" font-size="7" fill="#9fb0c0">DI16 24V</text>
+    <g fill="#2c5b3d"><rect x="272" y="42" width="6" height="4"/><rect x="282" y="42" width="6" height="4"/><rect x="292" y="42" width="6" height="4"/><rect x="302" y="42" width="6" height="4"/><rect x="272" y="50" width="6" height="4"/><rect x="282" y="50" width="6" height="4"/><rect x="292" y="50" width="6" height="4"/><rect x="302" y="50" width="6" height="4"/><rect x="272" y="58" width="6" height="4"/><rect x="282" y="58" width="6" height="4"/><rect x="292" y="58" width="6" height="4"/><rect x="302" y="58" width="6" height="4"/><rect x="272" y="66" width="6" height="4"/><rect x="282" y="66" width="6" height="4"/><rect x="292" y="66" width="6" height="4"/><rect x="302" y="66" width="6" height="4"/></g>
+    <text x="294" y="90" text-anchor="middle" font-size="6" fill="#7f8ea0">ESTOP · VFD FB</text>
+  </g>
+  <g>
+    <rect x="330" y="20" width="60" height="76" rx="3" fill="url(#cvg-p-mod)" stroke="#1b232c" stroke-width="1.5"/>
+    <line x1="332" y1="21.5" x2="388" y2="21.5" stroke="#ffffff" stroke-opacity=".14"/>
+    <rect x="334" y="25" width="52" height="10" rx="2" fill="#0d1218"/>
+    <text x="360" y="32.5" text-anchor="middle" font-size="7" fill="#9fb0c0">DO16 RLY</text>
+    <g fill="#5b4a2c"><rect x="338" y="42" width="6" height="4"/><rect x="348" y="42" width="6" height="4"/><rect x="358" y="42" width="6" height="4"/><rect x="368" y="42" width="6" height="4"/><rect x="338" y="50" width="6" height="4"/><rect x="348" y="50" width="6" height="4"/><rect x="358" y="50" width="6" height="4"/><rect x="368" y="50" width="6" height="4"/><rect x="338" y="58" width="6" height="4"/><rect x="348" y="58" width="6" height="4"/><rect x="358" y="58" width="6" height="4"/><rect x="368" y="58" width="6" height="4"/></g>
+    <text x="360" y="90" text-anchor="middle" font-size="6" fill="#7f8ea0">GATE · RUN CMD</text>
+  </g>
+  <g>
+    <rect x="396" y="20" width="60" height="76" rx="3" fill="url(#cvg-p-mod)" stroke="#1b232c" stroke-width="1.5"/>
+    <line x1="398" y1="21.5" x2="454" y2="21.5" stroke="#ffffff" stroke-opacity=".14"/>
+    <rect x="400" y="25" width="52" height="10" rx="2" fill="#0d1218"/>
+    <text x="426" y="32.5" text-anchor="middle" font-size="7" fill="#9fb0c0">HSC-2 CNT</text>
+    <g fill="#2c5b3d"><rect x="404" y="42" width="6" height="4"/><rect x="414" y="42" width="6" height="4"/></g>
+    <rect x="404" y="52" width="44" height="9" rx="1" fill="#05080b"/>
+    <text x="426" y="59" text-anchor="middle" font-size="6.5" fill="#56dfa8">ENC 0 Hz</text>
+    <text x="426" y="90" text-anchor="middle" font-size="6" fill="#7f8ea0">ENCODER IN</text>
+  </g>
+  <g>
+    <rect x="462" y="20" width="46" height="76" rx="3" fill="url(#cvg-p-mod)" stroke="#1b232c" stroke-width="1.5"/>
+    <line x1="464" y1="21.5" x2="506" y2="21.5" stroke="#ffffff" stroke-opacity=".14"/>
+    <text x="485" y="62" text-anchor="middle" font-size="7" letter-spacing="2" fill="#5f6c7a" transform="rotate(-90 485 60)">SPARE</text>
+  </g>
+  <!-- vent grille -->
+  <g>
+    <rect x="514" y="20" width="84" height="76" rx="3" fill="#2c3844" stroke="#1b232c" stroke-width="1.5"/>
+    <g stroke="#1b232c" stroke-width="2.5"><line x1="522" y1="28" x2="522" y2="88"/><line x1="530" y1="28" x2="530" y2="88"/><line x1="538" y1="28" x2="538" y2="88"/><line x1="546" y1="28" x2="546" y2="88"/><line x1="554" y1="28" x2="554" y2="88"/><line x1="562" y1="28" x2="562" y2="88"/><line x1="570" y1="28" x2="570" y2="88"/><line x1="578" y1="28" x2="578" y2="88"/><line x1="586" y1="28" x2="586" y2="88"/></g>
+    <rect x="530" y="52" width="52" height="11" rx="2" fill="#0d1218" stroke="#26303b"/>
+    <text x="556" y="60.5" text-anchor="middle" font-size="6.5" fill="#9fb0c0">RACK 0</text>
+  </g>
+
+  <!-- status cell -->
+  <rect x="612" y="10" width="130" height="108" rx="6" fill="url(#cvg-p-iron)" stroke="#12181f" stroke-width="2"/>
+  <line x1="615" y1="12" x2="739" y2="12" stroke="#ffffff" stroke-opacity=".14"/>
+  <text x="677" y="26" text-anchor="middle" font-size="8" letter-spacing="1.5" fill="#8fa0b0">SEQUENCER STATE</text>
+  <rect x="622" y="32" width="110" height="66" rx="3" fill="#05080b" stroke="#1a232c" stroke-width="1.5"/>
+  <text id="cv-state" x="677" y="72" text-anchor="middle" font-size="20" font-weight="bold" fill="#56dfa8">IDLE</text>
+  <text x="677" y="111" text-anchor="middle" font-size="7" fill="#5f6c7a">SORT SEQUENCE SQ-2</text>
+
+  <!-- timers cell -->
+  <rect x="752" y="10" width="133" height="108" rx="6" fill="url(#cvg-p-iron)" stroke="#12181f" stroke-width="2"/>
+  <line x1="755" y1="12" x2="882" y2="12" stroke="#ffffff" stroke-opacity=".14"/>
+  <text x="818" y="26" text-anchor="middle" font-size="8" letter-spacing="1.5" fill="#8fa0b0">TIMERS</text>
+  <rect x="760" y="32" width="117" height="66" rx="3" fill="#05080b" stroke="#1a232c" stroke-width="1.5"/>
+  <text x="768" y="52" font-size="8" fill="#7f8ea0">T201 GATE DWELL</text>
+  <text id="cv-t1" x="768" y="66" font-size="11" fill="#56dfa8">0.0 / 1.2 s</text>
+  <text x="768" y="82" font-size="8" fill="#7f8ea0">T202 JAM WATCH</text>
+  <text id="cv-t2" x="768" y="96" font-size="11" fill="#56dfa8">0.0 / 3.0 s</text>
+  <text x="818" y="111" text-anchor="middle" font-size="7" fill="#5f6c7a">TON · 100 ms BASE</text>
+
+  <!-- ===== ladder monitor screen ===== -->
+  <rect x="9" y="119" width="882" height="302" rx="6" fill="url(#cvg-p-iron)" stroke="#12181f" stroke-width="2"/>
+  <rect x="15" y="125" width="870" height="290" fill="#05080b"/>
+  <text x="26" y="140" font-size="9" letter-spacing="1" fill="#3f5566">LADDER MONITOR — SortMain</text>
+  <text x="874" y="140" text-anchor="end" font-size="9" fill="#3f5566">SORT-LINE 2 · CPU 214-2 DP</text>
+  <g id="cv-ladder"></g>
+  <text x="26" y="408" font-size="8" fill="#3f5566">● ONLINE&#160;&#160;&#160;MODE: RUN&#160;&#160;&#160;SCAN 1.6 ms&#160;&#160;&#160;SortMain · RUNGS 1-6</text>
+  <text x="874" y="408" text-anchor="end" font-size="8" fill="#3f5566">NO EDITS PENDING</text>
+
+  <!-- ===== legend strip ===== -->
+  <rect x="15" y="429" width="870" height="118" rx="6" fill="url(#cvg-p-iron)" stroke="#12181f" stroke-width="2"/>
+  <line x1="18" y1="431" x2="882" y2="431" stroke="#ffffff" stroke-opacity=".14"/>
+  <rect x="27" y="440" width="846" height="96" rx="3" fill="#0b1016" stroke="#1a232c" stroke-width="1.5"/>
+  <rect x="44" y="434" width="110" height="12" rx="2" fill="#242c36" stroke="#12181f"/>
+  <text x="99" y="443" text-anchor="middle" font-size="7.5" letter-spacing="1.5" fill="#9fb0c0">LADDER LEGEND</text>
+
+  <g stroke="#7f8ea0" stroke-width="2" fill="none">
+    <line x1="52" y1="472" x2="66" y2="472"/><line x1="66" y1="464" x2="66" y2="480"/><line x1="76" y1="464" x2="76" y2="480"/><line x1="76" y1="472" x2="90" y2="472"/>
+  </g>
+  <text x="102" y="476" font-size="8.5" fill="#8fa0b0">CONTACT — EXAMINE ON</text>
+
+  <g stroke="#7f8ea0" stroke-width="2" fill="none">
+    <line x1="260" y1="472" x2="274" y2="472"/><line x1="274" y1="464" x2="274" y2="480"/><line x1="284" y1="464" x2="284" y2="480"/><line x1="284" y1="472" x2="298" y2="472"/><line x1="272" y1="482" x2="286" y2="462"/>
+  </g>
+  <text x="310" y="476" font-size="8.5" fill="#8fa0b0">CONTACT — EXAMINE OFF</text>
+
+  <g stroke="#7f8ea0" stroke-width="2" fill="none">
+    <line x1="478" y1="472" x2="492" y2="472"/><circle cx="502" cy="472" r="9"/><line x1="512" y1="472" x2="526" y2="472"/>
+  </g>
+  <text x="538" y="476" font-size="8.5" fill="#8fa0b0">OUTPUT COIL (Q)</text>
+
+  <rect x="682" y="462" width="30" height="20" rx="2" fill="#141b23" stroke="#7f8ea0" stroke-width="1.5"/>
+  <text x="697" y="476" text-anchor="middle" font-size="8" fill="#c7d3de">TON</text>
+  <text x="722" y="476" font-size="8.5" fill="#8fa0b0">TIMER (T201/T202)</text>
+
+  <line x1="52" y1="510" x2="90" y2="510" stroke="#3fd68f" stroke-width="3"/>
+  <circle cx="71" cy="510" r="4" fill="#3fd68f"/>
+  <text x="102" y="514" font-size="8.5" fill="#8fa0b0">POWER FLOW — LOGIC TRUE</text>
+
+  <line x1="260" y1="510" x2="298" y2="510" stroke="#39434f" stroke-width="3"/>
+  <text x="310" y="514" font-size="8.5" fill="#8fa0b0">NO FLOW — LOGIC FALSE</text>
+
+  <text x="478" y="514" font-size="8.5" fill="#8fa0b0">I x.x = INPUT · Q x.x = OUTPUT</text>
+  <text x="700" y="514" font-size="8.5" fill="#6b7a89">DWG CV-LAD-002 REV B</text>
+</svg>
+    <svg class="layer" data-machine="conveyor" data-layer="hmi" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">
+  <defs>
+    <linearGradient id="cvg-h-steel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a97a5"/><stop offset=".55" stop-color="#4a5866"/><stop offset="1" stop-color="#2c3844"/></linearGradient>
+    <linearGradient id="cvg-h-bezel" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3d4754"/><stop offset=".5" stop-color="#2a333d"/><stop offset="1" stop-color="#1d242d"/></linearGradient>
+    <linearGradient id="cvg-h-key" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c2430"/><stop offset="1" stop-color="#0e1319"/></linearGradient>
+    <radialGradient id="cvg-h-shadow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#000" stop-opacity=".45"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+  </defs>
+
+  <!-- pedestal -->
+  <ellipse cx="450" cy="540" rx="150" ry="9" fill="url(#cvg-h-shadow)"/>
+  <rect x="432" y="496" width="36" height="40" fill="url(#cvg-h-steel)" stroke="#1e262e" stroke-width="1.5"/>
+  <rect x="410" y="532" width="80" height="10" rx="3" fill="url(#cvg-h-bezel)" stroke="#12181f" stroke-width="1.5"/>
+
+  <!-- panel body -->
+  <rect x="170" y="28" width="560" height="474" rx="18" fill="url(#cvg-h-bezel)" stroke="#0e1319" stroke-width="2.5"/>
+  <rect x="173" y="31" width="554" height="468" rx="15" fill="none" stroke="#ffffff" stroke-opacity=".08"/>
+  <line x1="190" y1="30.5" x2="710" y2="30.5" stroke="#ffffff" stroke-opacity=".14"/>
+  <g fill="#5f6c7a" stroke="#12181f">
+    <circle cx="190" cy="48" r="4.5"/><circle cx="710" cy="48" r="4.5"/><circle cx="190" cy="482" r="4.5"/><circle cx="710" cy="482" r="4.5"/>
+  </g>
+  <g stroke="#12181f" stroke-width="1.2">
+    <line x1="187" y1="45" x2="193" y2="51"/><line x1="707" y1="51" x2="713" y2="45"/><line x1="187" y1="485" x2="193" y2="479"/><line x1="707" y1="479" x2="713" y2="485"/>
+  </g>
+
+  <!-- brand plate -->
+  <rect x="322" y="40" width="256" height="20" rx="3" fill="#0d1218" stroke="#26303b"/>
+  <rect x="330" y="46" width="8" height="8" fill="#e8b93c"/>
+  <text x="458" y="54" text-anchor="middle" font-size="11" letter-spacing="4" fill="#c7d3de">SORTVIEW 400</text>
+
+  <!-- screen -->
+  <rect x="198" y="74" width="504" height="358" rx="6" fill="#0a0e14" stroke="#05070a" stroke-width="2"/>
+  <rect x="200" y="76" width="500" height="354" rx="5" fill="none" stroke="#1e2833" stroke-width="1"/>
+  <polygon points="198,74 430,74 236,432 198,432" fill="#ffffff" opacity=".025"/>
+
+  <!-- alarm banner -->
+  <rect id="cv-banner" x="214" y="90" width="472" height="40" rx="4" fill="#0f2b1a" stroke="#3fae62" stroke-width="1.5"/>
+  <text id="cv-bannertext" x="232" y="115" font-size="15" letter-spacing="1.5" fill="#7ce8a8">SYSTEM READY</text>
+
+  <!-- station -->
+  <text x="214" y="158" font-size="8" letter-spacing="2" fill="#6b7a89">STATION</text>
+  <text x="214" y="180" font-size="17" letter-spacing="1" fill="#dfe7ee">SORT-LINE 2</text>
+  <line x1="214" y1="190" x2="514" y2="190" stroke="#232e3a" stroke-width="1.5"/>
+
+  <!-- throughput cell -->
+  <rect x="214" y="204" width="300" height="128" rx="4" fill="#070b10" stroke="#1a232c" stroke-width="1.5"/>
+  <text x="230" y="226" font-size="9" letter-spacing="2" fill="#6b7a89">BOXES SORTED</text>
+  <text id="cv-throughput" x="364" y="298" text-anchor="middle" font-size="58" font-weight="bold" fill="#56dfa8">0</text>
+  <text x="364" y="322" text-anchor="middle" font-size="8" letter-spacing="1.5" fill="#44525f">TOTAL THIS SHIFT</text>
+
+  <!-- belt speed cell -->
+  <rect x="214" y="346" width="300" height="60" rx="4" fill="#070b10" stroke="#1a232c" stroke-width="1.5"/>
+  <text x="230" y="368" font-size="9" letter-spacing="2" fill="#6b7a89">BELT SPEED</text>
+  <text id="cv-speedhmi" x="498" y="392" text-anchor="end" font-size="22" fill="#ffd76a">0.00 m/s</text>
+  <text x="230" y="392" font-size="9" fill="#44525f">SP 0.80</text>
+
+  <!-- lamp column -->
+  <rect x="532" y="152" width="154" height="254" rx="4" fill="#070b10" stroke="#1a232c" stroke-width="1.5"/>
+  <text x="609" y="174" text-anchor="middle" font-size="9" letter-spacing="2" fill="#6b7a89">STATUS</text>
+  <circle cx="570" cy="212" r="16" fill="url(#cvg-h-steel)" stroke="#12181f" stroke-width="1.5"/>
+  <circle id="cvlamp-run" cx="570" cy="212" r="10" fill="#24313a" stroke="#10161c" stroke-width="1.5"/>
+  <rect x="594" y="204" width="80" height="16" rx="2" fill="#0d1218" stroke="#26303b"/>
+  <text x="634" y="215.5" text-anchor="middle" font-size="8.5" fill="#9fb0c0">RUN</text>
+  <circle cx="570" cy="282" r="16" fill="url(#cvg-h-steel)" stroke="#12181f" stroke-width="1.5"/>
+  <circle id="cvlamp-fault" cx="570" cy="282" r="10" fill="#24313a" stroke="#10161c" stroke-width="1.5"/>
+  <rect x="594" y="274" width="80" height="16" rx="2" fill="#0d1218" stroke="#26303b"/>
+  <text x="634" y="285.5" text-anchor="middle" font-size="8.5" fill="#9fb0c0">FAULT</text>
+  <circle cx="570" cy="352" r="16" fill="url(#cvg-h-steel)" stroke="#12181f" stroke-width="1.5"/>
+  <circle id="cvlamp-estop" cx="570" cy="352" r="10" fill="#24313a" stroke="#10161c" stroke-width="1.5"/>
+  <rect x="594" y="344" width="80" height="16" rx="2" fill="#0d1218" stroke="#26303b"/>
+  <text x="634" y="355.5" text-anchor="middle" font-size="8.5" fill="#9fb0c0">E-STOP OK</text>
+  <text x="609" y="392" text-anchor="middle" font-size="7.5" fill="#44525f">PLC LINK ● OK</text>
+
+  <!-- hint line -->
+  <text x="450" y="423" text-anchor="middle" font-size="9" fill="#5f6c7a">F2 = RESET COUNT · F4 = ALARM ACK · SCAN 4 ms</text>
+
+  <!-- membrane keys -->
+  <g>
+    <rect x="280" y="450" width="70" height="32" rx="6" fill="url(#cvg-h-key)" stroke="#2a3642" stroke-width="1.5"/>
+    <line x1="286" y1="452" x2="344" y2="452" stroke="#ffffff" stroke-opacity=".12"/>
+    <text x="315" y="470" text-anchor="middle" font-size="11" fill="#b8c4ce">F1</text>
+    <rect x="370" y="450" width="70" height="32" rx="6" fill="url(#cvg-h-key)" stroke="#2a3642" stroke-width="1.5"/>
+    <line x1="376" y1="452" x2="434" y2="452" stroke="#ffffff" stroke-opacity=".12"/>
+    <text x="405" y="470" text-anchor="middle" font-size="11" fill="#b8c4ce">F2</text>
+    <rect x="460" y="450" width="70" height="32" rx="6" fill="url(#cvg-h-key)" stroke="#2a3642" stroke-width="1.5"/>
+    <line x1="466" y1="452" x2="524" y2="452" stroke="#ffffff" stroke-opacity=".12"/>
+    <text x="495" y="470" text-anchor="middle" font-size="11" fill="#b8c4ce">F3</text>
+    <rect x="550" y="450" width="70" height="32" rx="6" fill="url(#cvg-h-key)" stroke="#2a3642" stroke-width="1.5"/>
+    <line x1="556" y1="452" x2="614" y2="452" stroke="#ffffff" stroke-opacity=".12"/>
+    <text x="585" y="470" text-anchor="middle" font-size="11" fill="#b8c4ce">F4</text>
+  </g>
+
+  <!-- footer engravings -->
+  <text x="190" y="494" font-size="7" fill="#5f6c7a">SER 2214-B7</text>
+  <text x="710" y="494" text-anchor="end" font-size="7" fill="#5f6c7a">TYPE HM-2812 · 24VDC 0.9A · IP65 FRONT</text>
+</svg>
+
+    <!-- ================= ROBOT · PICK-CELL 4 ================= -->
+    <svg class="layer" data-machine="robot" data-layer="cell" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,Menlo,Consolas,monospace">
+  <defs>
+    <linearGradient id="rbg-c-steel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8a97a5"/><stop offset=".55" stop-color="#4a5866"/><stop offset="1" stop-color="#2c3844"/>
+    </linearGradient>
+    <linearGradient id="rbg-c-alu" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b9c2cc"/><stop offset=".45" stop-color="#7e8a96"/><stop offset="1" stop-color="#525d68"/>
+    </linearGradient>
+    <linearGradient id="rbg-c-aluh" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#aeb8c2"/><stop offset=".5" stop-color="#78848f"/><stop offset="1" stop-color="#4d5862"/>
+    </linearGradient>
+    <linearGradient id="rbg-c-iron" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d4754"/><stop offset="1" stop-color="#242c36"/>
+    </linearGradient>
+    <linearGradient id="rbg-c-ironh" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#46515f"/><stop offset="1" stop-color="#232b34"/>
+    </linearGradient>
+    <linearGradient id="rbg-c-blue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a72a3"/><stop offset=".5" stop-color="#1f5f8b"/><stop offset="1" stop-color="#14456b"/>
+    </linearGradient>
+    <linearGradient id="rbg-c-yellow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e8b93c"/><stop offset=".6" stop-color="#cf9f32"/><stop offset="1" stop-color="#b8862a"/>
+    </linearGradient>
+    <linearGradient id="rbg-c-brass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c9a35a"/><stop offset=".6" stop-color="#a58242"/><stop offset="1" stop-color="#8a6d35"/>
+    </linearGradient>
+    <linearGradient id="rbg-c-floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#20282f"/><stop offset="1" stop-color="#12181e"/>
+    </linearGradient>
+    <linearGradient id="rbg-c-rail" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d8dee4"/><stop offset=".5" stop-color="#98a4b0"/><stop offset="1" stop-color="#5c6873"/>
+    </linearGradient>
+    <radialGradient id="rbg-c-shadow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#000000" stop-opacity=".5"/><stop offset="1" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="rbg-c-mesh" width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M0 10 H20 M10 0 V20" stroke="#2b3644" stroke-width="1.4" fill="none"/>
+    </pattern>
+  </defs>
+
+  <!-- ======================= backdrop / fencing ======================= -->
+  <rect x="30" y="90" width="840" height="382" fill="#171f28"/>
+  <rect x="86" y="212" width="728" height="258" fill="url(#rbg-c-mesh)" opacity=".8"/>
+  <rect x="86" y="208" width="728" height="7" fill="url(#rbg-c-iron)"/>
+  <rect x="86" y="464" width="728" height="6" fill="#1c242d"/>
+  <rect x="330" y="212" width="8" height="252" fill="#222c37"/>
+  <rect x="562" y="212" width="8" height="252" fill="#222c37"/>
+  <!-- hazard sign on rear fence -->
+  <g>
+    <rect x="416" y="226" width="68" height="36" rx="3" fill="#1a212a" stroke="#8a7a30" stroke-width="1.5"/>
+    <path d="M432 250 l6 -11 l6 11 z" fill="none" stroke="#c9a23a" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="M438 243.5 v3.5 M438 249 v.4" stroke="#c9a23a" stroke-width="1.4"/>
+    <text x="452" y="243" font-size="7" fill="#c9a23a" letter-spacing="1">ROBOT</text>
+    <text x="452" y="253" font-size="7" fill="#c9a23a" letter-spacing="1">CELL</text>
+  </g>
+
+  <!-- floor -->
+  <rect x="0" y="470" width="900" height="90" fill="url(#rbg-c-floor)"/>
+  <rect x="0" y="469" width="900" height="2" fill="#39434e"/>
+  <path d="M40 512 H860 M120 540 H780" stroke="#1b2229" stroke-width="1.5"/>
+  <ellipse cx="160" cy="472" rx="130" ry="10" fill="url(#rbg-c-shadow)"/>
+  <ellipse cx="740" cy="472" rx="120" ry="10" fill="url(#rbg-c-shadow)"/>
+
+  <!-- ======================= gantry columns ======================= -->
+  <g>
+    <rect x="44" y="176" width="42" height="296" fill="url(#rbg-c-ironh)"/>
+    <rect x="44" y="176" width="42" height="3" fill="rgba(255,255,255,.14)"/>
+    <rect x="52" y="186" width="8" height="278" fill="#4b5663" opacity=".55"/>
+    <rect x="34" y="458" width="62" height="14" rx="2" fill="url(#rbg-c-iron)"/>
+    <circle cx="42" cy="465" r="3" fill="#161c23" stroke="#5a6673" stroke-width="1"/>
+    <circle cx="88" cy="465" r="3" fill="#161c23" stroke="#5a6673" stroke-width="1"/>
+  </g>
+  <g>
+    <rect x="814" y="176" width="42" height="296" fill="url(#rbg-c-ironh)"/>
+    <rect x="814" y="176" width="42" height="3" fill="rgba(255,255,255,.14)"/>
+    <rect x="822" y="186" width="8" height="278" fill="#4b5663" opacity=".55"/>
+    <rect x="804" y="458" width="62" height="14" rx="2" fill="url(#rbg-c-iron)"/>
+    <circle cx="812" cy="465" r="3" fill="#161c23" stroke="#5a6673" stroke-width="1"/>
+    <circle cx="858" cy="465" r="3" fill="#161c23" stroke="#5a6673" stroke-width="1"/>
+  </g>
+
+  <!-- ======================= X beam (T-slot extrusion + rail + chain tray) ======================= -->
+  <g>
+    <!-- cable chain tray on top -->
+    <rect x="60" y="106" width="780" height="22" rx="2" fill="url(#rbg-c-iron)"/>
+    <rect x="60" y="106" width="780" height="2" fill="rgba(255,255,255,.12)"/>
+    <!-- chain links resting in tray -->
+    <g fill="#10151b" stroke="#2f3944" stroke-width="1">
+      <rect x="70" y="111" width="16" height="12" rx="3"/><rect x="88" y="111" width="16" height="12" rx="3"/>
+      <rect x="106" y="111" width="16" height="12" rx="3"/><rect x="124" y="111" width="16" height="12" rx="3"/>
+      <rect x="142" y="111" width="16" height="12" rx="3"/><rect x="160" y="111" width="16" height="12" rx="3"/>
+      <rect x="178" y="111" width="16" height="12" rx="3"/><rect x="196" y="111" width="16" height="12" rx="3"/>
+      <rect x="214" y="111" width="16" height="12" rx="3"/><rect x="232" y="111" width="16" height="12" rx="3"/>
+      <rect x="250" y="111" width="16" height="12" rx="3"/><rect x="268" y="111" width="16" height="12" rx="3"/>
+      <rect x="286" y="111" width="16" height="12" rx="3"/><rect x="304" y="111" width="16" height="12" rx="3"/>
+      <rect x="322" y="111" width="16" height="12" rx="3"/><rect x="340" y="111" width="16" height="12" rx="3"/>
+      <rect x="358" y="111" width="16" height="12" rx="3"/><rect x="376" y="111" width="16" height="12" rx="3"/>
+    </g>
+    <!-- beam body: anodized extrusion -->
+    <rect x="40" y="128" width="820" height="50" fill="url(#rbg-c-alu)"/>
+    <rect x="40" y="128" width="820" height="2.5" fill="rgba(255,255,255,.16)"/>
+    <!-- T-slot grooves -->
+    <rect x="40" y="140" width="820" height="5" fill="#39424c"/>
+    <rect x="40" y="141.5" width="820" height="1.2" fill="#161c22"/>
+    <rect x="40" y="156" width="820" height="5" fill="#39424c"/>
+    <rect x="40" y="157.5" width="820" height="1.2" fill="#161c22"/>
+    <!-- end caps -->
+    <rect x="36" y="126" width="10" height="54" rx="2" fill="url(#rbg-c-iron)"/>
+    <rect x="854" y="126" width="10" height="54" rx="2" fill="url(#rbg-c-iron)"/>
+    <!-- linear rail along bottom edge -->
+    <rect x="46" y="168" width="808" height="9" rx="1.5" fill="url(#rbg-c-rail)"/>
+    <rect x="46" y="168" width="808" height="1.5" fill="rgba(255,255,255,.3)"/>
+    <circle cx="110" cy="172.5" r="1.4" fill="#3c4650"/><circle cx="230" cy="172.5" r="1.4" fill="#3c4650"/>
+    <circle cx="350" cy="172.5" r="1.4" fill="#3c4650"/><circle cx="470" cy="172.5" r="1.4" fill="#3c4650"/>
+    <circle cx="590" cy="172.5" r="1.4" fill="#3c4650"/><circle cx="710" cy="172.5" r="1.4" fill="#3c4650"/>
+    <circle cx="830" cy="172.5" r="1.4" fill="#3c4650"/>
+    <!-- beam label plate -->
+    <rect x="395" y="132" width="150" height="14" rx="3" fill="#10161d" stroke="#39434e" stroke-width="1"/>
+    <text x="470" y="142.5" font-size="9" fill="#9fb4c4" text-anchor="middle" letter-spacing="1.5">X-AXIS  750 MM</text>
+  </g>
+
+  <!-- ======================= pick nest (left) ======================= -->
+  <g>
+    <rect x="116" y="436" width="10" height="34" fill="url(#rbg-c-ironh)"/>
+    <rect x="194" y="436" width="10" height="34" fill="url(#rbg-c-ironh)"/>
+    <rect x="106" y="426" width="108" height="12" rx="2" fill="url(#rbg-c-steel)"/>
+    <rect x="106" y="426" width="108" height="2" fill="rgba(255,255,255,.14)"/>
+    <!-- nest v-blocks -->
+    <path d="M112 426 v-22 l14 6 v16 z" fill="url(#rbg-c-iron)"/>
+    <path d="M208 426 v-22 l-14 6 v16 z" fill="url(#rbg-c-iron)"/>
+    <circle cx="118" cy="432" r="2" fill="#141a20"/>
+    <circle cx="202" cy="432" r="2" fill="#141a20"/>
+    <!-- part sitting in nest (game toggles opacity) -->
+    <rect id="rb-nestpart" x="138" y="400" width="44" height="26" rx="2" fill="url(#rbg-c-brass)" stroke="#6e5628" stroke-width="1"/>
+    <rect x="128" y="482" width="66" height="18" rx="3" fill="#10161d" stroke="#39434e" stroke-width="1"/>
+    <text x="161" y="494.5" font-size="9" fill="#9fb4c4" text-anchor="middle" letter-spacing="1">NEST</text>
+  </g>
+
+  <!-- ======================= place stack / pallet (right) ======================= -->
+  <g>
+    <!-- pallet blocks -->
+    <rect x="692" y="452" width="18" height="18" fill="url(#rbg-c-iron)"/>
+    <rect x="731" y="452" width="18" height="18" fill="url(#rbg-c-iron)"/>
+    <rect x="770" y="452" width="18" height="18" fill="url(#rbg-c-iron)"/>
+    <!-- deck boards -->
+    <rect x="686" y="440" width="108" height="14" rx="1" fill="#5d5136"/>
+    <rect x="686" y="440" width="108" height="2" fill="rgba(255,255,255,.12)"/>
+    <path d="M712 440 v14 M740 440 v14 M768 440 v14" stroke="#463c27" stroke-width="1.6"/>
+    <!-- stack plate on pallet -->
+    <rect x="700" y="426" width="80" height="14" rx="1.5" fill="url(#rbg-c-steel)"/>
+    <rect x="700" y="426" width="80" height="2" fill="rgba(255,255,255,.14)"/>
+    <!-- drop target outline -->
+    <rect x="718" y="400" width="44" height="26" rx="2" fill="none" stroke="#4f6c53" stroke-width="1.4" stroke-dasharray="5 4"/>
+    <!-- placed counter plate -->
+    <rect x="690" y="482" width="100" height="18" rx="3" fill="#10161d" stroke="#39434e" stroke-width="1"/>
+    <text x="704" y="494.5" font-size="9" fill="#9fb4c4" letter-spacing="1">PLACED</text>
+    <text id="rb-placed" x="774" y="495" font-size="11" fill="#5fd3c8" text-anchor="end">0</text>
+  </g>
+
+  <!-- ======================= light curtain ======================= -->
+  <g id="rb-curtain" stroke="#2b3a2b" stroke-width="1.6">
+    <line x1="94" y1="268" x2="824" y2="268"/>
+    <line x1="94" y1="294" x2="824" y2="294"/>
+    <line x1="94" y1="320" x2="824" y2="320"/>
+    <line x1="94" y1="346" x2="824" y2="346"/>
+    <line x1="94" y1="372" x2="824" y2="372"/>
+    <line x1="94" y1="398" x2="824" y2="398"/>
+    <line x1="94" y1="424" x2="824" y2="424"/>
+    <line x1="94" y1="450" x2="824" y2="450"/>
+  </g>
+  <!-- emitter / receiver posts -->
+  <g>
+    <rect x="74" y="252" width="20" height="220" rx="3" fill="url(#rbg-c-yellow)"/>
+    <rect x="75" y="253" width="18" height="2" fill="rgba(255,255,255,.25)"/>
+    <rect x="86" y="260" width="6" height="204" rx="2" fill="#181e16"/>
+    <line x1="89" y1="268" x2="89" y2="450" stroke="#c23b30" stroke-width="3" stroke-linecap="round" stroke-dasharray="0.1 26"/>
+    <rect x="70" y="468" width="28" height="8" rx="2" fill="url(#rbg-c-iron)"/>
+    <text x="66" y="368" font-size="8" fill="#c8ccd2" text-anchor="middle" transform="rotate(-90 66 368)" letter-spacing="1.4">EMITTER</text>
+  </g>
+  <g>
+    <rect x="826" y="252" width="20" height="220" rx="3" fill="url(#rbg-c-yellow)"/>
+    <rect x="827" y="253" width="18" height="2" fill="rgba(255,255,255,.25)"/>
+    <rect x="828" y="260" width="6" height="204" rx="2" fill="#181e16"/>
+    <line x1="831" y1="268" x2="831" y2="450" stroke="#3f4a3c" stroke-width="3" stroke-linecap="round" stroke-dasharray="0.1 26"/>
+    <rect x="822" y="468" width="28" height="8" rx="2" fill="url(#rbg-c-iron)"/>
+    <text x="856" y="368" font-size="8" fill="#c8ccd2" text-anchor="middle" transform="rotate(90 856 368)" letter-spacing="1.4">RECEIVER</text>
+  </g>
+
+  <!-- ======================= X carriage (game: translate(X 0), X in 0..580) ======================= -->
+  <g id="rb-xcar" transform="translate(0 0)">
+    <!-- cable chain drop to carriage -->
+    <path d="M150 108 q-24 0 -24 12 q0 8 12 8" fill="none" stroke="#10151b" stroke-width="9" stroke-linecap="round"/>
+    <path d="M150 108 q-24 0 -24 12 q0 8 12 8" fill="none" stroke="#2f3944" stroke-width="1.2" stroke-dasharray="3 3"/>
+    <!-- Z arm (game: translate(0 Z), Z in 0..170) -->
+    <g id="rb-zarm" transform="translate(0 0)">
+      <!-- arm top cap -->
+      <rect x="133" y="14" width="34" height="10" rx="2" fill="url(#rbg-c-iron)"/>
+      <circle cx="150" cy="19" r="2.4" fill="#141a20" stroke="#5a6673" stroke-width="1"/>
+      <!-- vertical extrusion -->
+      <rect x="137" y="22" width="26" height="182" fill="url(#rbg-c-aluh)"/>
+      <rect x="137" y="22" width="2.5" height="182" fill="rgba(255,255,255,.16)"/>
+      <rect x="147" y="22" width="4" height="182" fill="#39424c"/>
+      <rect x="148.4" y="22" width="1.2" height="182" fill="#161c22"/>
+      <!-- gripper head bracket -->
+      <rect x="128" y="202" width="44" height="14" rx="3" fill="url(#rbg-c-blue)"/>
+      <rect x="128" y="202" width="44" height="2" fill="rgba(255,255,255,.14)"/>
+      <circle cx="134" cy="209" r="2" fill="#0e2438"/>
+      <circle cx="166" cy="209" r="2" fill="#0e2438"/>
+      <!-- fitting stub -->
+      <rect x="144" y="214" width="12" height="4" fill="url(#rbg-c-steel)"/>
+      <!-- vacuum bellows cup: game tints fill -->
+      <path id="rb-cup" d="M139 217 h22 v3 l5 5 q1.5 3.5 -3.5 4.5 h-25 q-5 -1 -3.5 -4.5 l5 -5 z" fill="#2a2f36" stroke="#171b20" stroke-width="1"/>
+    </g>
+    <!-- carriage body (in front of arm) -->
+    <rect x="112" y="124" width="76" height="60" rx="5" fill="url(#rbg-c-blue)"/>
+    <rect x="114" y="125.5" width="72" height="2" rx="1" fill="rgba(255,255,255,.14)"/>
+    <circle cx="120" cy="132" r="2.6" fill="#0e2438" stroke="#3f7ba6" stroke-width="1"/>
+    <circle cx="180" cy="132" r="2.6" fill="#0e2438" stroke="#3f7ba6" stroke-width="1"/>
+    <circle cx="120" cy="176" r="2.6" fill="#0e2438" stroke="#3f7ba6" stroke-width="1"/>
+    <circle cx="180" cy="176" r="2.6" fill="#0e2438" stroke="#3f7ba6" stroke-width="1"/>
+    <!-- rail bearing blocks -->
+    <rect x="118" y="166" width="22" height="14" rx="2" fill="url(#rbg-c-steel)"/>
+    <rect x="160" y="166" width="22" height="14" rx="2" fill="url(#rbg-c-steel)"/>
+    <!-- arm clamp collars over the Z extrusion -->
+    <rect x="130" y="136" width="40" height="9" rx="2" fill="url(#rbg-c-steel)"/>
+    <circle cx="135" cy="140.5" r="1.8" fill="#141a20"/><circle cx="165" cy="140.5" r="1.8" fill="#141a20"/>
+    <rect x="130" y="156" width="40" height="9" rx="2" fill="url(#rbg-c-steel)"/>
+    <circle cx="135" cy="160.5" r="1.8" fill="#141a20"/><circle cx="165" cy="160.5" r="1.8" fill="#141a20"/>
+    <!-- lower guide sleeve (keeps arm captive at full stroke) -->
+    <rect x="131" y="180" width="38" height="24" rx="3" fill="url(#rbg-c-steel)"/>
+    <rect x="131" y="180" width="38" height="2" fill="rgba(255,255,255,.14)"/>
+    <circle cx="137" cy="192" r="1.8" fill="#141a20"/><circle cx="163" cy="192" r="1.8" fill="#141a20"/>
+    <rect x="131" y="200" width="38" height="4" rx="1" fill="#1b222a"/>
+    <!-- carriage tag -->
+    <rect x="124" y="146" width="52" height="9" rx="2" fill="#10161d"/>
+    <text x="150" y="153" font-size="6.5" fill="#8fa5b5" text-anchor="middle" letter-spacing="1">Z-CAR 01</text>
+  </g>
+
+  <!-- flying workpiece: game positions x/y + visibility -->
+  <rect id="rb-part" x="138" y="400" width="44" height="26" rx="2" fill="url(#rbg-c-brass)" stroke="#6e5628" stroke-width="1" visibility="hidden"/>
+
+  <!-- ======================= plates / DRO ======================= -->
+  <g>
+    <rect x="340" y="20" width="220" height="34" rx="4" fill="#10161d" stroke="#39434e" stroke-width="1"/>
+    <text x="450" y="35" font-size="12" fill="#c8d4de" text-anchor="middle" letter-spacing="2">PICK-CELL 4</text>
+    <text x="450" y="48" font-size="8" fill="#7c8b98" text-anchor="middle" letter-spacing="1.2">2-AXIS GANTRY · VACUUM EOAT</text>
+  </g>
+  <g>
+    <rect x="672" y="20" width="208" height="46" rx="4" fill="#0b1016" stroke="#39434e" stroke-width="1"/>
+    <text x="686" y="38" font-size="10" fill="#7c8b98">X</text>
+    <text id="rb-xpos" x="822" y="38" font-size="14" fill="#5fd3c8" text-anchor="end">+000.0</text>
+    <text x="836" y="38" font-size="9" fill="#7c8b98">mm</text>
+    <text x="686" y="57" font-size="10" fill="#7c8b98">Z</text>
+    <text id="rb-zpos" x="822" y="57" font-size="14" fill="#5fd3c8" text-anchor="end">+000.0</text>
+    <text x="836" y="57" font-size="9" fill="#7c8b98">mm</text>
+  </g>
+
+  <!-- ======================= test points ======================= -->
+  <g class="tp" data-tp="XAXIS"><circle cx="450" cy="163" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/><circle cx="450" cy="163" r="1.8" fill="#33d1c9"/></g>
+  <g class="tp" data-tp="ZAXIS"><circle cx="150" cy="96" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/><circle cx="150" cy="96" r="1.8" fill="#33d1c9"/></g>
+  <g class="tp" data-tp="GRIP"><circle cx="150" cy="244" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/><circle cx="150" cy="244" r="1.8" fill="#33d1c9"/></g>
+  <g class="tp" data-tp="NEST"><circle cx="160" cy="446" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/><circle cx="160" cy="446" r="1.8" fill="#33d1c9"/></g>
+  <g class="tp" data-tp="PLACE"><circle cx="740" cy="446" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/><circle cx="740" cy="446" r="1.8" fill="#33d1c9"/></g>
+  <g class="tp" data-tp="CURTAIN"><circle cx="84" cy="300" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/><circle cx="84" cy="300" r="1.8" fill="#33d1c9"/></g>
+</svg>
+    <svg class="layer" data-machine="robot" data-layer="vac" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,Menlo,Consolas,monospace">
+  <defs>
+    <linearGradient id="rbg-v-steel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8a97a5"/><stop offset=".55" stop-color="#4a5866"/><stop offset="1" stop-color="#2c3844"/>
+    </linearGradient>
+    <linearGradient id="rbg-v-steelh" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8a97a5"/><stop offset=".55" stop-color="#4a5866"/><stop offset="1" stop-color="#2c3844"/>
+    </linearGradient>
+    <linearGradient id="rbg-v-iron" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d4754"/><stop offset="1" stop-color="#242c36"/>
+    </linearGradient>
+    <linearGradient id="rbg-v-blue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a72a3"/><stop offset=".5" stop-color="#1f5f8b"/><stop offset="1" stop-color="#14456b"/>
+    </linearGradient>
+    <linearGradient id="rbg-v-brass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c9a35a"/><stop offset=".6" stop-color="#a58242"/><stop offset="1" stop-color="#8a6d35"/>
+    </linearGradient>
+    <linearGradient id="rbg-v-alu" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#aeb8c2"/><stop offset=".5" stop-color="#78848f"/><stop offset="1" stop-color="#4d5862"/>
+    </linearGradient>
+    <linearGradient id="rbg-v-glass" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5d7484" stop-opacity=".9"/><stop offset=".25" stop-color="#8fa8b8" stop-opacity=".55"/>
+      <stop offset=".6" stop-color="#3c505e" stop-opacity=".85"/><stop offset="1" stop-color="#2b3a45" stop-opacity=".95"/>
+    </linearGradient>
+    <radialGradient id="rbg-v-motor" cx=".35" cy=".3" r=".9">
+      <stop offset="0" stop-color="#5a6774"/><stop offset=".6" stop-color="#333d49"/><stop offset="1" stop-color="#20272f"/>
+    </radialGradient>
+    <radialGradient id="rbg-v-shadow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#000" stop-opacity=".5"/><stop offset="1" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- backplate -->
+  <rect x="16" y="14" width="868" height="532" rx="8" fill="#19212b" stroke="#2c3844" stroke-width="1.5"/>
+  <circle cx="34" cy="32" r="4" fill="#242e39" stroke="#5a6673" stroke-width="1"/><path d="M31 32 h6 M34 29 v6" stroke="#161c23" stroke-width="1"/>
+  <circle cx="866" cy="32" r="4" fill="#242e39" stroke="#5a6673" stroke-width="1"/><path d="M863 32 h6 M866 29 v6" stroke="#161c23" stroke-width="1"/>
+  <circle cx="34" cy="528" r="4" fill="#242e39" stroke="#5a6673" stroke-width="1"/><path d="M31 528 h6 M34 525 v6" stroke="#161c23" stroke-width="1"/>
+  <circle cx="866" cy="528" r="4" fill="#242e39" stroke="#5a6673" stroke-width="1"/><path d="M863 528 h6 M866 525 v6" stroke="#161c23" stroke-width="1"/>
+
+  <!-- title plate -->
+  <rect x="330" y="28" width="240" height="30" rx="4" fill="#10161d" stroke="#39434e" stroke-width="1"/>
+  <text x="450" y="43" font-size="11" fill="#c8d4de" text-anchor="middle" letter-spacing="2">PICK-CELL 4 · VACUUM</text>
+  <text x="450" y="53" font-size="7.5" fill="#7c8b98" text-anchor="middle" letter-spacing="1.2">ROTARY VANE · 8 m³/h</text>
+
+  <!-- ============== big vacuum gauge plate (top left) ============== -->
+  <g>
+    <rect x="40" y="28" width="230" height="76" rx="6" fill="#0b1016" stroke="#39434e" stroke-width="1.5"/>
+    <rect x="41" y="29" width="228" height="2" rx="1" fill="rgba(255,255,255,.08)"/>
+    <text x="56" y="50" font-size="9" fill="#7c8b98" letter-spacing="1.6">SYSTEM VACUUM</text>
+    <text id="rb-vac-kpa" x="252" y="88" font-size="32" fill="#5fd3c8" text-anchor="end">-0 kPa</text>
+  </g>
+
+  <!-- ============== pump unit (bottom left) ============== -->
+  <ellipse cx="165" cy="508" rx="130" ry="9" fill="url(#rbg-v-shadow)"/>
+  <g>
+    <!-- base skid -->
+    <rect x="52" y="486" width="230" height="16" rx="3" fill="url(#rbg-v-iron)"/>
+    <rect x="52" y="486" width="230" height="2" fill="rgba(255,255,255,.12)"/>
+    <circle cx="66" cy="494" r="3" fill="#161c23" stroke="#5a6673" stroke-width="1"/>
+    <circle cx="268" cy="494" r="3" fill="#161c23" stroke="#5a6673" stroke-width="1"/>
+    <!-- motor: finned cylinder -->
+    <rect x="60" y="398" width="112" height="82" rx="10" fill="url(#rbg-v-motor)"/>
+    <rect x="63" y="400" width="106" height="3" rx="1.5" fill="rgba(255,255,255,.14)"/>
+    <path d="M70 398 v82 M82 398 v82 M94 398 v82 M106 398 v82 M118 398 v82 M130 398 v82 M142 398 v82 M154 398 v82" stroke="#1a2129" stroke-width="2"/>
+    <rect x="98" y="384" width="36" height="16" rx="3" fill="url(#rbg-v-iron)"/>
+    <text x="116" y="395" font-size="7" fill="#8fa5b5" text-anchor="middle">M 0.75kW</text>
+    <!-- coupling housing -->
+    <rect x="172" y="414" width="16" height="52" fill="url(#rbg-v-steel)"/>
+    <!-- vane pump body -->
+    <circle cx="232" cy="440" r="46" fill="url(#rbg-v-motor)" stroke="#1a2129" stroke-width="2"/>
+    <circle cx="232" cy="440" r="34" fill="url(#rbg-v-iron)" stroke="#454f5c" stroke-width="1.5"/>
+    <circle cx="232" cy="440" r="2.6" fill="#141a20" stroke="#5a6673" stroke-width="1"/>
+    <circle cx="232" cy="412" r="2.2" fill="#141a20"/><circle cx="232" cy="468" r="2.2" fill="#141a20"/>
+    <circle cx="204" cy="440" r="2.2" fill="#141a20"/><circle cx="260" cy="440" r="2.2" fill="#141a20"/>
+    <text id="rbp-pump-glyph" x="232" y="449" font-size="26" fill="#8fa5b5" text-anchor="middle">P</text>
+    <!-- gauge boss on pump -->
+    <circle cx="276" cy="404" r="15" fill="url(#rbg-v-steel)" stroke="#1a2129" stroke-width="1.5"/>
+    <circle cx="276" cy="404" r="10.5" fill="#0d1218" stroke="#454f5c" stroke-width="1"/>
+    <path d="M276 404 L269.5 398" stroke="#d05a4a" stroke-width="1.6" stroke-linecap="round"/>
+    <circle cx="276" cy="404" r="1.4" fill="#8fa5b5"/>
+    <rect x="271" y="416" width="10" height="8" fill="url(#rbg-v-brass)"/>
+    <!-- inlet port up from pump -->
+    <rect x="222" y="378" width="20" height="18" fill="url(#rbg-v-alu)"/>
+    <rect x="219" y="374" width="26" height="7" rx="2" fill="url(#rbg-v-brass)"/>
+    <!-- exhaust muffler -->
+    <rect x="262" y="452" width="34" height="13" rx="6" fill="url(#rbg-v-steel)"/>
+    <path d="M300 455 h8 M300 459 h10 M300 463 h7" stroke="#4a5866" stroke-width="1.4"/>
+    <!-- label -->
+    <rect x="78" y="508" width="176" height="18" rx="3" fill="#10161d" stroke="#39434e" stroke-width="1"/>
+    <text x="166" y="520.5" font-size="9" fill="#9fb4c4" text-anchor="middle" letter-spacing="1.2">VACUUM PUMP VP-8</text>
+  </g>
+
+  <!-- ============== filter / separator jar (on line1 riser) ============== -->
+  <g>
+    <rect x="212" y="238" width="40" height="16" rx="3" fill="url(#rbg-v-brass)"/>
+    <rect x="212" y="238" width="40" height="2" fill="rgba(255,255,255,.2)"/>
+    <rect x="216" y="254" width="32" height="58" rx="6" fill="url(#rbg-v-glass)" stroke="#5d7484" stroke-width="1.2"/>
+    <rect x="220" y="258" width="5" height="50" rx="2.5" fill="rgba(255,255,255,.22)"/>
+    <!-- element inside -->
+    <rect x="226" y="262" width="12" height="42" rx="3" fill="#7a8694" opacity=".7"/>
+    <path d="M226 268 h12 M226 274 h12 M226 280 h12 M226 286 h12 M226 292 h12 M226 298 h12" stroke="#57626e" stroke-width="1"/>
+    <rect x="222" y="310" width="20" height="8" rx="2" fill="url(#rbg-v-brass)"/>
+    <rect x="262" y="274" width="112" height="16" rx="3" fill="#10161d" stroke="#39434e" stroke-width="1"/>
+    <text x="318" y="285.5" font-size="8" fill="#9fb4c4" text-anchor="middle" letter-spacing="1">FILTER / SEPARATOR</text>
+  </g>
+
+  <!-- ============== pipes (under components' fittings, above plate) ============== -->
+  <!-- casing shadows -->
+  <path d="M232 374 V318 M232 238 V196 H420" fill="none" stroke="#10151b" stroke-width="10" stroke-linecap="round"/>
+  <path d="M492 196 H700 V352" fill="none" stroke="#10151b" stroke-width="10" stroke-linecap="round"/>
+  <!-- live lines: game sets stroke + class 'flowing' -->
+  <path id="rbp-line1" class="pipe" d="M232 374 V318 M232 238 V196 H420" fill="none" stroke="#3a4d5c" stroke-width="5" stroke-linecap="round"/>
+  <path id="rbp-line2" class="pipe" d="M492 196 H700 V352" fill="none" stroke="#3a4d5c" stroke-width="5" stroke-linecap="round"/>
+  <!-- flow direction chevrons -->
+  <path d="M232 344 l-5 8 h10 z M232 300 l-5 8 h10 z" fill="#5c7183"/>
+  <path d="M560 196 l-8 -5 v10 z M640 196 l-8 -5 v10 z" fill="#5c7183"/>
+  <!-- compression fittings -->
+  <rect x="225" y="360" width="14" height="9" rx="2" fill="url(#rbg-v-brass)"/>
+  <rect x="225" y="188" width="14" height="9" rx="2" fill="url(#rbg-v-brass)" transform="rotate(90 232 196)"/>
+  <rect x="413" y="191.5" width="14" height="9" rx="2" fill="url(#rbg-v-brass)"/>
+  <rect x="485" y="191.5" width="14" height="9" rx="2" fill="url(#rbg-v-brass)"/>
+  <rect x="693" y="200" width="14" height="9" rx="2" fill="url(#rbg-v-brass)" transform="rotate(90 700 210)"/>
+
+  <!-- ============== solenoid valve (top center) ============== -->
+  <g>
+    <!-- body -->
+    <rect x="420" y="176" width="72" height="40" rx="4" fill="url(#rbg-v-steelh)" stroke="#20262e" stroke-width="1"/>
+    <rect x="421" y="177" width="70" height="2" rx="1" fill="rgba(255,255,255,.14)"/>
+    <path d="M440 206 l10 -18 M462 206 l10 -18" stroke="#28323c" stroke-width="2"/>
+    <!-- coil on top -->
+    <rect x="434" y="140" width="44" height="38" rx="4" fill="url(#rbg-v-iron)" stroke="#1a2129" stroke-width="1"/>
+    <path d="M438 148 h36 M438 154 h36 M438 160 h36 M438 166 h36" stroke="#2c3641" stroke-width="1.6"/>
+    <!-- DIN connector + cable -->
+    <rect x="448" y="126" width="16" height="16" rx="2" fill="#20272f" stroke="#39434e" stroke-width="1"/>
+    <path d="M456 126 v-14 q0 -10 14 -10 h46" fill="none" stroke="#10151b" stroke-width="4" stroke-linecap="round"/>
+    <rect x="516" y="92" width="30" height="22" rx="3" fill="url(#rbg-v-iron)" stroke="#141a20" stroke-width="1"/>
+    <rect x="517" y="93" width="28" height="2" fill="rgba(255,255,255,.12)"/>
+    <text x="531" y="106" font-size="7" fill="#8fa5b5" text-anchor="middle">J2</text>
+    <!-- energized LED -->
+    <circle id="rbp-sol" cx="484" cy="150" r="5" fill="#3a2020" stroke="#141a20" stroke-width="1.2"/>
+    <rect x="398" y="226" width="116" height="16" rx="3" fill="#10161d" stroke="#39434e" stroke-width="1"/>
+    <text x="456" y="237.5" font-size="8" fill="#9fb4c4" text-anchor="middle" letter-spacing="1">VAC VALVE · 24 VDC</text>
+  </g>
+
+  <!-- ============== vacuum switch (teed off line2) ============== -->
+  <g>
+    <!-- tee + stub -->
+    <path d="M584 196 V232" fill="none" stroke="#10151b" stroke-width="8" stroke-linecap="round"/>
+    <path d="M584 196 V232" fill="none" stroke="#3a4d5c" stroke-width="4"/>
+    <rect x="577" y="202" width="14" height="8" rx="2" fill="url(#rbg-v-brass)"/>
+    <!-- switch body -->
+    <rect x="560" y="232" width="48" height="54" rx="5" fill="url(#rbg-v-blue)" stroke="#0e2c44" stroke-width="1"/>
+    <rect x="561" y="233" width="46" height="2" rx="1" fill="rgba(255,255,255,.14)"/>
+    <!-- window -->
+    <rect x="568" y="242" width="32" height="14" rx="2" fill="#0b1016" stroke="#39434e" stroke-width="1"/>
+    <text x="584" y="252.5" font-size="8.5" fill="#5fd3c8" text-anchor="middle">-kPa</text>
+    <!-- adjustment screw -->
+    <circle cx="577" cy="270" r="7" fill="url(#rbg-v-steel)" stroke="#1a2129" stroke-width="1.2"/>
+    <path d="M572.5 270 h9" stroke="#141a20" stroke-width="2"/>
+    <text x="577" y="292" font-size="6" fill="#9db0be" text-anchor="middle">ADJ</text>
+    <!-- indicator + cable -->
+    <circle cx="597" cy="270" r="4" fill="#203a26" stroke="#141a20" stroke-width="1"/>
+    <path d="M608 262 h22 q10 0 10 10 v30" fill="none" stroke="#10151b" stroke-width="4" stroke-linecap="round"/>
+    <rect x="635" y="300" width="10" height="14" rx="2" fill="#20272f" stroke="#39434e" stroke-width="1"/>
+    <rect x="544" y="296" width="80" height="16" rx="3" fill="#10161d" stroke="#39434e" stroke-width="1"/>
+    <text x="584" y="307.5" font-size="8" fill="#9fb4c4" text-anchor="middle" letter-spacing="1">VAC SWITCH</text>
+  </g>
+
+  <!-- ============== gripper head + cup (right, line2 terminus) ============== -->
+  <g>
+    <!-- partial Z arm -->
+    <rect x="686" y="330" width="28" height="16" rx="3" fill="url(#rbg-v-alu)"/>
+    <rect x="672" y="346" width="56" height="16" rx="3" fill="url(#rbg-v-blue)"/>
+    <rect x="672" y="346" width="56" height="2" fill="rgba(255,255,255,.14)"/>
+    <circle cx="680" cy="354" r="2" fill="#0e2438"/><circle cx="720" cy="354" r="2" fill="#0e2438"/>
+    <rect x="692" y="362" width="16" height="8" fill="url(#rbg-v-steel)"/>
+    <!-- bellows cup -->
+    <path d="M686 370 h28 l3 6 h-34 z" fill="#2a2f36" stroke="#171b20" stroke-width="1"/>
+    <path d="M683 376 h34 l4 7 q1.5 4 -4 5 h-34 q-5.5 -1 -4 -5 z" fill="#232830" stroke="#171b20" stroke-width="1"/>
+    <!-- workpiece under cup -->
+    <rect x="678" y="390" width="44" height="26" rx="2" fill="url(#rbg-v-brass)" stroke="#6e5628" stroke-width="1"/>
+    <!-- nest table stub -->
+    <rect x="662" y="416" width="76" height="10" rx="2" fill="url(#rbg-v-steel)"/>
+    <rect x="672" y="426" width="8" height="28" fill="url(#rbg-v-iron)"/>
+    <rect x="720" y="426" width="8" height="28" fill="url(#rbg-v-iron)"/>
+    <rect x="640" y="440" width="120" height="16" rx="3" fill="#10161d" stroke="#39434e" stroke-width="1"/>
+    <text x="700" y="451.5" font-size="8" fill="#9fb4c4" text-anchor="middle" letter-spacing="1">EOAT · BELLOWS CUP Ø40</text>
+  </g>
+
+  <!-- ============== schematic legend (bottom right) ============== -->
+  <g>
+    <rect x="560" y="486" width="320" height="44" rx="4" fill="#0b1016" stroke="#39434e" stroke-width="1"/>
+    <path d="M576 500 h30" stroke="#3a4d5c" stroke-width="5" stroke-linecap="round"/>
+    <text x="614" y="504" font-size="8" fill="#7c8b98">SUCTION LINE</text>
+    <path d="M576 518 h30" stroke="#33d1c9" stroke-width="5" stroke-linecap="round"/>
+    <text x="614" y="522" font-size="8" fill="#7c8b98">VACUUM PRESENT</text>
+    <circle cx="726" cy="500" r="5" fill="#233" stroke="#33d1c9" stroke-width="1.6"/>
+    <text x="738" y="504" font-size="8" fill="#7c8b98">TEST POINT</text>
+    <circle cx="726" cy="518" r="4" fill="#e0603c"/>
+    <text x="738" y="522" font-size="8" fill="#7c8b98">SOL ENERGIZED</text>
+  </g>
+
+  <!-- ============== test points ============== -->
+  <g class="tp" data-tp="VPUMP"><circle cx="232" cy="484" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/><circle cx="232" cy="484" r="1.8" fill="#33d1c9"/></g>
+  <g class="tp" data-tp="VSOL"><circle cx="508" cy="184" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/><circle cx="508" cy="184" r="1.8" fill="#33d1c9"/></g>
+  <g class="tp" data-tp="VCUP"><circle cx="716" cy="336" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/><circle cx="716" cy="336" r="1.8" fill="#33d1c9"/></g>
+  <g class="tp" data-tp="VSW"><circle cx="620" cy="240" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/><circle cx="620" cy="240" r="1.8" fill="#33d1c9"/></g>
+</svg>
+    <svg class="layer" data-machine="robot" data-layer="elec" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,Menlo,Consolas,monospace">
+  <defs>
+    <linearGradient id="rbg-e-steel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8a97a5"/><stop offset=".55" stop-color="#4a5866"/><stop offset="1" stop-color="#2c3844"/>
+    </linearGradient>
+    <linearGradient id="rbg-e-iron" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d4754"/><stop offset="1" stop-color="#242c36"/>
+    </linearGradient>
+    <linearGradient id="rbg-e-cab" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#39434f"/><stop offset=".08" stop-color="#2c3541"/><stop offset="1" stop-color="#1d242d"/>
+    </linearGradient>
+    <linearGradient id="rbg-e-panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4d5763"/><stop offset="1" stop-color="#39424d"/>
+    </linearGradient>
+    <linearGradient id="rbg-e-psu" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9aa5b1"/><stop offset=".5" stop-color="#77828e"/><stop offset="1" stop-color="#5a6470"/>
+    </linearGradient>
+    <linearGradient id="rbg-e-drive" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#343e4a"/><stop offset=".06" stop-color="#262f39"/><stop offset="1" stop-color="#181e26"/>
+    </linearGradient>
+    <linearGradient id="rbg-e-yellow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8b93c"/><stop offset="1" stop-color="#b8862a"/>
+    </linearGradient>
+    <linearGradient id="rbg-e-rail" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c3ccd5"/><stop offset=".5" stop-color="#8b96a1"/><stop offset="1" stop-color="#5d6873"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ============ enclosure ============ -->
+  <rect x="24" y="14" width="852" height="532" rx="10" fill="url(#rbg-e-cab)" stroke="#0d1117" stroke-width="2"/>
+  <rect x="26" y="16" width="848" height="3" rx="1.5" fill="rgba(255,255,255,.14)"/>
+  <!-- hinge knuckles -->
+  <rect x="18" y="90" width="10" height="34" rx="3" fill="url(#rbg-e-iron)"/>
+  <rect x="18" y="270" width="10" height="34" rx="3" fill="url(#rbg-e-iron)"/>
+  <rect x="18" y="440" width="10" height="34" rx="3" fill="url(#rbg-e-iron)"/>
+  <!-- inner back panel -->
+  <rect x="48" y="60" width="804" height="440" rx="4" fill="url(#rbg-e-panel)"/>
+  <rect x="48" y="60" width="804" height="2" fill="rgba(255,255,255,.1)"/>
+  <circle cx="62" cy="74" r="3.4" fill="#242e39" stroke="#78838f" stroke-width="1"/>
+  <circle cx="838" cy="74" r="3.4" fill="#242e39" stroke="#78838f" stroke-width="1"/>
+  <circle cx="62" cy="486" r="3.4" fill="#242e39" stroke="#78838f" stroke-width="1"/>
+  <circle cx="838" cy="486" r="3.4" fill="#242e39" stroke="#78838f" stroke-width="1"/>
+  <!-- nameplate -->
+  <rect x="330" y="24" width="240" height="26" rx="4" fill="#10161d" stroke="#39434e" stroke-width="1"/>
+  <text x="450" y="37" font-size="10" fill="#c8d4de" text-anchor="middle" letter-spacing="2">PICK-CELL 4 · CONTROL</text>
+  <text x="450" y="46" font-size="7" fill="#7c8b98" text-anchor="middle" letter-spacing="1.2">400V 3~ IN · 24VDC CTRL</text>
+
+  <!-- ============ wire duct (vertical + horizontal, slotted) ============ -->
+  <g fill="#525d69" stroke="#39424d" stroke-width="1">
+    <rect x="430" y="80" width="26" height="330" rx="2"/>
+    <rect x="64" y="286" width="772" height="24" rx="2"/>
+  </g>
+  <g stroke="#333d47" stroke-width="2">
+    <path d="M436 88 h14 M436 102 h14 M436 116 h14 M436 130 h14 M436 144 h14 M436 158 h14 M436 172 h14 M436 186 h14 M436 200 h14 M436 214 h14 M436 228 h14 M436 242 h14 M436 256 h14 M436 270 h14 M436 322 h14 M436 336 h14 M436 350 h14 M436 364 h14 M436 378 h14 M436 392 h14"/>
+    <path d="M76 292 v12 M100 292 v12 M124 292 v12 M148 292 v12 M172 292 v12 M196 292 v12 M220 292 v12 M244 292 v12 M268 292 v12 M292 292 v12 M316 292 v12 M340 292 v12 M364 292 v12 M388 292 v12 M412 292 v12 M472 292 v12 M496 292 v12 M520 292 v12 M544 292 v12 M568 292 v12 M592 292 v12 M616 292 v12 M640 292 v12 M664 292 v12 M688 292 v12 M712 292 v12 M736 292 v12 M760 292 v12 M784 292 v12 M808 292 v12"/>
+  </g>
+
+  <!-- ============ DIN rails ============ -->
+  <rect x="64" y="150" width="360" height="8" rx="1" fill="url(#rbg-e-rail)"/>
+  <rect x="470" y="150" width="366" height="8" rx="1" fill="url(#rbg-e-rail)"/>
+
+  <!-- ============ wires (game sets stroke) ============ -->
+  <!-- 24V distribution: PSU / relay / drives, stubs into the wire duct -->
+  <path id="rbw-24" d="M162 230 V286 M336 236 V286 M496 268 V286 M596 268 V286" fill="none" stroke="#7d3a28" stroke-width="3" stroke-linecap="round"/>
+  <!-- curtain safety string: gland -> X21 terminal -> duct -> safety relay -->
+  <path id="rbw-curtain" d="M700 500 V412 M700 352 V310 M299 236 V286" fill="none" stroke="#8a7a30" stroke-width="3" stroke-linecap="round"/>
+  <!-- X drive -> motor cable via gland -->
+  <path id="rbw-xdrv" d="M520 250 V286 M360 496 V432" fill="none" stroke="#3d4c58" stroke-width="4" stroke-linecap="round"/>
+  <!-- Z drive -> motor cable via gland -->
+  <path id="rbw-zdrv" d="M620 250 V286 M560 496 V432" fill="none" stroke="#3d4c58" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- ============ 24VDC PSU ============ -->
+  <g>
+    <rect x="80" y="96" width="140" height="140" rx="4" fill="url(#rbg-e-psu)" stroke="#1a2129" stroke-width="1.5"/>
+    <rect x="82" y="98" width="136" height="2.5" rx="1" fill="rgba(255,255,255,.25)"/>
+    <path d="M92 108 h116 M92 116 h116 M92 124 h116 M92 132 h116" stroke="#5c6773" stroke-width="3"/>
+    <rect x="92" y="142" width="116" height="30" rx="2" fill="#20272f"/>
+    <text x="150" y="155" font-size="9" fill="#c8d4de" text-anchor="middle" letter-spacing="1">POWERLINE</text>
+    <text x="150" y="166" font-size="8" fill="#8fa5b5" text-anchor="middle">24VDC · 10A</text>
+    <circle cx="102" cy="184" r="4" fill="#2f5d35" stroke="#141a20" stroke-width="1"/>
+    <text x="112" y="187" font-size="7" fill="#39434e">DC OK</text>
+    <circle cx="168" cy="184" r="6" fill="#242c36" stroke="#141a20" stroke-width="1"/>
+    <path d="M164 184 h8" stroke="#8fa5b5" stroke-width="1.6"/>
+    <text x="168" y="199" font-size="6" fill="#39434e" text-anchor="middle">VADJ</text>
+    <!-- output terminals -->
+    <g fill="#2a333d" stroke="#161c23" stroke-width="1">
+      <rect x="94" y="212" width="16" height="18" rx="2"/><rect x="114" y="212" width="16" height="18" rx="2"/>
+      <rect x="134" y="212" width="16" height="18" rx="2"/><rect x="154" y="212" width="16" height="18" rx="2"/>
+      <rect x="174" y="212" width="16" height="18" rx="2"/><rect x="194" y="212" width="12" height="18" rx="2"/>
+    </g>
+    <circle cx="102" cy="221" r="2.6" fill="#161c23" stroke="#78838f" stroke-width="1"/>
+    <circle cx="122" cy="221" r="2.6" fill="#161c23" stroke="#78838f" stroke-width="1"/>
+    <circle cx="142" cy="221" r="2.6" fill="#161c23" stroke="#78838f" stroke-width="1"/>
+    <circle cx="162" cy="221" r="2.6" fill="#161c23" stroke="#78838f" stroke-width="1"/>
+    <circle cx="182" cy="221" r="2.6" fill="#161c23" stroke="#78838f" stroke-width="1"/>
+    <text x="102" y="243" font-size="6.5" fill="#9db0be" text-anchor="middle">L</text>
+    <text x="122" y="243" font-size="6.5" fill="#9db0be" text-anchor="middle">N</text>
+    <text x="142" y="243" font-size="6.5" fill="#9db0be" text-anchor="middle">PE</text>
+    <text x="162" y="243" font-size="6.5" fill="#9db0be" text-anchor="middle">+V</text>
+    <text x="182" y="243" font-size="6.5" fill="#9db0be" text-anchor="middle">0V</text>
+  </g>
+
+  <!-- ============ safety relay ============ -->
+  <g>
+    <rect x="256" y="104" width="160" height="132" rx="4" fill="url(#rbg-e-yellow)" stroke="#6e5215" stroke-width="1.5"/>
+    <rect x="258" y="106" width="156" height="2.5" rx="1" fill="rgba(255,255,255,.3)"/>
+    <rect x="264" y="112" width="144" height="24" rx="2" fill="#20272f"/>
+    <text x="336" y="123" font-size="9" fill="#e8d9a8" text-anchor="middle" letter-spacing="1.2">SAFEGUARD SR-30</text>
+    <text x="336" y="132" font-size="7" fill="#9a8d5e" text-anchor="middle">CAT 3 · LIGHT CURTAIN / E-STOP</text>
+    <circle cx="284" cy="152" r="4.5" fill="#2f5d35" stroke="#3a2f10" stroke-width="1"/>
+    <text x="284" y="168" font-size="6.5" fill="#553f0e" text-anchor="middle">PWR</text>
+    <circle cx="320" cy="152" r="4.5" fill="#2f5d35" stroke="#3a2f10" stroke-width="1"/>
+    <text x="320" y="168" font-size="6.5" fill="#553f0e" text-anchor="middle">K1</text>
+    <circle cx="356" cy="152" r="4.5" fill="#2f5d35" stroke="#3a2f10" stroke-width="1"/>
+    <text x="356" y="168" font-size="6.5" fill="#553f0e" text-anchor="middle">K2</text>
+    <circle cx="392" cy="152" r="4.5" fill="#4a2417" stroke="#3a2f10" stroke-width="1"/>
+    <text x="392" y="168" font-size="6.5" fill="#553f0e" text-anchor="middle">FLT</text>
+    <g fill="#2a333d" stroke="#161c23" stroke-width="1">
+      <rect x="268" y="180" width="18" height="20" rx="2"/><rect x="290" y="180" width="18" height="20" rx="2"/>
+      <rect x="312" y="180" width="18" height="20" rx="2"/><rect x="334" y="180" width="18" height="20" rx="2"/>
+      <rect x="356" y="180" width="18" height="20" rx="2"/><rect x="378" y="180" width="18" height="20" rx="2"/>
+    </g>
+    <text x="277" y="212" font-size="6" fill="#553f0e" text-anchor="middle">S11</text>
+    <text x="299" y="212" font-size="6" fill="#553f0e" text-anchor="middle">S12</text>
+    <text x="321" y="212" font-size="6" fill="#553f0e" text-anchor="middle">S21</text>
+    <text x="343" y="212" font-size="6" fill="#553f0e" text-anchor="middle">S22</text>
+    <text x="365" y="212" font-size="6" fill="#553f0e" text-anchor="middle">13</text>
+    <text x="387" y="212" font-size="6" fill="#553f0e" text-anchor="middle">14</text>
+    <text x="336" y="228" font-size="7" fill="#553f0e" text-anchor="middle" letter-spacing="1">OSSD LOOP</text>
+  </g>
+
+  <!-- ============ servo drives X and Z ============ -->
+  <g>
+    <rect x="478" y="88" width="90" height="180" rx="4" fill="url(#rbg-e-drive)" stroke="#0d1117" stroke-width="1.5"/>
+    <rect x="480" y="90" width="86" height="2.5" rx="1" fill="rgba(255,255,255,.12)"/>
+    <path d="M572 96 h6 M572 106 h6 M572 116 h6 M572 126 h6 M572 136 h6 M572 146 h6 M572 156 h6 M572 166 h6 M572 176 h6 M572 186 h6 M572 196 h6 M572 206 h6 M572 216 h6 M572 226 h6 M572 236 h6 M572 246 h6 M572 256 h6" stroke="#39434e" stroke-width="3"/>
+    <text x="523" y="104" font-size="9" fill="#9fb4c4" text-anchor="middle" letter-spacing="1.6">SERVAX-D2</text>
+    <rect x="488" y="112" width="70" height="14" rx="2" fill="#1f5f8b"/>
+    <text x="523" y="122.5" font-size="9" fill="#d6e6f2" text-anchor="middle" letter-spacing="2">X-DRV</text>
+    <!-- 7seg window: cmd/actual velocity -->
+    <rect x="488" y="134" width="70" height="26" rx="2" fill="#0b1016" stroke="#39434e" stroke-width="1"/>
+    <text id="rb-xvel" x="552" y="152" font-size="13" fill="#4fbf6a" text-anchor="end">0/0</text>
+    <text x="523" y="170" font-size="6" fill="#5c6a77" text-anchor="middle">CMD/ACT mm·s</text>
+    <!-- status LEDs -->
+    <circle cx="496" cy="182" r="4" fill="#2f5d35" stroke="#0d1117" stroke-width="1"/>
+    <text x="506" y="185" font-size="6.5" fill="#5c6a77">RDY</text>
+    <circle id="rbi-xflt" cx="530" cy="182" r="4" fill="#3a2020" stroke="#0d1117" stroke-width="1"/>
+    <text x="540" y="185" font-size="6.5" fill="#5c6a77">FLT</text>
+    <!-- power terminals -->
+    <g fill="#2a333d" stroke="#161c23" stroke-width="1">
+      <rect x="490" y="196" width="14" height="16" rx="2"/><rect x="508" y="196" width="14" height="16" rx="2"/>
+      <rect x="526" y="196" width="14" height="16" rx="2"/><rect x="544" y="196" width="14" height="16" rx="2"/>
+    </g>
+    <text x="497" y="221" font-size="6" fill="#5c6a77" text-anchor="middle">U</text>
+    <text x="515" y="221" font-size="6" fill="#5c6a77" text-anchor="middle">V</text>
+    <text x="533" y="221" font-size="6" fill="#5c6a77" text-anchor="middle">W</text>
+    <text x="551" y="221" font-size="6" fill="#5c6a77" text-anchor="middle">PE</text>
+    <!-- motor connector -->
+    <rect x="506" y="232" width="28" height="24" rx="3" fill="url(#rbg-e-iron)" stroke="#0d1117" stroke-width="1"/>
+    <circle cx="520" cy="244" r="6" fill="#141a20" stroke="#4a5866" stroke-width="1.5"/>
+  </g>
+  <g>
+    <rect x="578" y="88" width="90" height="180" rx="4" fill="url(#rbg-e-drive)" stroke="#0d1117" stroke-width="1.5"/>
+    <rect x="580" y="90" width="86" height="2.5" rx="1" fill="rgba(255,255,255,.12)"/>
+    <path d="M672 96 h6 M672 106 h6 M672 116 h6 M672 126 h6 M672 136 h6 M672 146 h6 M672 156 h6 M672 166 h6 M672 176 h6 M672 186 h6 M672 196 h6 M672 206 h6 M672 216 h6 M672 226 h6 M672 236 h6 M672 246 h6 M672 256 h6" stroke="#39434e" stroke-width="3"/>
+    <text x="623" y="104" font-size="9" fill="#9fb4c4" text-anchor="middle" letter-spacing="1.6">SERVAX-D2</text>
+    <rect x="588" y="112" width="70" height="14" rx="2" fill="#1f5f8b"/>
+    <text x="623" y="122.5" font-size="9" fill="#d6e6f2" text-anchor="middle" letter-spacing="2">Z-DRV</text>
+    <rect x="588" y="134" width="70" height="26" rx="2" fill="#0b1016" stroke="#39434e" stroke-width="1"/>
+    <text id="rb-zvel" x="652" y="152" font-size="13" fill="#4fbf6a" text-anchor="end">0/0</text>
+    <text x="623" y="170" font-size="6" fill="#5c6a77" text-anchor="middle">CMD/ACT mm·s</text>
+    <circle cx="596" cy="182" r="4" fill="#2f5d35" stroke="#0d1117" stroke-width="1"/>
+    <text x="606" y="185" font-size="6.5" fill="#5c6a77">RDY</text>
+    <circle id="rbi-zflt" cx="630" cy="182" r="4" fill="#3a2020" stroke="#0d1117" stroke-width="1"/>
+    <text x="640" y="185" font-size="6.5" fill="#5c6a77">FLT</text>
+    <g fill="#2a333d" stroke="#161c23" stroke-width="1">
+      <rect x="590" y="196" width="14" height="16" rx="2"/><rect x="608" y="196" width="14" height="16" rx="2"/>
+      <rect x="626" y="196" width="14" height="16" rx="2"/><rect x="644" y="196" width="14" height="16" rx="2"/>
+    </g>
+    <text x="597" y="221" font-size="6" fill="#5c6a77" text-anchor="middle">U</text>
+    <text x="615" y="221" font-size="6" fill="#5c6a77" text-anchor="middle">V</text>
+    <text x="633" y="221" font-size="6" fill="#5c6a77" text-anchor="middle">W</text>
+    <text x="651" y="221" font-size="6" fill="#5c6a77" text-anchor="middle">PE</text>
+    <rect x="606" y="232" width="28" height="24" rx="3" fill="url(#rbg-e-iron)" stroke="#0d1117" stroke-width="1"/>
+    <circle cx="620" cy="244" r="6" fill="#141a20" stroke="#4a5866" stroke-width="1.5"/>
+  </g>
+
+  <!-- ============ line filter / breaker (right) ============ -->
+  <g>
+    <rect x="700" y="96" width="120" height="120" rx="4" fill="url(#rbg-e-iron)" stroke="#0d1117" stroke-width="1.5"/>
+    <rect x="702" y="98" width="116" height="2.5" rx="1" fill="rgba(255,255,255,.12)"/>
+    <text x="760" y="114" font-size="8" fill="#9fb4c4" text-anchor="middle" letter-spacing="1">MAIN · Q1</text>
+    <rect x="726" y="124" width="68" height="56" rx="3" fill="#242c36" stroke="#141a20" stroke-width="1"/>
+    <rect x="748" y="132" width="24" height="40" rx="3" fill="url(#rbg-e-steel)"/>
+    <rect x="754" y="136" width="12" height="18" rx="2" fill="#c23b30"/>
+    <text x="760" y="196" font-size="7" fill="#5c6a77" text-anchor="middle">400V 3~ 16A</text>
+    <text x="760" y="206" font-size="6" fill="#5c6a77" text-anchor="middle">LINE FILTER BELOW</text>
+  </g>
+
+  <!-- ============ terminal strip (bottom band) ============ -->
+  <g>
+    <rect x="64" y="336" width="772" height="8" rx="1" fill="url(#rbg-e-rail)"/>
+    <rect x="80" y="352" width="740" height="60" rx="3" fill="url(#rbg-e-iron)" stroke="#141a20" stroke-width="1"/>
+    <rect x="81" y="353" width="738" height="2" fill="rgba(255,255,255,.1)"/>
+    <g fill="#39434f" stroke="#161c23" stroke-width="1">
+      <rect x="92" y="358" width="26" height="48" rx="2"/><rect x="122" y="358" width="26" height="48" rx="2"/>
+      <rect x="152" y="358" width="26" height="48" rx="2"/><rect x="182" y="358" width="26" height="48" rx="2"/>
+      <rect x="212" y="358" width="26" height="48" rx="2"/><rect x="242" y="358" width="26" height="48" rx="2"/>
+      <rect x="272" y="358" width="26" height="48" rx="2"/><rect x="302" y="358" width="26" height="48" rx="2"/>
+      <rect x="332" y="358" width="26" height="48" rx="2"/><rect x="362" y="358" width="26" height="48" rx="2"/>
+      <rect x="392" y="358" width="26" height="48" rx="2"/><rect x="422" y="358" width="26" height="48" rx="2"/>
+      <rect x="452" y="358" width="26" height="48" rx="2"/><rect x="482" y="358" width="26" height="48" rx="2"/>
+      <rect x="512" y="358" width="26" height="48" rx="2"/><rect x="542" y="358" width="26" height="48" rx="2"/>
+      <rect x="572" y="358" width="26" height="48" rx="2"/><rect x="602" y="358" width="26" height="48" rx="2"/>
+      <rect x="632" y="358" width="26" height="48" rx="2"/><rect x="662" y="358" width="26" height="48" rx="2"/>
+      <rect x="692" y="358" width="26" height="48" rx="2"/><rect x="722" y="358" width="26" height="48" rx="2"/>
+      <rect x="752" y="358" width="26" height="48" rx="2"/><rect x="782" y="358" width="26" height="48" rx="2"/>
+    </g>
+    <g fill="#161c23">
+      <circle cx="105" cy="368" r="2.4"/><circle cx="135" cy="368" r="2.4"/><circle cx="165" cy="368" r="2.4"/>
+      <circle cx="195" cy="368" r="2.4"/><circle cx="225" cy="368" r="2.4"/><circle cx="255" cy="368" r="2.4"/>
+      <circle cx="285" cy="368" r="2.4"/><circle cx="315" cy="368" r="2.4"/><circle cx="345" cy="368" r="2.4"/>
+      <circle cx="375" cy="368" r="2.4"/><circle cx="405" cy="368" r="2.4"/><circle cx="435" cy="368" r="2.4"/>
+      <circle cx="465" cy="368" r="2.4"/><circle cx="495" cy="368" r="2.4"/><circle cx="525" cy="368" r="2.4"/>
+      <circle cx="555" cy="368" r="2.4"/><circle cx="585" cy="368" r="2.4"/><circle cx="615" cy="368" r="2.4"/>
+      <circle cx="645" cy="368" r="2.4"/><circle cx="675" cy="368" r="2.4"/><circle cx="705" cy="368" r="2.4"/>
+      <circle cx="735" cy="368" r="2.4"/><circle cx="765" cy="368" r="2.4"/><circle cx="795" cy="368" r="2.4"/>
+    </g>
+    <g fill="#161c23">
+      <circle cx="105" cy="396" r="2.4"/><circle cx="135" cy="396" r="2.4"/><circle cx="165" cy="396" r="2.4"/>
+      <circle cx="195" cy="396" r="2.4"/><circle cx="225" cy="396" r="2.4"/><circle cx="255" cy="396" r="2.4"/>
+      <circle cx="285" cy="396" r="2.4"/><circle cx="315" cy="396" r="2.4"/><circle cx="345" cy="396" r="2.4"/>
+      <circle cx="375" cy="396" r="2.4"/><circle cx="405" cy="396" r="2.4"/><circle cx="435" cy="396" r="2.4"/>
+      <circle cx="465" cy="396" r="2.4"/><circle cx="495" cy="396" r="2.4"/><circle cx="525" cy="396" r="2.4"/>
+      <circle cx="555" cy="396" r="2.4"/><circle cx="585" cy="396" r="2.4"/><circle cx="615" cy="396" r="2.4"/>
+      <circle cx="645" cy="396" r="2.4"/><circle cx="675" cy="396" r="2.4"/><circle cx="705" cy="396" r="2.4"/>
+      <circle cx="735" cy="396" r="2.4"/><circle cx="765" cy="396" r="2.4"/><circle cx="795" cy="396" r="2.4"/>
+    </g>
+    <text x="105" y="386" font-size="6" fill="#9db0be" text-anchor="middle">1</text>
+    <text x="255" y="386" font-size="6" fill="#9db0be" text-anchor="middle">6</text>
+    <text x="405" y="386" font-size="6" fill="#9db0be" text-anchor="middle">11</text>
+    <text x="555" y="386" font-size="6" fill="#9db0be" text-anchor="middle">16</text>
+    <text x="705" y="386" font-size="6" fill="#e0c469" text-anchor="middle">X21</text>
+    <text x="795" y="386" font-size="6" fill="#9db0be" text-anchor="middle">24</text>
+    <rect x="80" y="418" width="740" height="14" rx="3" fill="#10161d" stroke="#39434e" stroke-width="1"/>
+    <text x="450" y="428" font-size="7.5" fill="#7c8b98" text-anchor="middle" letter-spacing="1.4">FIELD TERMINALS · X20 CURTAIN OSSD1/2 = X21 · MOTOR FEEDBACK X30/X31</text>
+  </g>
+
+  <!-- ============ cable glands out to field ============ -->
+  <g>
+    <rect x="60" y="496" width="780" height="10" rx="2" fill="url(#rbg-e-iron)"/>
+    <g fill="#141a20" stroke="#39434e" stroke-width="1.2">
+      <circle cx="200" cy="501" r="9"/><circle cx="360" cy="501" r="9"/><circle cx="560" cy="501" r="9"/><circle cx="700" cy="501" r="9"/>
+    </g>
+    <g fill="none" stroke="#0d1117" stroke-width="6" stroke-linecap="round">
+      <path d="M200 506 v34"/><path d="M360 506 v34"/><path d="M560 506 v34"/><path d="M700 506 v34"/>
+    </g>
+    <text x="200" y="522" font-size="6.5" fill="#7c8b98" text-anchor="middle" dy="8">24V FIELD</text>
+    <text x="360" y="522" font-size="6.5" fill="#7c8b98" text-anchor="middle" dy="8">X MOTOR</text>
+    <text x="560" y="522" font-size="6.5" fill="#7c8b98" text-anchor="middle" dy="8">Z MOTOR</text>
+    <text x="700" y="522" font-size="6.5" fill="#7c8b98" text-anchor="middle" dy="8">CURTAIN</text>
+  </g>
+
+  <!-- ============ test points ============ -->
+  <g class="tp" data-tp="PSUR"><circle cx="162" cy="221" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/><circle cx="162" cy="221" r="1.8" fill="#33d1c9"/></g>
+  <g class="tp" data-tp="ESTOPR"><circle cx="398" cy="224" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/><circle cx="398" cy="224" r="1.8" fill="#33d1c9"/></g>
+  <g class="tp" data-tp="XDRV"><circle cx="488" cy="244" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/><circle cx="488" cy="244" r="1.8" fill="#33d1c9"/></g>
+  <g class="tp" data-tp="ZDRV"><circle cx="588" cy="244" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/><circle cx="588" cy="244" r="1.8" fill="#33d1c9"/></g>
+  <g class="tp" data-tp="CURTE"><circle cx="705" cy="368" r="6" fill="#233" stroke="#33d1c9" stroke-width="1.6"/><circle cx="705" cy="368" r="1.8" fill="#33d1c9"/></g>
+</svg>
+    <svg class="layer" data-machine="robot" data-layer="plc" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,Menlo,Consolas,monospace">
+  <defs>
+    <linearGradient id="rbg-p-iron" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d4754"/><stop offset="1" stop-color="#242c36"/>
+    </linearGradient>
+    <linearGradient id="rbg-p-mod" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#39434f"/><stop offset=".08" stop-color="#2b333e"/><stop offset="1" stop-color="#1c232b"/>
+    </linearGradient>
+    <linearGradient id="rbg-p-cpu" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a72a3"/><stop offset=".5" stop-color="#1f5f8b"/><stop offset="1" stop-color="#14456b"/>
+    </linearGradient>
+    <linearGradient id="rbg-p-rail" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c3ccd5"/><stop offset=".5" stop-color="#8b96a1"/><stop offset="1" stop-color="#5d6873"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ============ PLC rack band (top) ============ -->
+  <rect x="10" y="8" width="880" height="92" rx="6" fill="url(#rbg-p-iron)" stroke="#0d1117" stroke-width="1.5"/>
+  <rect x="12" y="10" width="876" height="2.5" rx="1" fill="rgba(255,255,255,.12)"/>
+  <rect x="22" y="48" width="856" height="7" rx="1" fill="url(#rbg-p-rail)"/>
+  <!-- PSU module -->
+  <g>
+    <rect x="26" y="18" width="96" height="72" rx="3" fill="url(#rbg-p-mod)" stroke="#10151b" stroke-width="1"/>
+    <rect x="28" y="20" width="92" height="2" fill="rgba(255,255,255,.1)"/>
+    <text x="74" y="32" font-size="8" fill="#9fb4c4" text-anchor="middle" letter-spacing="1">PS 24V</text>
+    <circle cx="44" cy="42" r="3.4" fill="#3f8f4d" stroke="#10151b" stroke-width="1"/>
+    <text x="54" y="45" font-size="6.5" fill="#5c6a77">DC</text>
+    <path d="M36 62 h74 M36 70 h74 M36 78 h74" stroke="#333d47" stroke-width="3.4"/>
+  </g>
+  <!-- CPU module -->
+  <g>
+    <rect x="128" y="18" width="130" height="72" rx="3" fill="url(#rbg-p-cpu)" stroke="#0e2c44" stroke-width="1"/>
+    <rect x="130" y="20" width="126" height="2" fill="rgba(255,255,255,.16)"/>
+    <text x="193" y="32" font-size="8.5" fill="#d6e6f2" text-anchor="middle" letter-spacing="1.4">CPU 314C</text>
+    <circle cx="146" cy="44" r="3.4" fill="#3f8f4d" stroke="#0e2438" stroke-width="1"/>
+    <text x="146" y="57" font-size="5.5" fill="#a9c6da" text-anchor="middle">RUN</text>
+    <circle cx="168" cy="44" r="3.4" fill="#57332b" stroke="#0e2438" stroke-width="1"/>
+    <text x="168" y="57" font-size="5.5" fill="#a9c6da" text-anchor="middle">STOP</text>
+    <circle cx="190" cy="44" r="3.4" fill="#4a2417" stroke="#0e2438" stroke-width="1"/>
+    <text x="190" y="57" font-size="5.5" fill="#a9c6da" text-anchor="middle">SF</text>
+    <circle cx="212" cy="44" r="3.4" fill="#8a7a30" stroke="#0e2438" stroke-width="1"/>
+    <text x="212" y="57" font-size="5.5" fill="#a9c6da" text-anchor="middle">FRCE</text>
+    <rect x="228" y="38" width="20" height="26" rx="2" fill="#10161d" stroke="#0e2c44" stroke-width="1"/>
+    <rect x="233" y="42" width="10" height="8" fill="#39434e"/>
+    <text x="238" y="72" font-size="5.5" fill="#a9c6da" text-anchor="middle">MMC</text>
+    <rect x="138" y="66" width="80" height="18" rx="2" fill="#10161d"/>
+    <text x="178" y="78" font-size="7" fill="#5fd3c8" text-anchor="middle" letter-spacing="1">PICKCELL.PRG</text>
+  </g>
+  <!-- IO cards -->
+  <g>
+    <rect x="264" y="18" width="96" height="72" rx="3" fill="url(#rbg-p-mod)" stroke="#10151b" stroke-width="1"/>
+    <text x="312" y="30" font-size="7.5" fill="#9fb4c4" text-anchor="middle" letter-spacing="1">DI 16x24V</text>
+    <g fill="#2f5d35"><rect x="276" y="38" width="7" height="5" rx="1"/><rect x="286" y="38" width="7" height="5" rx="1"/><rect x="296" y="38" width="7" height="5" rx="1"/><rect x="306" y="38" width="7" height="5" rx="1"/><rect x="316" y="38" width="7" height="5" rx="1"/><rect x="326" y="38" width="7" height="5" rx="1"/><rect x="336" y="38" width="7" height="5" rx="1"/><rect x="346" y="38" width="7" height="5" rx="1"/></g>
+    <g fill="#22422a"><rect x="276" y="46" width="7" height="5" rx="1"/><rect x="286" y="46" width="7" height="5" rx="1"/><rect x="296" y="46" width="7" height="5" rx="1"/><rect x="306" y="46" width="7" height="5" rx="1"/><rect x="316" y="46" width="7" height="5" rx="1"/><rect x="326" y="46" width="7" height="5" rx="1"/><rect x="336" y="46" width="7" height="5" rx="1"/><rect x="346" y="46" width="7" height="5" rx="1"/></g>
+    <path d="M274 60 h76 M274 68 h76 M274 76 h76 M274 84 h76" stroke="#333d47" stroke-width="3"/>
+  </g>
+  <g>
+    <rect x="366" y="18" width="96" height="72" rx="3" fill="url(#rbg-p-mod)" stroke="#10151b" stroke-width="1"/>
+    <text x="414" y="30" font-size="7.5" fill="#9fb4c4" text-anchor="middle" letter-spacing="1">DO 16x24V</text>
+    <g fill="#2f5d35"><rect x="378" y="38" width="7" height="5" rx="1"/><rect x="388" y="38" width="7" height="5" rx="1"/><rect x="398" y="38" width="7" height="5" rx="1"/><rect x="408" y="38" width="7" height="5" rx="1"/><rect x="418" y="38" width="7" height="5" rx="1"/><rect x="428" y="38" width="7" height="5" rx="1"/><rect x="438" y="38" width="7" height="5" rx="1"/><rect x="448" y="38" width="7" height="5" rx="1"/></g>
+    <g fill="#22422a"><rect x="378" y="46" width="7" height="5" rx="1"/><rect x="388" y="46" width="7" height="5" rx="1"/><rect x="398" y="46" width="7" height="5" rx="1"/><rect x="408" y="46" width="7" height="5" rx="1"/><rect x="418" y="46" width="7" height="5" rx="1"/><rect x="428" y="46" width="7" height="5" rx="1"/><rect x="438" y="46" width="7" height="5" rx="1"/><rect x="448" y="46" width="7" height="5" rx="1"/></g>
+    <path d="M376 60 h76 M376 68 h76 M376 76 h76 M376 84 h76" stroke="#333d47" stroke-width="3"/>
+  </g>
+  <g>
+    <rect x="468" y="18" width="96" height="72" rx="3" fill="url(#rbg-p-mod)" stroke="#10151b" stroke-width="1"/>
+    <text x="516" y="30" font-size="7.5" fill="#9fb4c4" text-anchor="middle" letter-spacing="1">FM AXIS</text>
+    <g fill="#2f5d35"><rect x="480" y="38" width="7" height="5" rx="1"/><rect x="490" y="38" width="7" height="5" rx="1"/></g>
+    <g fill="#8a7a30"><rect x="500" y="38" width="7" height="5" rx="1"/><rect x="510" y="38" width="7" height="5" rx="1"/></g>
+    <g fill="#4a2417"><rect x="520" y="38" width="7" height="5" rx="1"/><rect x="530" y="38" width="7" height="5" rx="1"/></g>
+    <rect x="480" y="52" width="72" height="14" rx="2" fill="#10161d"/>
+    <text x="516" y="62" font-size="6.5" fill="#5fd3c8" text-anchor="middle">X/Z PROFILE</text>
+    <path d="M478 76 h76 M478 84 h76" stroke="#333d47" stroke-width="3"/>
+  </g>
+  <!-- comm module + nameplate -->
+  <g>
+    <rect x="570" y="18" width="72" height="72" rx="3" fill="url(#rbg-p-mod)" stroke="#10151b" stroke-width="1"/>
+    <text x="606" y="30" font-size="7.5" fill="#9fb4c4" text-anchor="middle" letter-spacing="1">CP-NET</text>
+    <circle cx="590" cy="42" r="3" fill="#3f8f4d"/><circle cx="606" cy="42" r="3" fill="#8a7a30"/><circle cx="622" cy="42" r="3" fill="#22422a"/>
+    <rect x="584" y="54" width="44" height="26" rx="2" fill="#141a20" stroke="#333d47" stroke-width="1"/>
+    <path d="M592 60 v14 M600 60 v14 M608 60 v14 M616 60 v14" stroke="#2b3540" stroke-width="2.4"/>
+  </g>
+  <rect x="654" y="26" width="224" height="56" rx="4" fill="#10161d" stroke="#39434e" stroke-width="1"/>
+  <text x="766" y="48" font-size="12" fill="#c8d4de" text-anchor="middle" letter-spacing="2">PICK-CELL 4 PLC</text>
+  <text x="766" y="66" font-size="8" fill="#7c8b98" text-anchor="middle" letter-spacing="1.4">LADDER MONITOR · ONLINE</text>
+
+  <!-- ============ state + timer cells ============ -->
+  <rect x="15" y="104" width="380" height="16" rx="3" fill="#0b1016" stroke="#39434e" stroke-width="1"/>
+  <text x="24" y="116" font-size="9" fill="#7c8b98" letter-spacing="1">STATE</text>
+  <text id="rb-state" x="82" y="116.5" font-size="11" fill="#5fd3c8" letter-spacing="1.5">IDLE</text>
+  <rect x="560" y="104" width="152" height="16" rx="3" fill="#0b1016" stroke="#39434e" stroke-width="1"/>
+  <text x="569" y="116" font-size="9" fill="#7c8b98">T1</text>
+  <text id="rb-t1" x="704" y="116.5" font-size="10" fill="#e0c469" text-anchor="end">0.0s</text>
+  <rect x="726" y="104" width="152" height="16" rx="3" fill="#0b1016" stroke="#39434e" stroke-width="1"/>
+  <text x="735" y="116" font-size="9" fill="#7c8b98">T2</text>
+  <text id="rb-t2" x="870" y="116.5" font-size="10" fill="#e0c469" text-anchor="end">0.0s</text>
+
+  <!-- ============ ladder monitor screen ============ -->
+  <rect x="11" y="121" width="878" height="298" rx="6" fill="#151b22" stroke="#0d1117" stroke-width="1.5"/>
+  <rect x="15" y="125" width="870" height="290" fill="#05080b"/>
+  <g id="rb-ladder"></g>
+  <rect x="15" y="125" width="870" height="290" fill="none" stroke="#1c242e" stroke-width="1"/>
+
+  <!-- ============ bottom legend strip ============ -->
+  <rect x="11" y="428" width="878" height="118" rx="6" fill="url(#rbg-p-iron)" stroke="#0d1117" stroke-width="1.5"/>
+  <rect x="13" y="430" width="874" height="2.5" rx="1" fill="rgba(255,255,255,.1)"/>
+  <rect x="26" y="440" width="848" height="94" rx="4" fill="#0b1016" stroke="#39434e" stroke-width="1"/>
+  <text x="42" y="460" font-size="9" fill="#7c8b98" letter-spacing="1.6">LADDER LEGEND</text>
+  <!-- NO contact -->
+  <g stroke="#8fa5b5" stroke-width="1.6" fill="none">
+    <path d="M50 482 h14 M78 482 h14 M64 474 v16 M78 474 v16"/>
+  </g>
+  <text x="102" y="485" font-size="8" fill="#7c8b98">EXAMINE ON</text>
+  <!-- NC contact -->
+  <g stroke="#8fa5b5" stroke-width="1.6" fill="none">
+    <path d="M50 508 h14 M78 508 h14 M64 500 v16 M78 500 v16 M62 516 L80 500"/>
+  </g>
+  <text x="102" y="511" font-size="8" fill="#7c8b98">EXAMINE OFF</text>
+  <!-- coil -->
+  <g stroke="#8fa5b5" stroke-width="1.6" fill="none">
+    <path d="M210 482 h12 M244 482 h12"/><circle cx="233" cy="482" r="9"/>
+  </g>
+  <text x="264" y="485" font-size="8" fill="#7c8b98">OUTPUT COIL</text>
+  <!-- timer box -->
+  <rect x="212" y="500" width="40" height="16" rx="2" fill="none" stroke="#8fa5b5" stroke-width="1.6"/>
+  <text x="232" y="511.5" font-size="8" fill="#8fa5b5" text-anchor="middle">TON</text>
+  <text x="264" y="511" font-size="8" fill="#7c8b98">TIMER ON-DELAY</text>
+  <!-- energized -->
+  <path d="M400 478 h44" stroke="#4fbf6a" stroke-width="3"/>
+  <text x="454" y="485" font-size="8" fill="#7c8b98">RUNG TRUE / POWER FLOW</text>
+  <path d="M400 504 h44" stroke="#33424e" stroke-width="3"/>
+  <text x="454" y="511" font-size="8" fill="#7c8b98">RUNG FALSE</text>
+  <!-- addresses -->
+  <text x="660" y="470" font-size="8" fill="#7c8b98" letter-spacing="1">I0.0 CURTAIN OK</text>
+  <text x="660" y="484" font-size="8" fill="#7c8b98" letter-spacing="1">I0.1 PART IN NEST</text>
+  <text x="660" y="498" font-size="8" fill="#7c8b98" letter-spacing="1">I0.2 VAC SWITCH</text>
+  <text x="660" y="512" font-size="8" fill="#7c8b98" letter-spacing="1">Q0.0 VAC VALVE</text>
+  <text x="660" y="526" font-size="8" fill="#7c8b98" letter-spacing="1">Q0.4 X/Z ENABLE</text>
+  <text x="330" y="530" font-size="7" fill="#4a5866" text-anchor="middle" letter-spacing="1">ONLINE MONITOR · SCAN 4 ms · DO NOT FORCE OUTPUTS WITH CELL OCCUPIED</text>
+</svg>
+    <svg class="layer" data-machine="robot" data-layer="hmi" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,Menlo,Consolas,monospace">
+  <defs>
+    <linearGradient id="rbg-h-bezel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4b5560"/><stop offset=".06" stop-color="#39424d"/><stop offset=".94" stop-color="#232b34"/><stop offset="1" stop-color="#1a2129"/>
+    </linearGradient>
+    <linearGradient id="rbg-h-screen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0d151c"/><stop offset="1" stop-color="#080e13"/>
+    </linearGradient>
+    <linearGradient id="rbg-h-key" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#48525d"/><stop offset=".5" stop-color="#333d47"/><stop offset="1" stop-color="#242c35"/>
+    </linearGradient>
+    <linearGradient id="rbg-h-iron" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d4754"/><stop offset="1" stop-color="#242c36"/>
+    </linearGradient>
+    <radialGradient id="rbg-h-lampoff" cx=".38" cy=".32" r=".85">
+      <stop offset="0" stop-color="#3a4550"/><stop offset="1" stop-color="#1b222a"/>
+    </radialGradient>
+  </defs>
+
+  <!-- ============ panel bezel ============ -->
+  <rect x="60" y="20" width="780" height="520" rx="18" fill="url(#rbg-h-bezel)" stroke="#0d1117" stroke-width="2.5"/>
+  <rect x="64" y="24" width="772" height="4" rx="2" fill="rgba(255,255,255,.14)"/>
+  <!-- corner screws -->
+  <g fill="#242e39" stroke="#6a7683" stroke-width="1.2">
+    <circle cx="84" cy="44" r="6"/><circle cx="816" cy="44" r="6"/><circle cx="84" cy="516" r="6"/><circle cx="816" cy="516" r="6"/>
+  </g>
+  <g stroke="#141a20" stroke-width="1.6">
+    <path d="M80 40 l8 8 M812 48 l8 -8 M80 520 l8 -8 M812 512 l8 8"/>
+  </g>
+  <!-- brand plate -->
+  <rect x="330" y="34" width="240" height="28" rx="4" fill="#10161d" stroke="#39434e" stroke-width="1"/>
+  <text x="450" y="48" font-size="12" fill="#c8d4de" text-anchor="middle" letter-spacing="3">CELLVIEW 200</text>
+  <text x="450" y="58" font-size="7" fill="#7c8b98" text-anchor="middle" letter-spacing="1.6">OPERATOR TERMINAL · IP65</text>
+  <!-- model tag -->
+  <rect x="92" y="36" width="120" height="20" rx="3" fill="#10161d" stroke="#39434e" stroke-width="1"/>
+  <text x="152" y="49.5" font-size="8" fill="#9fb4c4" text-anchor="middle" letter-spacing="1.2">HMI-02 · CELL 4</text>
+
+  <!-- ============ screen ============ -->
+  <rect x="86" y="74" width="620" height="380" rx="8" fill="#10151b" stroke="#0d1117" stroke-width="2"/>
+  <rect x="94" y="82" width="604" height="364" rx="4" fill="url(#rbg-h-screen)" stroke="#1e2a35" stroke-width="1"/>
+  <rect x="96" y="84" width="600" height="2" fill="rgba(255,255,255,.05)"/>
+
+  <!-- alarm banner -->
+  <rect id="rb-banner" x="106" y="94" width="580" height="38" rx="4" fill="#12291f"/>
+  <text id="rb-bannertext" x="396" y="118" font-size="15" fill="#67d18b" text-anchor="middle" letter-spacing="1.6">SYSTEM READY</text>
+
+  <!-- station name -->
+  <text x="396" y="166" font-size="22" fill="#c8d4de" text-anchor="middle" letter-spacing="4">PICK-CELL 4</text>
+  <path d="M126 180 H666" stroke="#1e2a35" stroke-width="1.5"/>
+
+  <!-- cycle counter block -->
+  <rect x="116" y="200" width="330" height="170" rx="6" fill="#0a1117" stroke="#1e2a35" stroke-width="1.5"/>
+  <text x="281" y="226" font-size="11" fill="#7c8b98" text-anchor="middle" letter-spacing="2.4">PARTS PLACED</text>
+  <text id="rb-cycles" x="281" y="320" font-size="76" fill="#5fd3c8" text-anchor="middle">0</text>
+  <text x="281" y="352" font-size="9" fill="#4a5866" text-anchor="middle" letter-spacing="1.6">SHIFT TOTAL · RESET F4</text>
+
+  <!-- vacuum readout block -->
+  <rect x="462" y="200" width="224" height="110" rx="6" fill="#0a1117" stroke="#1e2a35" stroke-width="1.5"/>
+  <text x="574" y="226" font-size="11" fill="#7c8b98" text-anchor="middle" letter-spacing="2.4">VACUUM</text>
+  <text id="rb-vachmi" x="574" y="276" font-size="34" fill="#5fd3c8" text-anchor="middle">-0 kPa</text>
+  <text x="574" y="298" font-size="9" fill="#4a5866" text-anchor="middle" letter-spacing="1.4">SW SET -55 kPa</text>
+
+  <!-- axis mimic strip -->
+  <rect x="462" y="326" width="224" height="44" rx="6" fill="#0a1117" stroke="#1e2a35" stroke-width="1.5"/>
+  <path d="M478 348 H670" stroke="#28394a" stroke-width="3" stroke-linecap="round"/>
+  <rect x="474" y="341" width="14" height="14" rx="3" fill="#1f5f8b" stroke="#2a72a3" stroke-width="1"/>
+  <path d="M481 355 v6" stroke="#2a72a3" stroke-width="2"/>
+  <text x="478" y="338" font-size="7" fill="#4a5866">PICK</text>
+  <text x="670" y="338" font-size="7" fill="#4a5866" text-anchor="end">PLACE</text>
+
+  <!-- footer status -->
+  <text x="112" y="430" font-size="9" fill="#4a5866" letter-spacing="1.2">MODE: AUTO</text>
+  <text x="396" y="430" font-size="9" fill="#4a5866" text-anchor="middle" letter-spacing="1.2">CURTAIN: CLEAR</text>
+  <text x="680" y="430" font-size="9" fill="#4a5866" text-anchor="end" letter-spacing="1.2">COMM: OK</text>
+
+  <!-- ============ lamp column (right of screen) ============ -->
+  <g>
+    <rect x="722" y="86" width="96" height="252" rx="8" fill="url(#rbg-h-iron)" stroke="#141a20" stroke-width="1.5"/>
+    <rect x="724" y="88" width="92" height="2.5" rx="1" fill="rgba(255,255,255,.12)"/>
+    <!-- RUN -->
+    <circle cx="770" cy="126" r="19" fill="#141a20" stroke="#5a6673" stroke-width="2"/>
+    <circle id="rblamp-run" cx="770" cy="126" r="13" fill="url(#rbg-h-lampoff)"/>
+    <rect x="736" y="152" width="68" height="14" rx="3" fill="#10161d" stroke="#39434e" stroke-width="1"/>
+    <text x="770" y="162" font-size="8" fill="#9fb4c4" text-anchor="middle" letter-spacing="2">RUN</text>
+    <!-- FAULT -->
+    <circle cx="770" cy="204" r="19" fill="#141a20" stroke="#5a6673" stroke-width="2"/>
+    <circle id="rblamp-fault" cx="770" cy="204" r="13" fill="url(#rbg-h-lampoff)"/>
+    <rect x="736" y="230" width="68" height="14" rx="3" fill="#10161d" stroke="#39434e" stroke-width="1"/>
+    <text x="770" y="240" font-size="8" fill="#9fb4c4" text-anchor="middle" letter-spacing="1.6">FAULT</text>
+    <!-- E-STOP OK -->
+    <circle cx="770" cy="282" r="19" fill="#141a20" stroke="#5a6673" stroke-width="2"/>
+    <circle id="rblamp-estop" cx="770" cy="282" r="13" fill="url(#rbg-h-lampoff)"/>
+    <rect x="730" y="308" width="80" height="14" rx="3" fill="#10161d" stroke="#39434e" stroke-width="1"/>
+    <text x="770" y="318" font-size="7.5" fill="#9fb4c4" text-anchor="middle" letter-spacing="1">E-STOP OK</text>
+  </g>
+  <!-- e-stop mushroom below lamp column -->
+  <g>
+    <circle cx="770" cy="396" r="30" fill="url(#rbg-h-iron)" stroke="#141a20" stroke-width="2"/>
+    <circle cx="770" cy="396" r="24" fill="#e8b93c"/>
+    <circle cx="770" cy="393" r="19" fill="#c23b30"/>
+    <circle cx="770" cy="390" r="15" fill="#a32c22"/>
+    <path d="M759 384 a15 15 0 0 1 22 0" stroke="rgba(255,255,255,.28)" stroke-width="2.4" fill="none"/>
+    <rect x="732" y="432" width="76" height="13" rx="3" fill="#10161d" stroke="#39434e" stroke-width="1"/>
+    <text x="770" y="441.5" font-size="7" fill="#9fb4c4" text-anchor="middle" letter-spacing="1">EMERG STOP</text>
+  </g>
+
+  <!-- ============ membrane keys (bottom) ============ -->
+  <g>
+    <rect x="86" y="466" width="620" height="56" rx="8" fill="url(#rbg-h-iron)" stroke="#141a20" stroke-width="1.5"/>
+    <rect x="88" y="468" width="616" height="2.5" rx="1" fill="rgba(255,255,255,.1)"/>
+    <g fill="url(#rbg-h-key)" stroke="#141a20" stroke-width="1.4">
+      <rect x="102" y="476" width="58" height="36" rx="5"/>
+      <rect x="170" y="476" width="58" height="36" rx="5"/>
+      <rect x="238" y="476" width="58" height="36" rx="5"/>
+      <rect x="306" y="476" width="58" height="36" rx="5"/>
+      <rect x="398" y="476" width="44" height="36" rx="5"/>
+      <rect x="450" y="476" width="44" height="36" rx="5"/>
+      <rect x="522" y="476" width="80" height="36" rx="5"/>
+      <rect x="612" y="476" width="80" height="36" rx="5"/>
+    </g>
+    <g fill="rgba(255,255,255,.1)">
+      <rect x="104" y="477.5" width="54" height="2" rx="1"/><rect x="172" y="477.5" width="54" height="2" rx="1"/>
+      <rect x="240" y="477.5" width="54" height="2" rx="1"/><rect x="308" y="477.5" width="54" height="2" rx="1"/>
+      <rect x="400" y="477.5" width="40" height="2" rx="1"/><rect x="452" y="477.5" width="40" height="2" rx="1"/>
+      <rect x="524" y="477.5" width="76" height="2" rx="1"/><rect x="614" y="477.5" width="76" height="2" rx="1"/>
+    </g>
+    <text x="131" y="498" font-size="10" fill="#c8d4de" text-anchor="middle">F1</text>
+    <text x="199" y="498" font-size="10" fill="#c8d4de" text-anchor="middle">F2</text>
+    <text x="267" y="498" font-size="10" fill="#c8d4de" text-anchor="middle">F3</text>
+    <text x="335" y="498" font-size="10" fill="#c8d4de" text-anchor="middle">F4</text>
+    <text x="131" y="508" font-size="6" fill="#7c8b98" text-anchor="middle">ALARMS</text>
+    <text x="199" y="508" font-size="6" fill="#7c8b98" text-anchor="middle">JOG</text>
+    <text x="267" y="508" font-size="6" fill="#7c8b98" text-anchor="middle">RECIPE</text>
+    <text x="335" y="508" font-size="6" fill="#7c8b98" text-anchor="middle">RESET</text>
+    <text x="420" y="500" font-size="11" fill="#c8d4de" text-anchor="middle">▲</text>
+    <text x="472" y="500" font-size="11" fill="#c8d4de" text-anchor="middle">▼</text>
+    <text x="562" y="494" font-size="9" fill="#8fd19b" text-anchor="middle" letter-spacing="1.4">START</text>
+    <text x="562" y="506" font-size="6" fill="#7c8b98" text-anchor="middle">CYCLE</text>
+    <text x="652" y="494" font-size="9" fill="#d8907f" text-anchor="middle" letter-spacing="1.4">STOP</text>
+    <text x="652" y="506" font-size="6" fill="#7c8b98" text-anchor="middle">CYCLE</text>
+  </g>
+</svg>
+
   </div>
 
   <!-- ============ INSTRUMENT PANEL ============ -->
@@ -2311,10 +3959,7 @@ let acc=0, last=performance.now();
 function loop(now){
   let d=(now-last)/1000; last=now; if(d>0.25)d=0.25; acc+=d;
   while(acc>=DT){
-    stepPhysics(DT);
-    plcAcc+=DT; if(plcAcc>=PLC_PERIOD){ plcAcc-=PLC_PERIOD; plcScan(); }
-    if(S.plc.state!=='IDLE'&&S.plc.state!=='FAULTED'&&S.plc.state!=='ESTOP') S.cycleT+=DT;
-    if(S.plc.state==='FAULTED'||S.plc.state==='ESTOP') S.cost+=DT*7;   // $7/s downtime
+    MACHINE.step(DT);
     if(career.active&&career.open){ career.ticketTime+=DT; career.shiftTime+=DT; }  // career downtime clock
     acc-=DT;
   }
@@ -2349,34 +3994,26 @@ function lamp(id,on,color){ const el=$(id); if(!el)return;
 let renderTick=0;
 function render(){
   renderTick++;
-  // top bar
-  const st=S.plc.state;
-  const pillCls = st==='FAULTED'||st==='ESTOP'?'fault': (st==='IDLE'?'idle': st==='RETRACT'&&false?'':'run');
+  const T=MACHINE.top(), st=T.state;
   $('m-state').innerHTML=`<span class="pill ${st==='IDLE'?'idle':(st==='FAULTED'||st==='ESTOP')?'fault':'run'}">${st}</span>`;
-  $('m-cycles').textContent=S.good; $('m-weak').textContent=S.weak;
-  $('m-timer').textContent=S.cycleT.toFixed(1)+'s';
-  $('m-cost').textContent='$'+S.cost.toFixed(0);
+  $('m-cycles').textContent=T.good; $('m-weak').textContent=T.weak;
+  $('m-timer').textContent=T.cycleT.toFixed(1)+'s';
+  $('m-cost').textContent='$'+T.cost.toFixed(0);
+  const eb=$('btn-estop'), ebTxt=T.estopOK?'■ E-STOP':'⟳ RELEASE E-STOP';
+  if(eb.textContent!==ebTxt) eb.textContent=ebTxt;
 
   // layer dots (alarm indicators)
   document.querySelectorAll('[data-dot]').forEach(d=>d.classList.remove('alarm'));
   if(st==='FAULTED'){
-    const fc=S.plc.faultCode;
-    if(fc==='ALM-1102') mark('plc','hyd');
-    else if(fc==='ALM-3300') mark('plc','mech');
-    else if(fc==='ALM-2205') mark('plc','elec');
-    else mark('plc');
+    (MACHINE.dotMap[T.fault]||['plc']).forEach(l=>{
+      const e=document.querySelector(`[data-dot="${l}"]`); if(e)e.classList.add('alarm'); });
   }
-  function mark(...ls){ ls.forEach(l=>{const e=document.querySelector(`[data-dot="${l}"]`); if(e)e.classList.add('alarm');}); }
 
-  if(activeLayer==='hyd') renderHyd();
-  else if(activeLayer==='elec') renderElec();
-  else if(activeLayer==='mech') renderMech();
-  else if(activeLayer==='plc') renderPLC();
-  else if(activeLayer==='hmi') renderHMI();
+  const rf=MACHINE.render[activeLayer]; if(rf) rf();
 
   // phase readout
   $('layer-phase').innerHTML = st==='FAULTED'
-    ? `<span style="color:var(--red)">⛔ ${S.plc.faultCode}</span>`
+    ? `<span style="color:var(--red)">⛔ ${T.fault}</span>`
     : `<span style="color:var(--dim)">phase:</span> <span style="color:var(--cyan)">${st}</span>`;
 
   if(career.active) renderCareer();
@@ -2449,7 +4086,7 @@ function renderPLC(){
   $('pv-state').textContent=S.plc.state; $('pv-state').style.fill = S.plc.state==='FAULTED'?'var(--red)':'var(--green)';
   $('pv-t101').textContent=`T101 extend ${S.plc.t101.toFixed(1)}/6.0`;
   $('pv-t301').textContent=`T301 press  ${S.plc.t301.toFixed(1)}/4.0`;
-  drawLadder();
+  paintLadder('ladder',pressRungs());
 }
 function gaugeAngle(p){ return -120 + Math.max(0,Math.min(250,p))/250*240; }  // deg, needle rotation
 function gaugePoint(r,p){ const a=gaugeAngle(p)*Math.PI/180; return [300+r*Math.sin(a), 330-r*Math.cos(a)]; }
@@ -2470,19 +4107,19 @@ function renderHMI(){
   else { b.setAttribute('fill','#16283a'); b.setAttribute('stroke','#2c5a8a'); t.setAttribute('fill','#4aa3ff'); t.textContent='CYCLE RUNNING · '+S.plc.state; }
 }
 
-// ladder diagram (live rung states) — only rebuilds DOM when a rung/contact toggles
-let _ladderSig='';
-function drawLadder(){
-  const rungs=[
+// generic live ladder painter — only rebuilds DOM when a rung/contact toggles
+const _ladSig={};
+function pressRungs(){ return [
     {y:150, label:'MOTOR RUN (Q0.0)', on:S.motorCmd&&S.estopOK, conds:[['E-STOP OK',S.IestopOK],['O/L OK',S.IolOK],['RUN CMD',S.motorCmd]]},
     {y:210, label:'EXTEND SOL (Q0.1)', on:S.solA, conds:[['STATE=EXT/PRESS',S.solA?1:0],['NOT FAULT',S.plc.state!=='FAULTED'?1:0]]},
     {y:270, label:'PRESS DONE', on:S.AIpress>=SP, conds:[['PT-110 ≥ 200',S.AIpress>=SP?1:0]]},
     {y:330, label:'RETRACT SOL (Q0.2)', on:S.solB, conds:[['STATE=RETRACT',S.solB?1:0]]},
     {y:390, label:'T101 EXTEND TIMER', on:S.plc.t101>=6.0, conds:[['I0.4 BOTTOM',S.Ibottom],['T101.DN',S.plc.t101>=6.0?1:0]]},
-  ];
+  ];}
+function paintLadder(gid,rungs){
   const sig=rungs.map(r=>(r.on?1:0)+r.conds.map(c=>c[1]?1:0).join('')).join('|');
-  if(sig===_ladderSig) return;   // nothing toggled -> skip the innerHTML rebuild
-  _ladderSig=sig;
+  if(sig===_ladSig[gid]) return;   // nothing toggled -> skip the innerHTML rebuild
+  _ladSig[gid]=sig;
   let svg='';
   rungs.forEach(r=>{
     let x=40; svg+=`<line x1="20" y1="${r.y}" x2="20" y2="${r.y}" />`;
@@ -2500,7 +4137,7 @@ function drawLadder(){
     svg+=`<circle cx="640" cy="${r.y}" r="10" fill="none" stroke="${r.on?'#33d17a':'#556'}" stroke-width="2"/>`;
     svg+=`<text class="lbl" x="660" y="${r.y+4}" style="font-size:11px;fill:${r.on?'#c9d6e2':'#7d8fa1'}">${r.label}</text>`;
   });
-  $('ladder').innerHTML=svg;
+  $(gid).innerHTML=svg;
 }
 
 /* =========================================================================
@@ -2545,14 +4182,12 @@ const TP = {
 };
 // thermal uses same dots on hyd layer; map RODLINE dot when thermal selected
 function probe(tp){
-  const def=TP[tp]; if(!def){ return; }
-  // instrument/domain match
-  const wantThermal = instrument==='thermal';
+  const def=MACHINE.TP[tp]; if(!def){ return; }
   let d=def;
-  if(tp==='RODLINE' && wantThermal) d=TP.RODLINE_T;
+  if(tp==='RODLINE' && instrument==='thermal' && MACHINE.TP.RODLINE_T) d=MACHINE.TP.RODLINE_T;
   if(d.d!==instrument){
-    setRead(def.name, '—', '', 'Wrong instrument for this point. '+
-      (def.d==='press'?'Use the Pressure gauge.':def.d==='dmm'?'Use the Multimeter.':'Use the Thermal camera.'));
+    setRead(def.name, '—', '', 'Wrong instrument for this point. Use the '+
+      (INSTRUMENT_NAMES[def.d]||def.d)+'.');
     return;
   }
   const [v,u,hint]=d.get();
@@ -2580,14 +4215,15 @@ function log(kind,cls,msg){
   alarms=alarms.slice(0,60);
   $('alarmlog').innerHTML=alarms.join('');
 }
-function renderIO(){
-  const rows=[
+function pressIO(){ return [
     ['I0.3 LS-TOP (home)',S.Itop],['I0.4 LS-402 (bottom)',S.Ibottom],
     ['I0.5 E-STOP OK',S.IestopOK],['I0.6 O/L OK',S.IolOK],
     ['AI2 PT-110 (bar)',S.AIpress.toFixed(0)+' / true '+S.Pcap.toFixed(0)],
     ['Q0.0 MOTOR RUN',S.motorCmd?1:0],['Q0.1 SOL-A EXTEND',S.solA?1:0],
     ['Q0.2 SOL-B RETRACT',S.solB?1:0],['Q0.7 ALARM',S.alarmOut?1:0],
-  ];
+  ];}
+function renderIO(){
+  const rows=MACHINE.io();
   const html=rows.map(r=>{
     let cell;
     if(typeof r[1]==='number'&&(r[1]===0||r[1]===1)) cell=`<span class="b1 ${r[1]?'hi':'lo'}">${r[1]}</span>`;
@@ -2603,22 +4239,20 @@ setInterval(renderIO,150);
    WIRING UP THE UI
    ========================================================================= */
 // layer tabs
-const LAYER_TITLES={hyd:'HYDRAULIC · P&ID',elec:'ELECTRICAL · POWER + CONTROL',mech:'MECHANICAL · RAM & TOOLING',plc:'PLC · I/O + LADDER',hmi:'HMI · OPERATOR PANEL'};
 function selectLayer(layer){
   activeLayer=layer;
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.layer===layer));
-  document.querySelectorAll('svg.layer').forEach(s=>s.classList.toggle('on',s.dataset.layer===layer));
-  $('layer-title').innerHTML=LAYER_TITLES[layer];
+  document.querySelectorAll('svg.layer').forEach(s=>
+    s.classList.toggle('on', s.dataset.machine===MACHINE.id && s.dataset.layer===layer));
+  $('layer-title').innerHTML=MACHINE.titles[layer]||layer.toUpperCase();
 }
-document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>selectLayer(t.dataset.layer));
 // keyboard shortcuts (ignored while typing in a field)
-const LAYER_KEYS={'1':'hyd','2':'elec','3':'mech','4':'plc','5':'hmi'};
 document.addEventListener('keydown',e=>{
   if(/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) return;
-  const k=e.key.toLowerCase();
-  if(LAYER_KEYS[k]){ selectLayer(LAYER_KEYS[k]); }
-  else if(k==='c'){ if(S.plc.state==='IDLE') startCycle(); }
-  else if(k==='r'){ doReset(); }
+  const k=e.key.toLowerCase(), n=parseInt(k,10);
+  if(n>=1&&n<=MACHINE.layers.length){ selectLayer(MACHINE.layers[n-1][0]); }
+  else if(k==='c'){ if(MACHINE.canCycle()) MACHINE.startCycle(); }
+  else if(k==='r'){ MACHINE.reset(); }
   else if(k==='e'){ $('btn-estop').click(); }
   else if(k==='s'){ $('btn-career').click(); }
   else return;
@@ -2638,11 +4272,10 @@ $('main').addEventListener('click',e=>{
   probe(tp);
 });
 // top controls
-$('btn-cycle').onclick=()=>{ if(S.plc.state==='IDLE') startCycle(); };
-$('btn-auto').onclick=()=>{ S.auto=!S.auto; $('btn-auto').style.borderColor=S.auto?'var(--green)':'var(--edge)'; if(S.auto&&S.plc.state==='IDLE')startCycle(); };
-$('btn-estop').onclick=()=>{ S.estopOK=!S.estopOK; $('btn-estop').textContent=S.estopOK?'■ E-STOP':'⟳ RELEASE E-STOP';
-  if(!S.estopOK){S.plc.state='ESTOP'; log('alarm','active','E-STOP PRESSED · machine safe state');} else {S.plc.state='IDLE'; log('alarm','','E-STOP RELEASED');} };
-$('btn-reset').onclick=doReset;
+$('btn-cycle').onclick=()=>{ if(MACHINE.canCycle()) MACHINE.startCycle(); };
+$('btn-auto').onclick=()=>{ S.auto=!S.auto; $('btn-auto').style.borderColor=S.auto?'var(--green)':'var(--edge)'; if(S.auto&&MACHINE.canCycle())MACHINE.startCycle(); };
+$('btn-estop').onclick=()=>MACHINE.estop();
+$('btn-reset').onclick=()=>MACHINE.reset();
 $('btn-deadhead').onclick=()=>{ S.deadhead=!S.deadhead;
   $('btn-deadhead').style.borderColor=S.deadhead?'var(--amber)':'var(--edge)';
   log('alarm','info', S.deadhead?'DEAD-HEAD TEST: pump commanded against blocked port — read PG-101':'dead-head test ended'); };
@@ -2667,10 +4300,8 @@ document.querySelectorAll('.injector [data-f]').forEach(b=>b.onclick=()=>{
 // repair
 $('btn-repair').onclick=()=>{
   const p=$('repair-part').value; if(!p){ log('alarm','','Select a part first'); return; }
-  const map={FILTER:'filter.R',PT110:'pt110.offset',LS402WIRE:'ls402.wiring',CYLSEAL:'cyl.gLeak',
-             PUMP:'pump.slip',OIL:'cyl.beta',SPOOL:'valve.gMain',COILA:'coilA.R'};
-  const key=map[p]; const wasFault=!!faults[key]; const label=$('repair-part').selectedOptions[0].text;
-  if(wasFault){ delete faults[key]; log('alarm','ok','REPAIR ✓ '+label+' — fault cleared. CYCLE to verify.');
+  const key=MACHINE.partkey[p]; const wasFault=!!MACHINE.faults[key]; const label=$('repair-part').selectedOptions[0].text;
+  if(wasFault){ delete MACHINE.faults[key]; log('alarm','ok','REPAIR ✓ '+label+' — fault cleared. CYCLE to verify.');
     document.querySelectorAll('.injector [data-f]').forEach(x=>x.classList.remove('armed')); }
   else { log('alarm','info','Replaced '+p+' but it was NOT the fault. Parts cost incurred. Keep diagnosing.'); if(!career.active) S.cost+=180; }
   if(career.active) career.onRepair(p, wasFault);
@@ -2682,7 +4313,11 @@ document.querySelectorAll('.dtab').forEach(t=>t.onclick=()=>{
 });
 
 $('briefbody').innerHTML=`
-<b style="color:var(--blue)">▶ CAREER MODE:</b> press <b>START SHIFT</b> (top bar) for the game — 8 work orders with hidden faults
+<b style="color:var(--blue)">▶ THREE MACHINES:</b> the dropdown in the top-left switches between <b>SORT-LINE 2</b> (belt
+conveyor · ★), <b>PRESS-LINE 3</b> (hydraulic press · ★★) and <b>PICK-CELL 4</b> (gantry robot · ★★★) — each with its own
+physics, PLC program, instruments, fault library and per-machine personal best.
+<br><br>
+<b style="color:var(--blue)">▶ CAREER MODE:</b> press <b>START SHIFT</b> (top bar) for the game — work orders with hidden faults
 (shuffled order + randomized severity every shift, and the last two are ⚠ PRIORITY tickets with <b>two simultaneous
 faults</b>, one masking the other), a parts budget, ticking downtime cost, and an end-of-shift grade with a saved
 personal best. Only an operator complaint to go on; diagnose, replace the right part, CYCLE to verify.
@@ -2710,11 +4345,6 @@ seal=214 bar (pump fine), worn pump≈191 bar (pump can't make pressure).<br>
 ⑥ Air in oil → slow spongy pressure build.  ⑦ Sticky spool → slow extend but filter ΔP normal.<br>
 ⑧ Open SOL-A coil → ram won't move; multimeter shows 24V commanded at the coil but no pull-in.`;
 
-/* =========================================================================
-   CAREER MODE — a shift of work orders with HIDDEN seeded faults, a parts
-   budget, ticking downtime cost, and end-of-shift scoring. The sim/diagnosis
-   is unchanged; this only seeds faults, tracks economy, and grades.
-   ========================================================================= */
 const FAULTLIB=[
   {id:'COILA', key:'coilA.R',      spec:{mode:'set',value:1e9},       part:'COILA',
    complaint:'"Hit CYCLE and nothing moves — ram won\'t extend at all. Motor\'s running fine though."'},
@@ -2734,10 +4364,559 @@ const FAULTLIB=[
    complaint:'"Can\'t build full pressure under load — weak parts, pressure-not-reached faults. Just like last quarter."'},
 ];
 const PARTCOST={FILTER:40,PT110:300,LS402WIRE:80,CYLSEAL:600,PUMP:1500,OIL:200,SPOOL:250,COILA:60};
-const DOWNRATE=12, START_BUDGET=5000;
 // entries safe to combine in a double-fault ticket (LS402 excluded: verification would be
 // stochastic; PUMP excluded: keeps a perfect-play shift affordable within the budget)
 const DOUBLE_POOL=['FILTER','PT110','OIL','CYLSEAL','SPOOL','COILA'];
+
+/* =========================================================================
+   MACHINE 2 — SORT-LINE 2 (belt conveyor sortation). Same engine philosophy:
+   faults are data overrides read through cvEff; every alarm emerges from the
+   drive/belt/box physics plus an independent PLC scan. Nothing is scripted.
+   ========================================================================= */
+const cvP={ belt:{slip:0.02}, vfd:{derate:1.0, iTrip:14, cmdHz:45}, enc:{gain:1.0},
+            pe2:{gain:1.0}, bearing:{fric:1.0} };
+const cvFaults={};
+function cvEff(path){ const [c,k]=path.split('.'); let v=cvP[c][k]; const f=cvFaults[path];
+  if(!f) return v;
+  if(f.mode==='scale') return v*f.value;
+  if(f.mode==='offset') return v+f.value;
+  if(f.mode==='set') return f.value;
+  return v; }
+const CV_PXM=200;   // px per metre along the belt (belt spans x=100..800)
+const cvS={ state:'IDLE', faultCode:'', estopOK:true, run:false, hz:0, beltV:0, encHz:0, amps:0,
+  boxes:[], toSpawn:0, spawnT:0, batchT:0, sorted:0, good:0, weak:0, cycleT:0, cost:0,
+  gateA:0, gateT:0, pe1:0,pe2:0,pe3:0, pe1Last:0,pe2Last:0,pe3Last:0,
+  trackTimers:[], slipT:0, ocT:0, vfdFault:false, treadOff:0, plcAcc:0 };
+
+function cvStep(dt){
+  const derate=cvEff('vfd.derate'), slip=cvEff('belt.slip'), fric=cvEff('bearing.fric');
+  const cmd=(cvS.run && cvS.estopOK)? cvP.vfd.cmdHz*derate : 0;
+  cvS.hz += Math.max(-40*dt, Math.min(40*dt, cmd-cvS.hz));
+  cvS.beltV = 0.028*cvS.hz*(1-slip);
+  cvS.encHz = cvS.hz*(1-slip)*cvEff('enc.gain');
+  cvS.amps  = cvS.hz>1 ? 4 + 0.08*cvS.hz + 3.5*(fric-1) + 6*slip : 0.4;
+  // VFD hardware overcurrent trip (drive-level protection, independent of the PLC)
+  if(cvS.amps>cvP.vfd.iTrip && cvS.hz>5){ cvS.ocT+=dt;
+    if(cvS.ocT>1.2 && cvS.state==='RUN'){ cvS.vfdFault=true; cvFault('ALM-2305','VFD OVERCURRENT TRIP · drive fault, check mechanics'); } }
+  else cvS.ocT=0;
+  // feed boxes
+  if(cvS.toSpawn>0 && cvS.state==='RUN'){ cvS.spawnT-=dt;
+    if(cvS.spawnT<=0){ cvS.boxes.push({x:100}); cvS.toSpawn--; cvS.spawnT=1.2; } }
+  // carry boxes
+  const adv=cvS.beltV*CV_PXM*dt;
+  for(const b of cvS.boxes) b.x+=adv;
+  cvS.treadOff=(cvS.treadOff+adv)%24;
+  // divert gate kinematics
+  if(cvS.gateT>0){ cvS.gateT-=dt; cvS.gateA=Math.min(40,cvS.gateA+300*dt); }
+  else cvS.gateA=Math.max(0,cvS.gateA-300*dt);
+  // divert capture window / discharge overshoot
+  cvS.boxes=cvS.boxes.filter(b=>{
+    if(cvS.gateA>25 && b.x>=608 && b.x<=655){ cvS.sorted++; return false; }
+    return b.x<=830;
+  });
+  // photo-eyes: physical beam state, PE-2 gated by its optics health
+  const near=x0=>cvS.boxes.some(b=>b.x>x0-20&&b.x<x0+20);
+  cvS.pe1=near(240)?1:0;
+  cvS.pe2=(near(590)&&cvEff('pe2.gain')>0.5)?1:0;
+  cvS.pe3=near(760)?1:0;
+  if(cvS.state==='RUN') cvS.cycleT+=dt;
+  if(cvS.state==='FAULTED'||cvS.state==='ESTOP') cvS.cost+=dt*7;
+  cvS.plcAcc+=dt; if(cvS.plcAcc>=0.1){ cvS.plcAcc-=0.1; cvScan(); }
+}
+function cvFault(code,msg){ cvS.state='FAULTED'; cvS.faultCode=code; cvS.run=false;
+  log('alarm','active',code+' · '+msg); }
+function cvScan(){
+  if(!cvS.estopOK){ cvS.state='ESTOP'; cvS.run=false; cvS.faultCode='E-STOP'; return; }
+  switch(cvS.state){
+    case 'IDLE': cvS.run=false; break;
+    case 'RUN':{
+      cvS.run=true; cvS.batchT+=0.1;
+      if(cvS.pe1&&!cvS.pe1Last) cvS.trackTimers.push(0);           // box registered at PE-1
+      cvS.trackTimers=cvS.trackTimers.map(t=>t+0.1);
+      if(cvS.pe2&&!cvS.pe2Last){ cvS.trackTimers.shift(); cvS.gateT=0.6; }  // confirm -> divert
+      if(cvS.trackTimers.some(t=>t>3.2)){ cvFault('ALM-2302','TRACKING TIMEOUT · box late to PE-2'); break; }
+      if(cvS.pe3&&!cvS.pe3Last){ cvFault('ALM-2301','SORT MISS · box passed the divert gate'); break; }
+      if(cvS.hz>30 && cvS.encHz<0.5*cvS.hz){ cvS.slipT+=0.1;
+        if(cvS.slipT>1.5){ cvFault('ALM-2304','BELT SLIP DETECTED · encoder under-speed vs drive'); break; } }
+      else cvS.slipT=0;
+      if(cvS.toSpawn===0 && cvS.boxes.length===0){
+        cvS.state='IDLE'; cvS.good++;
+        if(cvS.batchT>8.5){ cvS.weak++;
+          log('alarm','info','ALM-2400 (advisory) LOW THROUGHPUT · batch took '+cvS.batchT.toFixed(1)+'s (nominal <8.5s)'); }
+        log('alarm','ok','BATCH COMPLETE · 5/5 sorted in '+cvS.batchT.toFixed(1)+'s');
+      }
+      break; }
+    case 'FAULTED': case 'ESTOP': cvS.run=false; break;
+  }
+  cvS.pe1Last=cvS.pe1; cvS.pe2Last=cvS.pe2; cvS.pe3Last=cvS.pe3;
+}
+function cvStart(){ if(cvS.state!=='IDLE')return;
+  cvS.state='RUN'; cvS.toSpawn=5; cvS.spawnT=0; cvS.batchT=0; cvS.cycleT=0;
+  cvS.trackTimers=[]; cvS.slipT=0; log('alarm','','BATCH START · feeding 5 boxes'); }
+function cvReset(){ if(!cvS.estopOK)return;
+  cvS.state='IDLE'; cvS.faultCode=''; cvS.vfdFault=false; cvS.boxes=[]; cvS.toSpawn=0;
+  cvS.trackTimers=[]; cvS.slipT=0; cvS.ocT=0; cvS.hz=0; cvS.gateA=0; cvS.gateT=0;
+  log('alarm','','FAULT RESET · line cleared'); }
+function cvEstop(){ cvS.estopOK=!cvS.estopOK;
+  if(!cvS.estopOK){ cvS.state='ESTOP'; log('alarm','active','E-STOP PRESSED · SORT-LINE 2 safe state'); }
+  else { cvS.state='IDLE'; cvS.faultCode=''; log('alarm','','E-STOP RELEASED'); } }
+function cvSpecial(){                                    // chalk-mark ground-truth speed test
+  const encV=0.028*cvS.encHz;
+  log('alarm','info','CHALK-MARK TEST · true belt '+cvS.beltV.toFixed(2)+' m/s · encoder implies '
+    +encV.toFixed(2)+' m/s'+(Math.abs(cvS.beltV-encV)>0.15?' — ⚠ they disagree!':' — agree'));
+}
+function cvRenderMech(){
+  $('cv-belt-tread').setAttribute('stroke-dashoffset',(-cvS.treadOff).toFixed(1));
+  $('cv-boxes').innerHTML=cvS.boxes.map(b=>
+    `<rect x="${(b.x-18).toFixed(1)}" y="304" width="36" height="26" rx="2" fill="#b8862a" stroke="#8a6d35"/>`).join('');
+  $('cv-gate').setAttribute('transform',`rotate(${(-cvS.gateA).toFixed(1)} 620 300)`);
+  lamp('cv-pe1',cvS.pe1,'#33d17a'); lamp('cv-pe2',cvS.pe2,'#33d17a'); lamp('cv-pe3',cvS.pe3,'#33d17a');
+  $('cv-motor-glyph').textContent=cvS.hz>1?'⟳':'M';
+  $('cv-motor-glyph').style.fill=cvS.hz>1?'var(--green)':'var(--dim)';
+  $('cv-speed').textContent=cvS.beltV.toFixed(2)+' m/s';
+  $('cv-enc').textContent=cvS.encHz.toFixed(1)+' Hz';
+  $('cv-amps').textContent=cvS.amps.toFixed(1);
+  $('cv-amps').style.fill=cvS.amps>cvP.vfd.iTrip?'var(--red)':'var(--cyan)';
+}
+function cvRenderElec(){
+  $('cvw-480').style.stroke='var(--green)';
+  $('cvw-vfd').style.stroke=cvS.hz>1?'var(--green)':'var(--edge)';
+  $('cvw-24').style.stroke='var(--green)';
+  $('cvw-estop').style.stroke=cvS.estopOK?'var(--green)':'var(--red)';
+  $('cv-vfd-hz').textContent=cvS.hz.toFixed(1)+' Hz';
+  $('cv-vfd-amps').textContent=cvS.amps.toFixed(1)+' A';
+  $('cv-vfd-amps').style.fill=cvS.amps>cvP.vfd.iTrip?'var(--red)':'var(--cyan)';
+  lamp('cvi-run',cvS.run,'#33d17a'); lamp('cvi-vfdfault',cvS.vfdFault,'#ff5252');
+}
+function cvRungs(){ return [
+  {y:150,label:'BELT RUN (Q0.0)',on:cvS.run,conds:[['E-STOP OK',cvS.estopOK?1:0],['RUN CMD',cvS.state==='RUN'?1:0]]},
+  {y:210,label:'DIVERT GATE (Q0.1)',on:cvS.gateT>0,conds:[['PE-2 CONFIRM',cvS.pe2]]},
+  {y:270,label:'SORT-MISS FAULT',on:cvS.faultCode==='ALM-2301',conds:[['PE-3 HIT',cvS.pe3]]},
+  {y:330,label:'SLIP FAULT',on:cvS.faultCode==='ALM-2304',conds:[['CMD>30Hz',cvS.hz>30?1:0],['ENC<50%',(cvS.hz>30&&cvS.encHz<0.5*cvS.hz)?1:0]]},
+  {y:390,label:'TRACK WATCHDOG',on:cvS.faultCode==='ALM-2302',conds:[['PE-1 SEEN',cvS.trackTimers.length?1:0],['T>3.2s',cvS.trackTimers.some(t=>t>3.2)?1:0]]},
+];}
+function cvRenderPLC(){
+  $('cv-state').textContent=cvS.state;
+  $('cv-state').style.fill=cvS.state==='FAULTED'?'var(--red)':'var(--green)';
+  $('cv-t1').textContent='T-TRACK '+(cvS.trackTimers.length?Math.max(...cvS.trackTimers).toFixed(1):'0.0')+'/3.2';
+  $('cv-t2').textContent='SLIP-SUP '+(cvS.slipT>0?cvS.slipT.toFixed(1)+'/1.5':'ok');
+  paintLadder('cv-ladder',cvRungs());
+}
+function cvRenderHMI(){
+  $('cv-throughput').textContent=cvS.sorted;
+  $('cv-speedhmi').textContent=cvS.beltV.toFixed(2)+' m/s';
+  lamp('cvlamp-run',cvS.run,'#33d17a');
+  lamp('cvlamp-fault',cvS.state==='FAULTED','#ff5252');
+  lamp('cvlamp-estop',cvS.estopOK,'#33d17a');
+  const b=$('cv-banner'), t=$('cv-bannertext');
+  if(!cvS.estopOK){ b.setAttribute('fill','#3a1717'); b.setAttribute('stroke','#7a2c2c'); t.setAttribute('fill','#ff5252'); t.textContent='⛔ E-STOP ACTIVE'; }
+  else if(cvS.state==='FAULTED'){ b.setAttribute('fill','#3a1717'); b.setAttribute('stroke','#7a2c2c'); t.setAttribute('fill','#ff5252'); t.textContent='⛔ '+cvS.faultCode; }
+  else if(cvS.state==='IDLE'){ b.setAttribute('fill','#12351f'); b.setAttribute('stroke','#2c7a48'); t.setAttribute('fill','#33d17a'); t.textContent='SYSTEM READY'; }
+  else { b.setAttribute('fill','#16283a'); b.setAttribute('stroke','#2c5a8a'); t.setAttribute('fill','#4aa3ff'); t.textContent='SORTING · '+cvS.boxes.length+' ON BELT'; }
+}
+const cvTP={
+  E480C:{d:'dmm',name:'480V supply',get:()=>[480,'VAC','']},
+  VFD:{d:'dmm',name:'VFD output',get:()=>[cvS.hz*9.6,'VAC','display '+cvS.hz.toFixed(1)+' Hz · cmd '+(cvS.run?(cvP.vfd.cmdHz*cvEff('vfd.derate')).toFixed(1):'0')+' Hz'+(cvEff('vfd.derate')<0.9?' — ⚠ derated below setpoint':'')]},
+  MOTB:{d:'dmm',name:'motor terminals',get:()=>[cvS.hz*9.6,'VAC',cvS.amps.toFixed(1)+' A draw']},
+  PSUC:{d:'dmm',name:'24V PSU',get:()=>[24,'VDC','']},
+  ESTOPC:{d:'dmm',name:'E-stop chain',get:()=>[cvS.estopOK?24:0,'VDC',cvS.estopOK?'':'⛔ chain open']},
+  PE1:{d:'dmm',name:'PE-1 output',get:()=>[cvS.pe1?24:0,'VDC','']},
+  PE2:{d:'dmm',name:'PE-2 output',get:()=>{const phys=cvS.boxes.some(b=>b.x>570&&b.x<610);
+    return [cvS.pe2?24:0,'VDC',(phys&&!cvS.pe2)?'⚠ box in beam but no output — dirty/failed optics!':''];}},
+  PE3:{d:'dmm',name:'PE-3 output',get:()=>[cvS.pe3?24:0,'VDC','']},
+  ENC:{d:'tach',name:'encoder signal',get:()=>[cvS.encHz,'Hz','implies '+(0.028*cvS.encHz).toFixed(2)+' m/s belt']},
+  BELT:{d:'tach',name:'belt surface (contact tach)',get:()=>[cvS.beltV,'m/s','ground truth — compare with encoder']},
+  MOTORC:{d:'tach',name:'motor shaft',get:()=>[cvS.hz*29,'rpm','']},
+  GATE:{d:'dmm',name:'gate solenoid',get:()=>[cvS.gateT>0?24:0,'VDC','']},
+  TENS:{d:'thermal',name:'tensioner/belt',get:()=>[38+cvEff('belt.slip')*60,'°C',cvEff('belt.slip')>0.2?'⚠ belt running hot — slipping':'']},
+  BEARING:{d:'thermal',name:'head pulley bearing',get:()=>{const t=35+(cvEff('bearing.fric')-1)*22;
+    return [Math.min(140,t),'°C',t>70?'⚠ HOT — bearing failing':'']}},
+};
+function cvIO(){ return [
+  ['I0.1 PE-1 infeed',cvS.pe1],['I0.2 PE-2 confirm',cvS.pe2],['I0.3 PE-3 overshoot',cvS.pe3],
+  ['I0.5 E-STOP OK',cvS.estopOK?1:0],
+  ['AI1 ENCODER (Hz)',cvS.encHz.toFixed(1)+' / cmd '+cvS.hz.toFixed(1)],
+  ['AI2 MOTOR AMPS',cvS.amps.toFixed(1)+' A'],
+  ['Q0.0 BELT RUN',cvS.run?1:0],['Q0.1 DIVERT GATE',cvS.gateT>0?1:0],
+];}
+const cvFAULTLIB=[
+  {id:'BELT', key:'belt.slip',   spec:{mode:'set',value:0.55}, part:'BELTP', vary:[0.52,0.7],
+   complaint:'"Boxes are crawling down the line and it keeps throwing slip alarms. Belt looks glazed to me."'},
+  {id:'PE2',  key:'pe2.gain',    spec:{mode:'set',value:0},    part:'PE2P',
+   complaint:'"Boxes are blowing straight past the divert gate into the overshoot. Gate never even tries."'},
+  {id:'VFDDER',key:'vfd.derate', spec:{mode:'set',value:0.55}, part:'VFDP', vary:[0.45,0.6],
+   complaint:'"No alarms, but the line is way slower than it should be. Orders are backing up."'},
+  {id:'BRG',  key:'bearing.fric',spec:{mode:'set',value:6},    part:'BRGP', vary:[5,8],
+   complaint:'"Drive trips on overcurrent a little while after we start. Something smells hot down there."'},
+  {id:'ENC',  key:'enc.gain',    spec:{mode:'set',value:0},    part:'ENCP',
+   complaint:'"Slip alarm every single run — but I stood there and watched, the belt is NOT slipping."'},
+];
+const cvPARTCOST={BELTP:350,PE2P:90,VFDP:250,BRGP:180,ENCP:120};
+const cvREPAIRS=[['BELTP','Replace & re-tension belt'],['PE2P','Clean/replace photo-eye PE-2'],
+  ['VFDP','Service VFD cooling (clear derate)'],['BRGP','Replace head pulley bearing'],['ENCP','Replace belt encoder']];
+
+/* =========================================================================
+   MACHINE 3 — PICK-CELL 4 (2-axis gantry + vacuum gripper). Faults are data
+   overrides via rbEff; the sequence PLC only sees encoder + vacuum-switch
+   images, so wrong-height placements, dropped parts and false safety stops
+   all emerge.
+   ========================================================================= */
+const rbP={ xdrv:{vmax:260, drag:1}, zdrv:{vmax:220}, vac:{pumpMax:-82},
+            cup:{leak:0}, curtain:{ok:1}, zenc:{offset:0} };
+const rbFaults={};
+function rbEff(path){ const [c,k]=path.split('.'); let v=rbP[c][k]; const f=rbFaults[path];
+  if(!f) return v;
+  if(f.mode==='scale') return v*f.value;
+  if(f.mode==='offset') return v+f.value;
+  if(f.mode==='set') return f.value;
+  return v; }
+const rbS={ state:'IDLE', faultCode:'', estopOK:true, X:0,Z:0, xt:0,zt:0, xv:0,
+  vac:0, sol:false, vacSw:false, hasPart:false, nestPart:true, dropping:false,
+  partX:128, partY:374, partVis:false, placed:0, offCount:0, good:0, weak:0,
+  cycleT:0, cost:0, t1:0, t2:0, xflt:false, blankoff:false, plcAcc:0 };
+
+function rbStep(dt){
+  // axes: velocity-limited servo moves (drag fault divides X speed)
+  const xv=rbP.xdrv.vmax/Math.max(1,rbEff('xdrv.drag'));
+  const dx=Math.max(-xv*dt,Math.min(xv*dt,rbS.xt-rbS.X)); rbS.X+=dx; rbS.xv=dx/dt;
+  const zv=rbP.zdrv.vmax;
+  rbS.Z+=Math.max(-zv*dt,Math.min(zv*dt,rbS.zt-rbS.Z));
+  // vacuum: pump depth minus cup leakage (worse while the carriage accelerates hard)
+  let target=0;
+  if(rbS.sol||rbS.blankoff){
+    const leak=rbS.blankoff?0:rbEff('cup.leak');
+    const motionPenalty=(Math.abs(rbS.xv)>150 && leak>8)?28:0;
+    target=rbEff('vac.pumpMax')+leak+motionPenalty;
+  }
+  rbS.vac+=(target-rbS.vac)*Math.min(1,dt/0.25);
+  rbS.vacSw=rbS.vac<-55;
+  // part carriage / drop physics
+  if(rbS.hasPart){
+    if(rbS.vac>-35){                                     // seal lost mid-carry -> the part falls
+      rbS.hasPart=false; rbS.dropping=true;
+    } else { rbS.partX=150+rbS.X-22; rbS.partY=232+rbS.Z; rbS.partVis=true; }
+  }
+  if(rbS.dropping){ rbS.partY+=500*dt; if(rbS.partY>=430){ rbS.partY=430; rbS.dropping=false; } }
+  if(rbS.state!=='IDLE'&&rbS.state!=='FAULTED'&&rbS.state!=='ESTOP') rbS.cycleT+=dt;
+  if(rbS.state==='FAULTED'||rbS.state==='ESTOP') rbS.cost+=dt*7;
+  rbS.plcAcc+=dt; if(rbS.plcAcc>=0.1){ rbS.plcAcc-=0.1; rbScan(); }
+}
+function rbFault(code,msg){ rbS.state='FAULTED'; rbS.faultCode=code;
+  rbS.xt=rbS.X; rbS.zt=rbS.Z;                             // safety stop holds position (vacuum kept)
+  log('alarm','active',code+' · '+msg); }
+function rbScan(){
+  if(!rbS.estopOK){ rbS.state='ESTOP'; rbS.faultCode='E-STOP'; rbS.sol=false; rbS.xt=rbS.X; rbS.zt=rbS.Z; return; }
+  const encZ=rbS.Z+rbEff('zenc.offset');                  // the PLC only ever sees the ENCODER
+  const moving=['TO_PICK','Z_DOWN','Z_UP','TO_PLACE','Z_PLACE','Z_UP2','HOME'].includes(rbS.state);
+  if(moving && rbEff('curtain.ok')<1 && rnd()<0.035){
+    rbFault('ALM-3404','LIGHT CURTAIN INTERRUPT · beam break during motion'); return; }
+  switch(rbS.state){
+    case 'IDLE': break;
+    case 'TO_PICK': rbS.xt=0; if(rbS.X<=2){ rbS.state='Z_DOWN'; } break;
+    case 'Z_DOWN': rbS.zt=200;                            // command past nest; encoder stops the axis
+      if(encZ>=168){ rbS.zt=rbS.Z; rbS.sol=true; rbS.t1=0; rbS.state='GRAB'; } break;
+    case 'GRAB': rbS.t1+=0.1;
+      if(rbS.vacSw){ if(rbS.nestPart){ rbS.hasPart=true; rbS.nestPart=false; } rbS.state='Z_UP'; rbS.zt=0; }
+      else if(rbS.t1>2.5){ rbFault('ALM-3401','VACUUM TIMEOUT · pickup vacuum not reached'); }
+      break;
+    case 'Z_UP': if(rbS.Z<=2){ rbS.state='TO_PLACE'; rbS.xt=580; rbS.t2=0; } break;
+    case 'TO_PLACE': rbS.t2+=0.1;
+      if(!rbS.vacSw){ rbS.sol=false; rbFault('ALM-3402','PART LOST IN TRANSFER · vacuum switch dropped'); break; }
+      if(rbS.X>=578){ rbS.state='Z_PLACE'; rbS.zt=200; }
+      else if(rbS.t2>4){ rbS.xflt=true; rbFault('ALM-3403','X-AXIS MOVE TIMEOUT · carriage under-speed'); }
+      break;
+    case 'Z_PLACE':
+      if(encZ>=168){ rbS.zt=rbS.Z; rbS.sol=false; rbS.hasPart=false; rbS.partVis=false; rbS.placed++;
+        if(rbEff('zenc.offset')>8){ rbS.weak++; rbS.offCount++;
+          log('alarm','info','ALM-3400 (advisory) PLACEMENT HEIGHT OFF · released '+rbEff('zenc.offset').toFixed(0)+'px high — stack leaning'); }
+        rbS.state='Z_UP2'; rbS.zt=0; }
+      break;
+    case 'Z_UP2': if(rbS.Z<=2){ rbS.state='HOME'; rbS.xt=0; } break;
+    case 'HOME': if(rbS.X<=2){ rbS.state='IDLE'; rbS.good++; rbS.nestPart=true;
+        log('alarm','ok','CYCLE COMPLETE · part placed ('+rbS.placed+' total)'); }
+      break;
+    case 'FAULTED': case 'ESTOP': break;
+  }
+}
+function rbStart(){ if(rbS.state!=='IDLE')return;
+  rbS.state='TO_PICK'; rbS.cycleT=0; rbS.t1=0; rbS.t2=0; log('alarm','','CYCLE START · pick & place'); }
+function rbReset(){ if(!rbS.estopOK)return;
+  rbS.state='IDLE'; rbS.faultCode=''; rbS.xflt=false; rbS.sol=false; rbS.blankoff=false;
+  rbS.X=0; rbS.Z=0; rbS.xt=0; rbS.zt=0; rbS.vac=0; rbS.hasPart=false; rbS.nestPart=true;
+  rbS.dropping=false; rbS.partVis=false;
+  log('alarm','','FAULT RESET · axes homed, nest reloaded'); }
+function rbEstop(){ rbS.estopOK=!rbS.estopOK;
+  if(!rbS.estopOK){ rbS.state='ESTOP'; log('alarm','active','E-STOP PRESSED · PICK-CELL 4 safe state'); }
+  else { rbS.state='IDLE'; rbS.faultCode=''; log('alarm','','E-STOP RELEASED'); } }
+function rbSpecial(){                                     // blank-off: cap the cup, pump alone
+  rbS.blankoff=!rbS.blankoff;
+  if(rbS.blankoff) log('alarm','info','BLANK-OFF TEST START · cup capped, watch the vacuum reading settle ('+
+    'healthy pump ≈ -82 kPa)');
+  else log('alarm','info','BLANK-OFF TEST END · reading was '+rbS.vac.toFixed(0)+' kPa'+
+    (rbEff('vac.pumpMax')>-60?' — ⚠ pump cannot pull spec even capped':' — pump exonerated'));
+}
+function rbRenderCell(){
+  $('rb-xcar').setAttribute('transform',`translate(${rbS.X.toFixed(1)} 0)`);
+  $('rb-zarm').setAttribute('transform',`translate(0 ${rbS.Z.toFixed(1)})`);
+  $('rb-cup').setAttribute('fill',rbS.vac<-35?'#14456b':'#1a1e24');
+  const part=$('rb-part');
+  part.setAttribute('visibility',(rbS.partVis||rbS.dropping||rbS.partY===430)?'visible':'hidden');
+  part.setAttribute('x',rbS.partX.toFixed(1)); part.setAttribute('y',rbS.partY.toFixed(1));
+  $('rb-nestpart').setAttribute('opacity',rbS.nestPart?'1':'0.12');
+  $('rb-placed').textContent=rbS.placed;
+  $('rb-curtain').setAttribute('stroke',rbS.faultCode==='ALM-3404'?'var(--red)':(rbEff('curtain.ok')<1?'#4a3a2b':'#2b3a2b'));
+  lamp('rb-vaclamp',rbS.vacSw,'#33d17a');
+  $('rb-xpos').textContent=rbS.X.toFixed(0); $('rb-zpos').textContent=rbS.Z.toFixed(0);
+}
+function rbRenderVac(){
+  setPipe('rbp-line1', -rbS.vac, rbS.sol||rbS.blankoff?2:0);
+  setPipe('rbp-line2', -rbS.vac, rbS.sol?2:0);
+  $('rb-vac-kpa').textContent=rbS.vac.toFixed(0)+' kPa';
+  $('rb-vac-kpa').style.fill=rbS.vac<-55?'var(--green)':(rbS.sol?'var(--amber)':'var(--cyan)');
+  lamp('rbp-sol',rbS.sol,'#33d17a');
+  $('rbp-pump-glyph').textContent=(rbS.sol||rbS.blankoff)?'⟳':'P';
+  $('rbp-pump-glyph').style.fill=(rbS.sol||rbS.blankoff)?'var(--green)':'var(--dim)';
+}
+function rbRenderElec(){
+  $('rbw-24').style.stroke='var(--green)';
+  $('rbw-curtain').style.stroke=rbS.faultCode==='ALM-3404'?'var(--red)':(rbS.estopOK?'var(--green)':'var(--red)');
+  $('rbw-xdrv').style.stroke=Math.abs(rbS.xv)>5?'var(--green)':'var(--edge)';
+  $('rbw-zdrv').style.stroke=Math.abs(rbS.zt-rbS.Z)>2?'var(--green)':'var(--edge)';
+  lamp('rbi-xflt',rbS.xflt,'#ff5252'); lamp('rbi-zflt',false,'#ff5252');
+  const cmd=(rbS.xt!==rbS.X)?rbP.xdrv.vmax:0;
+  $('rb-xvel').textContent=cmd.toFixed(0)+'/'+Math.abs(rbS.xv).toFixed(0);
+  $('rb-xvel').style.fill=(cmd>0&&Math.abs(rbS.xv)<cmd*0.6)?'var(--amber)':'var(--cyan)';
+  $('rb-zvel').textContent=(Math.abs(rbS.zt-rbS.Z)>2?rbP.zdrv.vmax:0)+'/'+(Math.abs(rbS.zt-rbS.Z)>2?rbP.zdrv.vmax:0);
+}
+function rbRungs(){ return [
+  {y:150,label:'MOTION ENABLE (Q0.0)',on:rbS.estopOK&&rbS.state!=='IDLE'&&rbS.state!=='FAULTED',conds:[['SAFETY OK',rbS.estopOK?1:0],['CYCLE',rbS.state!=='IDLE'?1:0]]},
+  {y:210,label:'VACUUM SOL (Q0.2)',on:rbS.sol,conds:[['STATE=GRAB..PLACE',rbS.sol?1:0]]},
+  {y:270,label:'VAC SWITCH (I0.2)',on:rbS.vacSw,conds:[['VAC < -55 kPa',rbS.vacSw?1:0]]},
+  {y:330,label:'T-VAC TIMEOUT FLT',on:rbS.faultCode==='ALM-3401',conds:[['GRAB',rbS.state==='GRAB'?1:0],['T1 > 2.5s',rbS.t1>2.5?1:0]]},
+  {y:390,label:'PART-LOST FLT',on:rbS.faultCode==='ALM-3402',conds:[['TRANSFER',rbS.state==='TO_PLACE'?1:0],['VAC SW LOST',(!rbS.vacSw&&rbS.state==='TO_PLACE')?1:0]]},
+];}
+function rbRenderPLC(){
+  $('rb-state').textContent=rbS.state;
+  $('rb-state').style.fill=rbS.state==='FAULTED'?'var(--red)':'var(--green)';
+  $('rb-t1').textContent='T-VAC '+rbS.t1.toFixed(1)+'/2.5';
+  $('rb-t2').textContent='T-MOVE '+rbS.t2.toFixed(1)+'/4.0';
+  paintLadder('rb-ladder',rbRungs());
+}
+function rbRenderHMI(){
+  $('rb-cycles').textContent=rbS.placed;
+  $('rb-vachmi').textContent=rbS.vac.toFixed(0)+' kPa';
+  lamp('rblamp-run',rbS.state!=='IDLE'&&rbS.state!=='FAULTED'&&rbS.state!=='ESTOP','#33d17a');
+  lamp('rblamp-fault',rbS.state==='FAULTED','#ff5252');
+  lamp('rblamp-estop',rbS.estopOK,'#33d17a');
+  const b=$('rb-banner'), t=$('rb-bannertext');
+  if(!rbS.estopOK){ b.setAttribute('fill','#3a1717'); b.setAttribute('stroke','#7a2c2c'); t.setAttribute('fill','#ff5252'); t.textContent='⛔ E-STOP ACTIVE'; }
+  else if(rbS.state==='FAULTED'){ b.setAttribute('fill','#3a1717'); b.setAttribute('stroke','#7a2c2c'); t.setAttribute('fill','#ff5252'); t.textContent='⛔ '+rbS.faultCode; }
+  else if(rbS.state==='IDLE'){ b.setAttribute('fill','#12351f'); b.setAttribute('stroke','#2c7a48'); t.setAttribute('fill','#33d17a'); t.textContent='SYSTEM READY'; }
+  else { b.setAttribute('fill','#16283a'); b.setAttribute('stroke','#2c5a8a'); t.setAttribute('fill','#4aa3ff'); t.textContent='CYCLE RUNNING · '+rbS.state; }
+}
+const rbTP={
+  PSUR:{d:'dmm',name:'24V PSU',get:()=>[24,'VDC','']},
+  ESTOPR:{d:'dmm',name:'safety relay out',get:()=>[rbS.estopOK?24:0,'VDC',rbS.estopOK?'':'⛔ open']},
+  CURTE:{d:'dmm',name:'curtain receiver',get:()=>[rbS.estopOK?24:0,'VDC',rbEff('curtain.ok')<1?'⚠ signal flickers when carriage moves — alignment?':'']},
+  XDRV:{d:'dmm',name:'X drive',get:()=>{const cmd=(rbS.xt!==rbS.X)?rbP.xdrv.vmax:0;
+    return [48,'VDC bus','cmd/act vel '+cmd.toFixed(0)+'/'+Math.abs(rbS.xv).toFixed(0)+
+      ((cmd>0&&Math.abs(rbS.xv)<cmd*0.6)?' — ⚠ severe following error':'')];}},
+  ZDRV:{d:'dmm',name:'Z drive',get:()=>[48,'VDC bus','']},
+  VPUMP:{d:'vac',name:'pump inlet',get:()=>[(rbS.sol||rbS.blankoff)?rbEff('vac.pumpMax'):0,'kPa',
+    (rbS.blankoff&&rbEff('vac.pumpMax')>-60)?'⚠ pump below spec even blanked off':'']},
+  VSOL:{d:'vac',name:'solenoid valve',get:()=>[rbS.sol?rbS.vac:0,'kPa','']},
+  VCUP:{d:'vac',name:'at the cup',get:()=>[rbS.vac,'kPa',
+    (rbS.sol&&rbEff('cup.leak')>8&&rbS.vac>-70)?'⚠ vacuum marginal at cup — leak past the lip?':'']},
+  VSW:{d:'vac',name:'vacuum switch',get:()=>[rbS.vac,'kPa','switch '+(rbS.vacSw?'MADE':'open')+' · threshold -55']},
+  GRIP:{d:'thermal',name:'gripper head',get:()=>[32,'°C','']},
+  XAXIS:{d:'thermal',name:'X drive/motor',get:()=>{const hot=rbEff('xdrv.drag')>2;
+    return [hot?78:36,'°C',hot?'⚠ drive running hot — mechanical drag/failing drive':''];}},
+  ZAXIS:{d:'thermal',name:'Z axis',get:()=>[34,'°C','']},
+  NEST:{d:'dmm',name:'nest part sensor',get:()=>[rbS.nestPart?24:0,'VDC','']},
+  PLACE:{d:'dmm',name:'stack zone sensor',get:()=>[24,'VDC','']},
+  CURTAIN:{d:'dmm',name:'curtain emitter post',get:()=>[24,'VDC',rbEff('curtain.ok')<1?'⚠ intermittent when axis moves':'']},
+};
+function rbIO(){ return [
+  ['I0.1 NEST PART',rbS.nestPart?1:0],['I0.2 VAC SWITCH',rbS.vacSw?1:0],
+  ['I0.5 SAFETY OK',rbS.estopOK?1:0],
+  ['AI1 X ENC (px)',rbS.X.toFixed(0)],['AI2 Z ENC (px)',(rbS.Z+rbEff('zenc.offset')).toFixed(0)+' / true '+rbS.Z.toFixed(0)],
+  ['AI3 VACUUM',rbS.vac.toFixed(0)+' kPa'],
+  ['Q0.0 MOTION EN',rbS.state!=='IDLE'&&rbS.state!=='FAULTED'?1:0],['Q0.2 VAC SOL',rbS.sol?1:0],
+];}
+const rbFAULTLIB=[
+  {id:'CUP',    key:'cup.leak',    spec:{mode:'set',value:24},  part:'CUPP', vary:[20,26],
+   complaint:'"Keeps dropping parts halfway across the cell. Vacuum looks fine at pickup, I checked."'},
+  {id:'XDRV',   key:'xdrv.drag',   spec:{mode:'set',value:4},   part:'XDRVP', vary:[3.5,6],
+   complaint:'"Carriage crawls on the way to the stack, then times out. Z is snappy as ever."'},
+  {id:'VACPUMP',key:'vac.pumpMax', spec:{mode:'set',value:-45}, part:'VPUMPP', vary:[-50,-40],
+   complaint:'"Won\'t pick up at all — vacuum timeout every single cycle. Cup looks okay to me."'},
+  {id:'CURT',   key:'curtain.ok',  spec:{mode:'set',value:0.5}, part:'CURTP',
+   complaint:'"Random safety stops mid-cycle. Nobody is anywhere near the cell when it happens."'},
+  {id:'ZENC',   key:'zenc.offset', spec:{mode:'set',value:18},  part:'ZENCP', vary:[14,24],
+   complaint:'"Stacks are coming out leaning and QC is rejecting pallets. No alarms at all."'},
+];
+const rbPARTCOST={CUPP:45,XDRVP:900,VPUMPP:700,CURTP:150,ZENCP:260};
+const rbREPAIRS=[['CUPP','Replace vacuum cup / bellows'],['XDRVP','Replace X servo drive'],
+  ['VPUMPP','Rebuild vacuum pump'],['CURTP','Realign light curtain'],['ZENCP','Replace Z-axis encoder']];
+
+/* =========================================================================
+   MACHINE REGISTRY + SHELL — one active machine drives the shared cockpit.
+   ========================================================================= */
+function pressStep(dt){
+  stepPhysics(dt);
+  plcAcc+=dt; if(plcAcc>=PLC_PERIOD){ plcAcc-=PLC_PERIOD; plcScan(); }
+  if(S.plc.state!=='IDLE'&&S.plc.state!=='FAULTED'&&S.plc.state!=='ESTOP') S.cycleT+=dt;
+  if(S.plc.state==='FAULTED'||S.plc.state==='ESTOP') S.cost+=dt*7;
+}
+function pressEstop(){ S.estopOK=!S.estopOK;
+  if(!S.estopOK){ S.plc.state='ESTOP'; log('alarm','active','E-STOP PRESSED · machine safe state'); }
+  else { S.plc.state='IDLE'; log('alarm','','E-STOP RELEASED'); } }
+function pressSpecial(){ S.deadhead=!S.deadhead;
+  log('alarm','info', S.deadhead?'DEAD-HEAD TEST: pump commanded against blocked port — read PG-101':'dead-head test ended'); }
+
+const MACHINES={
+  press:{ id:'press', name:'PRESS-LINE 3', sub:'150-ton downstroke hydraulic press · ★★',
+    layers:[['hyd','Hydraulic','P&ID · fluid power'],['elec','Electrical','power · control'],
+            ['mech','Mechanical','ram · tooling'],['plc','PLC Logic','I/O · ladder'],['hmi','HMI','operator panel']],
+    titles:{hyd:'HYDRAULIC · P&ID',elec:'ELECTRICAL · POWER + CONTROL',mech:'MECHANICAL · RAM & TOOLING',plc:'PLC · I/O + LADDER',hmi:'HMI · OPERATOR PANEL'},
+    instruments:[['none','✋ Select'],['dmm','🔌 Multimeter'],['press','🛢 Pressure'],['thermal','🌡 Thermal']],
+    special:{label:'⚙ Dead-head pump test',fn:pressSpecial},
+    faults:faults, step:pressStep,
+    top:()=>({state:S.plc.state,fault:S.plc.faultCode,good:S.good,weak:S.weak,cycleT:S.cycleT,cost:S.cost,estopOK:S.estopOK}),
+    render:{hyd:renderHyd,elec:renderElec,mech:renderMech,plc:renderPLC,hmi:renderHMI},
+    TP:TP, startCycle:startCycle, reset:doReset, estop:pressEstop, io:pressIO,
+    resetCounters:()=>{S.good=0;S.weak=0;S.cost=0;},
+    dotMap:{'ALM-1102':['plc','hyd'],'ALM-3300':['plc','mech'],'ALM-2205':['plc','elec']},
+    faultlib:FAULTLIB, partcost:PARTCOST, doublePool:DOUBLE_POOL,
+    partkey:{FILTER:'filter.R',PT110:'pt110.offset',LS402WIRE:'ls402.wiring',CYLSEAL:'cyl.gLeak',
+             PUMP:'pump.slip',OIL:'cyl.beta',SPOOL:'valve.gMain',COILA:'coilA.R'},
+    repairs:[['FILTER','Replace filter element FLT-201'],['PT110','Recalibrate/replace transducer PT-110'],
+      ['LS402WIRE','Replace LS-402 flex cable / connector'],['CYLSEAL','Reseal cylinder CYL-401 (piston seal)'],
+      ['PUMP','Replace worn pump P-101'],['OIL','Bleed air / change hydraulic oil'],
+      ['SPOOL','Free / replace DCV DV-301 spool'],['COILA','Replace SOL-A solenoid coil']],
+    injects:[['FILTER','① Clog pressure filter (HYD)','filter.R',{mode:'scale',value:2000}],
+      ['PT110','② Transducer drift +20bar (SENSOR)','pt110.offset',{mode:'offset',value:20}],
+      ['LS402','③ Intermittent LS-402 wire (ELEC)','ls402.wiring',{mode:'set',value:0.5}],
+      ['CYLSEAL','④ Cylinder seal bypass (MECH)','cyl.gLeak',{mode:'set',value:0.03}],
+      ['PUMP','⑤ Worn pump — sags under load (HYD)','pump.slip',{mode:'set',value:0.009}],
+      ['OIL','⑥ Air in oil — spongy/slow (HYD)','cyl.beta',{mode:'set',value:140}],
+      ['SPOOL','⑦ Sticky DCV spool (VALVE)','valve.gMain',{mode:'scale',value:0.0012}],
+      ['COILA','⑧ Open SOL-A coil (ELEC)','coilA.R',{mode:'set',value:1e9}]],
+    canCycle:()=>S.plc.state==='IDLE',
+  },
+  conveyor:{ id:'conveyor', name:'SORT-LINE 2', sub:'belt conveyor sortation line · ★',
+    layers:[['mech','Mechanical','belt · gate · boxes'],['elec','Electrical','VFD · drive'],
+            ['plc','PLC Logic','I/O · ladder'],['hmi','HMI','operator panel']],
+    titles:{mech:'MECHANICAL · BELT & SORTATION',elec:'ELECTRICAL · VFD DRIVE',plc:'PLC · I/O + LADDER',hmi:'HMI · OPERATOR PANEL'},
+    instruments:[['none','✋ Select'],['dmm','🔌 Multimeter'],['tach','⏱ Tachometer'],['thermal','🌡 Thermal']],
+    special:{label:'⚙ Chalk-mark speed test',fn:cvSpecial},
+    faults:cvFaults, step:cvStep,
+    top:()=>({state:cvS.state,fault:cvS.faultCode,good:cvS.good,weak:cvS.weak,cycleT:cvS.batchT,cost:cvS.cost,estopOK:cvS.estopOK}),
+    render:{mech:cvRenderMech,elec:cvRenderElec,plc:cvRenderPLC,hmi:cvRenderHMI},
+    TP:cvTP, startCycle:cvStart, reset:cvReset, estop:cvEstop, io:cvIO,
+    resetCounters:()=>{cvS.good=0;cvS.weak=0;cvS.cost=0;cvS.sorted=0;},
+    dotMap:{'ALM-2301':['plc','mech'],'ALM-2302':['plc','mech'],'ALM-2304':['plc','mech'],'ALM-2305':['plc','elec']},
+    faultlib:cvFAULTLIB, partcost:cvPARTCOST, doublePool:['PE2','VFDDER','BRG','ENC'],
+    partkey:{BELTP:'belt.slip',PE2P:'pe2.gain',VFDP:'vfd.derate',BRGP:'bearing.fric',ENCP:'enc.gain'},
+    repairs:cvREPAIRS,
+    injects:[['BELT','① Worn/loose belt — slips (MECH)','belt.slip',{mode:'set',value:0.55}],
+      ['PE2','② Dirty photo-eye PE-2 (SENSOR)','pe2.gain',{mode:'set',value:0}],
+      ['VFDDER','③ VFD thermal derate (DRIVE)','vfd.derate',{mode:'set',value:0.55}],
+      ['BRG','④ Seizing head bearing (MECH)','bearing.fric',{mode:'set',value:6}],
+      ['ENC','⑤ Dead belt encoder (SENSOR)','enc.gain',{mode:'set',value:0}]],
+    canCycle:()=>cvS.state==='IDLE',
+  },
+  robot:{ id:'robot', name:'PICK-CELL 4', sub:'2-axis gantry · vacuum gripper · ★★★',
+    layers:[['cell','Cell','gantry · gripper'],['vac','Vacuum','pump · circuit'],
+            ['elec','Electrical','drives · safety'],['plc','PLC Logic','I/O · ladder'],['hmi','HMI','operator panel']],
+    titles:{cell:'CELL · GANTRY & GRIPPER',vac:'VACUUM · CIRCUIT',elec:'ELECTRICAL · DRIVES + SAFETY',plc:'PLC · I/O + LADDER',hmi:'HMI · OPERATOR PANEL'},
+    instruments:[['none','✋ Select'],['dmm','🔌 Multimeter'],['vac','⭕ Vacuum gauge'],['thermal','🌡 Thermal']],
+    special:{label:'⚙ Blank-off vacuum test',fn:rbSpecial},
+    faults:rbFaults, step:rbStep,
+    top:()=>({state:rbS.state,fault:rbS.faultCode,good:rbS.good,weak:rbS.weak,cycleT:rbS.cycleT,cost:rbS.cost,estopOK:rbS.estopOK}),
+    render:{cell:rbRenderCell,vac:rbRenderVac,elec:rbRenderElec,plc:rbRenderPLC,hmi:rbRenderHMI},
+    TP:rbTP, startCycle:rbStart, reset:rbReset, estop:rbEstop, io:rbIO,
+    resetCounters:()=>{rbS.good=0;rbS.weak=0;rbS.cost=0;rbS.placed=0;},
+    dotMap:{'ALM-3401':['plc','vac'],'ALM-3402':['plc','vac'],'ALM-3403':['plc','elec'],'ALM-3404':['plc','elec']},
+    faultlib:rbFAULTLIB, partcost:rbPARTCOST, doublePool:['CUP','XDRV','VACPUMP','ZENC'],
+    partkey:{CUPP:'cup.leak',XDRVP:'xdrv.drag',VPUMPP:'vac.pumpMax',CURTP:'curtain.ok',ZENCP:'zenc.offset'},
+    repairs:rbREPAIRS,
+    injects:[['CUP','① Worn vacuum cup — drops parts (GRIP)','cup.leak',{mode:'set',value:24}],
+      ['XDRV','② Failing X servo drive (ELEC)','xdrv.drag',{mode:'set',value:4}],
+      ['VACPUMP','③ Worn vacuum pump (VAC)','vac.pumpMax',{mode:'set',value:-45}],
+      ['CURT','④ Misaligned light curtain (SAFETY)','curtain.ok',{mode:'set',value:0.5}],
+      ['ZENC','⑤ Z encoder drift — leaning stacks (SENSOR)','zenc.offset',{mode:'set',value:18}]],
+    canCycle:()=>rbS.state==='IDLE',
+  },
+};
+let MACHINE=MACHINES.press;
+const INSTRUMENT_NAMES={dmm:'Multimeter',press:'Pressure gauge',thermal:'Thermal camera',tach:'Tachometer',vac:'Vacuum gauge'};
+
+const TABS_LEGEND=`<div class="filler"></div><div class="legend"><b>PRESSURE / LEVEL</b>
+<span class="chip" style="background:#3a4a58"></span>low / off<br>
+<span class="chip" style="background:var(--amber)"></span>working<br>
+<span class="chip" style="background:var(--red)"></span>at limit<br>
+<b style="margin-top:6px">SIGNAL</b>
+<span class="chip" style="background:var(--green)"></span>energized / TRUE<br>
+<span class="chip" style="background:var(--edge)"></span>de-energized</div>`;
+function buildTabs(){
+  $('tabs').innerHTML=MACHINE.layers.map(([k,n,s],i)=>
+    `<button class="tab${i===0?' on':''}" data-layer="${k}">${n}<span class="k">${s}</span><i class="dot" data-dot="${k}"></i></button>`).join('')+TABS_LEGEND;
+  document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>selectLayer(t.dataset.layer));
+}
+function buildInstruments(){
+  instrument='none';
+  document.getElementById('itools').innerHTML=MACHINE.instruments.map(([k,n],i)=>
+    `<button class="itool${i===0?' on':''}" data-i="${k}">${n}</button>`).join('');
+  document.querySelectorAll('.itool').forEach(b=>b.onclick=()=>{
+    instrument=b.dataset.i;
+    document.querySelectorAll('.itool').forEach(x=>x.classList.toggle('on',x===b));
+    $('ro-hint').textContent=instrument==='none'?'Click a component to inspect.':'Click a labelled test point on the schematic.';
+  });
+}
+function buildRepairs(){
+  $('repair-part').innerHTML='<option value="">— select replacement part —</option>'+
+    MACHINE.repairs.map(([v,l])=>`<option value="${v}">${l}</option>`).join('');
+}
+function buildSpecial(){
+  const b=$('btn-deadhead'); b.textContent=MACHINE.special.label; b.onclick=MACHINE.special.fn;
+}
+function buildInjector(){
+  $('injector').innerHTML=`<button class="x" id="inj-x">×</button>
+    <h4>⚙ INSTRUCTOR · INJECT FAULT · ${MACHINE.name}</h4>`+
+    MACHINE.injects.map(([id,label])=>`<button data-f="${id}">${label}</button>`).join('')+
+    `<button data-f="CLEAR" style="border-color:var(--green);color:var(--green)">✓ Clear all faults</button>
+    <div class="help" style="margin-top:6px">Each fault is a single data override on one component. Symptoms emerge from physics + the PLC scan — nothing is scripted.</div>`;
+  $('injector').querySelector('#inj-x').onclick=()=>$('injector').style.display='none';
+  $('injector').querySelectorAll('[data-f]').forEach(b=>b.onclick=()=>{
+    const f=b.dataset.f;
+    $('injector').querySelectorAll('[data-f]').forEach(x=>x.classList.remove('armed'));
+    if(f==='CLEAR'){ for(const k in MACHINE.faults)delete MACHINE.faults[k]; log('alarm','ok','All faults cleared'); return; }
+    const inj=MACHINE.injects.find(e=>e[0]===f); if(!inj)return;
+    b.classList.add('armed');
+    MACHINE.faults[inj[2]]=inj[3];
+    log('alarm','info','INJECT '+inj[1]+' → '+inj[2]);
+  });
+}
+function switchMachine(id){
+  if(career.active){ log('alarm','info','Finish or end the shift before switching machines.');
+    $('machine-sel').value=MACHINE.id; return; }
+  MACHINE=MACHINES[id];
+  $('machine-sel').value=id;
+  $('wo-sub').textContent=MACHINE.sub;
+  buildTabs(); buildInstruments(); buildRepairs(); buildSpecial(); buildInjector();
+  _ioHtml=''; probeLog=[]; $('probelog').innerHTML='';
+  setRead('— no probe —','--','','Pick an instrument, then click a labelled test point on the schematic.');
+  selectLayer(MACHINE.layers[0][0]);
+  log('alarm','ok','▶ Switched to '+MACHINE.name+' · '+MACHINE.sub);
+}
+
+/* =========================================================================
+   CAREER MODE — a shift of work orders with HIDDEN seeded faults, a parts
+   budget, ticking downtime cost, and end-of-shift scoring. The sim/diagnosis
+   is unchanged; this only seeds faults, tracks economy, and grades.
+   ========================================================================= */
+const DOWNRATE=12, START_BUDGET=5000;
 
 const career={active:false,idx:0,plan:[],budget:START_BUDGET,ticketTime:0,shiftTime:0,
   ticketParts:0,wrongThis:0,partsTotal:0,downCost:0,lastGood:0,fixed:0,seeded:null,open:false,results:[]};
@@ -2750,11 +4929,11 @@ function rollInstance(lib){
 }
 // build a shift: 6 shuffled singles (varied severity) + 2 double-fault "nasty" tickets
 function buildShiftPlan(){
-  const shuffled=FAULTLIB.slice();
+  const shuffled=MACHINE.faultlib.slice();
   for(let i=shuffled.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]]; }
-  const plan=shuffled.slice(0,6).map(lib=>({ faults:[rollInstance(lib)], complaint:lib.complaint, nasty:false }));
+  const plan=shuffled.slice(0,Math.min(6,shuffled.length)).map(lib=>({ faults:[rollInstance(lib)], complaint:lib.complaint, nasty:false }));
   for(let d=0; d<2; d++){
-    const pool=FAULTLIB.filter(l=>DOUBLE_POOL.includes(l.id));
+    const pool=MACHINE.faultlib.filter(l=>MACHINE.doublePool.includes(l.id));
     const a=pool[Math.floor(rnd()*pool.length)];
     let b; do{ b=pool[Math.floor(rnd()*pool.length)]; }while(b.id===a.id);
     plan.push({ faults:[rollInstance(a),rollInstance(b)],
@@ -2764,33 +4943,34 @@ function buildShiftPlan(){
   return plan;
 }
 const ticketLabel=t=>t.faults.map(f=>f.id).join('+');
-const seededStillActive=()=>career.seeded.faults.some(f=>faults[f.key]);
+const seededStillActive=()=>career.seeded.faults.some(f=>MACHINE.faults[f.key]);
 
 function startShift(){
   _seed=(Date.now()&0x7fffffff)||1337;                     // fresh procedural seed per shift
   career.active=true; career.idx=0; career.plan=buildShiftPlan();
   career.budget=START_BUDGET; career.partsTotal=0; career.downCost=0; career.fixed=0; career.results=[];
-  for(const k in faults) delete faults[k];
-  S.good=0; S.weak=0; S.cost=0;
+  for(const k in MACHINE.faults) delete MACHINE.faults[k];
+  MACHINE.resetCounters();
+  $('machine-sel').disabled=true;
   $('injector').style.display='none'; $('btn-inject').disabled=true; $('btn-inject').style.opacity=.4;
   $('btn-career').textContent='■ END SHIFT'; $('btn-career').style.borderColor='var(--red)'; $('btn-career').style.color='var(--red)';
   $('shiftmodal').style.display='none'; $('wocard').style.display='block';
-  log('alarm','ok','▶ SHIFT STARTED · '+career.plan.length+' work orders · budget $'+START_BUDGET);
+  log('alarm','ok','▶ SHIFT STARTED on '+MACHINE.name+' · '+career.plan.length+' work orders · budget $'+START_BUDGET);
   nextTicket();
 }
 function nextTicket(){
   if(career.idx>=career.plan.length || career.budget<=0){ endShift(); return; }
-  doReset(); for(const k in faults) delete faults[k];
+  MACHINE.reset(); for(const k in MACHINE.faults) delete MACHINE.faults[k];
   career.seeded=career.plan[career.idx];
-  for(const f of career.seeded.faults) faults[f.key]=f.spec;   // HIDDEN — player must diagnose
-  career.open=true; career.ticketTime=0; career.ticketParts=0; career.wrongThis=0; career.lastGood=S.good;
+  for(const f of career.seeded.faults) MACHINE.faults[f.key]=f.spec;   // HIDDEN — player must diagnose
+  career.open=true; career.ticketTime=0; career.ticketParts=0; career.wrongThis=0; career.lastGood=MACHINE.top().good;
   $('repair-part').value='';
   $('wo-status').className='wo-status';
   $('wo-status').textContent='Machine down. CYCLE to observe the symptom, diagnose with instruments, pick the part, then CYCLE to verify.';
   log('alarm','info','📋 TICKET '+(career.idx+1)+(career.seeded.nasty?' ⚠ PRIORITY':'')+' · operator: '+career.seeded.complaint);
 }
 career.onRepair=function(partValue, wasFault){
-  const cost=PARTCOST[partValue]||0;
+  const cost=MACHINE.partcost[partValue]||0;
   career.budget-=cost; career.ticketParts+=cost; career.partsTotal+=cost;
   if(!wasFault){                                          // didn't clear ANY active fault -> wasted part
     career.wrongThis++;
@@ -2823,15 +5003,16 @@ function abandonTicket(){
   career.results.push({id:ticketLabel(career.seeded), time:career.ticketTime, nasty:career.seeded.nasty,
     wrong:career.wrongThis, parts:career.ticketParts, firstFix:false, skipped:true});
   log('alarm','active','⏭ Ticket '+(career.idx+1)+' abandoned (+$500 penalty).');
-  for(const k in faults) delete faults[k];
+  for(const k in MACHINE.faults) delete MACHINE.faults[k];
   career.open=false; career.idx++; nextTicket();
 }
 function endShift(){
   career.active=false; career.open=false;
   $('wocard').style.display='none';
+  $('machine-sel').disabled=false;
   $('btn-inject').disabled=false; $('btn-inject').style.opacity=1;
   $('btn-career').textContent='▶ START SHIFT'; $('btn-career').style.borderColor='var(--blue)'; $('btn-career').style.color='var(--blue)';
-  for(const k in faults) delete faults[k]; doReset();
+  for(const k in MACHINE.faults) delete MACHINE.faults[k]; MACHINE.reset();
   const solved=career.results.filter(r=>!r.skipped);
   const ff=solved.filter(r=>r.firstFix).length;
   const ffRate=solved.length? ff/solved.length : 0;
@@ -2844,12 +5025,12 @@ function endShift(){
   // personal best (localStorage; fails silently if storage unavailable)
   const RANK={A:4,B:3,C:2,D:1}; let best=null, shifts=1;
   try{
-    const prev=JSON.parse(localStorage.getItem('pressline3.best')||'null');
+    const prev=JSON.parse(localStorage.getItem(MACHINE.id+'.best')||'null');
     shifts=(prev?prev.shifts:0)+1;
     best=prev&&prev.grade ? {grade:prev.grade,cost:prev.cost} : null;
     const isPB=!best || RANK[grade]>RANK[best.grade] || (RANK[grade]===RANK[best.grade] && total<best.cost);
     if(isPB) best={grade,cost:Math.round(total)};
-    localStorage.setItem('pressline3.best',JSON.stringify({...best,shifts}));
+    localStorage.setItem(MACHINE.id+'.best',JSON.stringify({...best,shifts}));
     best._new=isPB;
   }catch(e){}
   $('sm-grade').textContent=grade; $('sm-grade').style.color=gc;
@@ -2872,8 +5053,9 @@ function endShift(){
 function renderCareer(){
   if(!career.active) return;
   // detect a verify: a completed cycle (good++) with ALL seeded faults gone
-  if(career.open && S.good>career.lastGood){
-    career.lastGood=S.good;
+  const nowGood=MACHINE.top().good;
+  if(career.open && nowGood>career.lastGood){
+    career.lastGood=nowGood;
     if(!seededStillActive()){ closeTicket(); }
     else { const remaining=career.seeded.faults.filter(f=>faults[f.key]);
       $('wo-status').className='wo-status bad';
@@ -2884,7 +5066,7 @@ function renderCareer(){
   const down=career.ticketTime*DOWNRATE;
   $('wo-ticket').textContent='TICKET '+Math.min(career.idx+1,career.plan.length)+'/'+career.plan.length;
   $('wo-shift').textContent='SHIFT '+fmt(career.shiftTime);
-  $('wo-machine').textContent = career.open? 'PRESS-LINE 3 · DOWN'+(career.seeded&&career.seeded.nasty?' · ⚠ PRIORITY':'') : 'PRESS-LINE 3';
+  $('wo-machine').textContent = career.open? MACHINE.name+' · DOWN'+(career.seeded&&career.seeded.nasty?' · ⚠ PRIORITY':'') : MACHINE.name;
   if(career.seeded) $('wo-complaint').textContent=career.seeded.complaint;
   $('wo-down').textContent='$'+down.toFixed(0);
   $('wo-parts').textContent='$'+career.ticketParts;
@@ -2927,7 +5109,9 @@ buildGauge();
 })();
 
 // boot
-log('alarm','ok','Workstation online · PRESS-LINE 3 · ▶ START SHIFT for career mode, or CYCLE to free-play');
+buildTabs(); buildInstruments(); buildRepairs(); buildSpecial(); buildInjector();
+$('machine-sel').onchange=e=>switchMachine(e.target.value);
+log('alarm','ok','Workstation online · 3 machines on the floor · ▶ START SHIFT for career mode, or CYCLE to free-play');
 renderIO();
 requestAnimationFrame(loop);
 </script>

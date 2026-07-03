@@ -1,7 +1,18 @@
-# Industrial Troubleshooting Sim — engine + press prototype
+# Industrial Troubleshooting Sim — three machines, one workstation
 
 A realistic, multi-discipline troubleshooting game where faults are **emergent,
-not scripted**. This folder is the technical vertical slice.
+not scripted**. Three machines share one diagnostic workstation — pick one from
+the dropdown in the top bar:
+
+| Machine | What it is | Difficulty | Fault library |
+|---|---|---|---|
+| **SORT-LINE 2** | belt conveyor sortation line (VFD, photo-eyes, divert gate, encoder) | ★ | slip, dirty photo-eye, VFD derate, seizing bearing, dead encoder |
+| **PRESS-LINE 3** | 150-ton hydraulic press across 5 layers | ★★ | the original 8 (filter, drift, wiring, seals, pump, air, spool, coil) |
+| **PICK-CELL 4** | 2-axis gantry robot with vacuum gripper | ★★★ | worn cup (drops parts), failing servo, worn pump, curtain intermittent, Z-encoder drift |
+
+Each machine has its own physics, PLC program, instruments (tachometer on the
+conveyor, vacuum gauge on the robot), discriminator test (chalk-mark / dead-head
+/ blank-off), career fault library, and per-machine personal best.
 
 **▶ Play it live (no install):**
 https://raw.githack.com/tlaba/workbench/main/troubleshooter/hydraulic-press-troubleshooter.html

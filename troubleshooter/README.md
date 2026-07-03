@@ -15,7 +15,20 @@ conveyor, vacuum gauge on the robot), discriminator test (chalk-mark / dead-head
 / blank-off), career fault library, and per-machine personal best.
 
 **▶ Play it live (no install):**
-https://raw.githack.com/tlaba/workbench/main/troubleshooter/hydraulic-press-troubleshooter.html
+https://tlaba.github.io/workbench/ (auto-deploys from `main` via GitHub Pages)
+
+## The game loop
+- **🎓 Tutorial** — a guided first ticket teaches the diagnose→repair→verify loop.
+- **Progression** — career shifts unlock in order: SORT-LINE 2 (★) → grade C
+  unlocks PRESS-LINE 3 (★★) → grade C unlocks PICK-CELL 4 (★★★). Free-play and
+  the instructor sandbox are always open on every machine.
+- **📞 Paid hints** — call OEM support mid-ticket: $150 names the layer the root
+  cause lives in, $400 points at the subsystem. Comes out of your budget.
+- **🏁 Challenge links** — the shift summary gives a copyable link with the exact
+  seed; a rival plays the identical shift (same tickets, same severities).
+- **Resume** — an interrupted shift is saved locally and offered on return.
+- **🔊 Sound** — diagnostic audio: VFD whine tracks Hz, a failing bearing squeals,
+  a pinned relief valve screams, a leaking vacuum cup hisses.
 
 | File | What it is |
 |---|---|

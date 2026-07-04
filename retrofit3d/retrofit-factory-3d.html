@@ -144,8 +144,16 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 .acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 14px 16px}
 .act{background:var(--panel2);border:1px solid var(--edge);border-radius:10px;padding:10px;text-align:left;color:var(--ink)}
 .act:disabled{opacity:.4}
-.act .t{font-size:13px;font-weight:700;display:flex;justify-content:space-between;align-items:baseline}
-.act .t .cost{font-family:var(--mono);font-size:11px;color:var(--amber)}
+.act .t{font-size:13px;font-weight:700;display:flex;justify-content:space-between;align-items:baseline;gap:6px}
+.act .t .tl{min-width:0;overflow-wrap:anywhere}
+.act .t .cost{font-family:var(--mono);font-size:11px;color:var(--amber);white-space:nowrap;flex:0 0 auto}
+.act .t .cost .poor{color:var(--red)}
+.act.off{opacity:.55}
+.act.off:active{animation:nudge .18s}
+@keyframes nudge{0%,100%{transform:translateX(0)}30%{transform:translateX(-3px)}70%{transform:translateX(3px)}}
+.sheet-top{position:sticky;top:0;background:var(--panel);z-index:3;
+  border-radius:14px 14px 0 0;box-shadow:0 8px 12px -9px #000d}
+.fixbtn.off{opacity:.5;color:var(--dim);border-color:var(--edge);background:var(--panel2)}
 .act .d{font-size:10px;color:var(--dim);margin-top:3px;line-height:1.3}
 .act.primary{border-color:#2c7a48;background:#12281c}
 .act.danger{border-color:#7a4a2c}
@@ -175,6 +183,27 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
   border-radius:10px;padding:10px 12px;z-index:9;font-size:12.5px;line-height:1.45;box-shadow:0 6px 20px #0009;
   width:min(calc(100% - 24px),520px);margin:0 auto}
 .tut b{color:var(--blue)} .tut .x{float:right;color:var(--dim);background:none;border:none;font-size:16px;margin:-2px -2px 0 0}
+
+/* ---- touch layout: phones & coarse pointers ---- */
+@media (max-width:520px), (pointer:coarse){
+  .spd{width:44px;height:38px;font-size:13px;border-radius:8px}
+  #daybar{gap:5px;padding:5px 6px}
+  #clock{min-width:62px;font-size:10.5px}
+  .stat b{font-size:13.5px} .stat span{font-size:8px}
+  #helpbtn,#planbtn,#mutebtn,#fxbtn{width:40px;height:40px;font-size:15px}
+  #planbtn{top:56px} #mutebtn{top:102px} #fxbtn{top:148px}
+  #planner{right:54px;top:56px}
+  .sheet-close{font-size:26px;padding:6px 12px;margin:-6px -6px 0 0}
+  .fixbtn{padding:7px 10px;font-size:10.5px}
+  .bar{width:68px} .chan .pf{width:38px}
+  .acts{gap:7px;padding:8px 10px 16px}
+  .act{padding:9px 8px}
+  .act .t{font-size:12.5px} .act .d{font-size:9.5px}
+  #joy{width:126px;height:126px}
+  #jnub{width:54px;height:54px}
+  #ichip{padding:12px 20px;bottom:152px}
+  #sheet{max-height:54%}
+}
 
 /* ---- game-feel layer ---- */
 #vig{position:absolute;inset:0;pointer-events:none;z-index:6;opacity:0;
@@ -780,10 +809,12 @@ function openSheet(id){
     const w = shown? c.reveal : null;
     const barw = shown? Math.round(w*100):0;
     let fx='';
-    if(shown && near && !m.broken){
-      const pf=pendFix.has(c.id), ok=w<0.18;
-      fx='<button class="fixbtn" '+((pf||ok)?'disabled':'')+
-        ' onclick="actFix(\''+id+'\',\''+c.id+'\')">🔩 '+(pf?'✓':ok?'OK':'$'+fixCost(id,c.id))+'</button>';
+    if(near && !m.broken){
+      if(!shown) fx='<button class="fixbtn off" onclick="offMsg(\'Inspect first — 🔩 targeted fixes need known part condition\')">🔩 ?</button>';
+      else{ const pf=pendFix.has(c.id), ok=w<0.18;
+        fx = pf ? '<button class="fixbtn off" onclick="offMsg(\'Fix already queued for this part\')">🔩 ✓</button>'
+           : ok ? '<button class="fixbtn off" onclick="offMsg(\'This part is in good shape — no fix needed\')">🔩 OK</button>'
+           : '<button class="fixbtn" onclick="actFix(\''+id+'\',\''+c.id+'\')">🔩 $'+fixCost(id,c.id)+'</button>'; }
     }
     cond+='<div class="chan"><span class="nm">'+c.nm+(c.moist?' 💧':'')+'</span>'+
       '<span class="bar"><i style="width:'+(shown?barw:0)+'%;background:'+(shown?chanColor(w):'#2b3a4a')+'"></i></span>'+
@@ -808,7 +839,7 @@ function openSheet(id){
   const rushAvail=m.broken && !m.rushed &&
     (m.awaitDelivery>0.5 || (tech.busy&&tech.job&&tech.job.mid===id&&tech.phase==='wait'));
   const rushBtn = m.broken ? (m.rushed
-    ? act('🚚 Rush courier','<span style="color:var(--green)">✓ rushed</span>','Expedited courier en route.','actRush',id,'disabled')
+    ? offAct('🚚 Rush courier','<span style="color:var(--green)">✓ rushed</span>','Expedited courier en route.','Courier already rushed — part lands within ~30m')
     : (rushAvail? act('🚚 Rush courier','$250','Phone order — no need to be on site.'+PV('part in ~30m instead of 3h','good'),'actRush',id,'primary'):''))
     :'';
   const nurseBtn = (!m.utility && !m.broken)
@@ -819,16 +850,26 @@ function openSheet(id){
   const curType=(tech.busy&&tech.job&&tech.job.mid===id)?tech.job.type:null;
   const pend=new Set(tech.queue.filter(j=>j.mid===id).map(j=>j.type)); if(curType) pend.add(curType);
   const Q='<span style="color:var(--green)">✓ queued</span>';
-  const A=(label,cost,desc,fn,type,cls)=> pend.has(type)? act(label,Q,desc,fn,id,'disabled') : act(label,cost,desc,fn,id,cls);
+  const offAct=(label,cost,desc,msg)=>'<button class="act off" onclick="offMsg(\''+msg.replace(/'/g,"\\'")+'\')">'+
+    '<div class="t"><span class="tl">'+label+'</span> <span class="cost">'+cost+'</span></div><div class="d">'+desc+'</div></button>';
+  const A=(label,cost,desc,fn,type,cls)=> pend.has(type)
+    ? offAct(label,Q,desc,'Already queued — you\'re on it. Check the job strip above.')
+    : act(label,cost,desc,fn,id,cls);
   let actsHtml;
   if(near){
     actsHtml=
       rushBtn+
       A('🔍 Inspect','$'+inspectCost(id),'Reveal per-part wear.'+pvInsp,'actInspect','inspect','')+
-      A('🔧 Repair','$'+repairCost(id),(m.broken?'Emergency crew handles this breakdown.':'Overhaul all parts to like-new.'+pvRep),'actRepair',m.broken?'emergency':'repair',disB?'disabled':'primary')+
-      act('📦 Stock spare','$'+worstChan(m).part,'Pre-buy the likeliest part.'+pvStock,'actStock',id,m.stocked?'disabled':'buy')+
+      (disB&&!pend.has('emergency')
+        ? offAct('🔧 Repair','—','Machine is down.','The emergency crew already covers this breakdown')
+        : A('🔧 Repair','$'+repairCost(id),(m.broken?'Emergency crew handles this breakdown.':'Overhaul all parts to like-new.'+pvRep),'actRepair',m.broken?'emergency':'repair',disB?'disabled':'primary'))+
+      (m.stocked
+        ? offAct('📦 Stock spare','<span style="color:var(--green)">✓ stocked</span>','Spare is on site for the next breakdown.','Spare already stocked — a breakdown here skips the parts premium')
+        : act('📦 Stock spare','$'+worstChan(m).part,'Pre-buy the likeliest part.'+pvStock,'actStock',id,'buy'))+
       A('⬆ Upgrade','$'+C.UPGRADE_COST,'Capacity ×1.4 → '+upNext+'/hr. Faster line = faster wear.'+pvUpg,'actUpgrade','upgrade','')+
-      A('🤖 Automate','$'+C.AUTOMATE_COST,'Condition-monitor + auto-drain, re-reveals daily.'+pvAuto,'actAutomate','automate',m.automated?'disabled':'')+
+      (m.automated
+        ? offAct('🤖 Automate','<span style="color:var(--green)">✓ active</span>','Condition monitoring is running.','Already automated — wear is cut and condition re-reveals every morning')
+        : A('🤖 Automate','$'+C.AUTOMATE_COST,'Condition-monitor + auto-drain, re-reveals daily.'+pvAuto,'actAutomate','automate',''))+
       nurseBtn+
       A('🆕 Replace','$'+m.replaceCost,'Brand-new unit.'+pvRepl,'actReplace','replace','danger');
   } else {
@@ -839,6 +880,7 @@ function openSheet(id){
       '<div class="d">You have to be at the machine to work on it. Tap to walk over; the panel reopens when you arrive.</div></button>';
   }
   const html=
+    '<div class="sheet-top">'+
     '<div class="sheet-head"><div class="mi" style="background:'+m.color+'"></div>'+
     '<h3>'+m.name+' <span class="crit">'+m.code+' · crit '+m.crit+'</span></h3>'+
     '<button class="sheet-close" onclick="selectNone()">×</button></div>'+
@@ -852,16 +894,23 @@ function openSheet(id){
       (m.automated?'<span class="chip good">auto ✓</span>':'')+
       (m.nursed?'<span class="chip warn">nursed 🐢</span>':'')+pn+
       (near?'':'<span class="chip warn">too far <b>🚶</b></span>')+
-    '</div>'+ cond +
+    '</div>'+
     '<div id="jobstrip"></div>'+
+    '</div>'+ cond +
     '<div class="acts">'+actsHtml+'</div>';
   sh.innerHTML=html; sh.classList.add('open');
 }
 function act(t,cost,d,fn,id,cls){
+  let ch=cost;
+  if(typeof cost==='string'&&/^\$\d/.test(cost)){
+    const n=parseInt(cost.replace(/[^0-9]/g,''),10);
+    if(!canPay(n)) ch='<span class="poor">'+cost+'</span>';   // red = can't afford (tap still explains)
+  }
   return '<button class="act '+(cls==='primary'?'primary':cls==='danger'?'danger':cls==='buy'?'buy':'')+'" '+
     (cls==='disabled'?'disabled':'')+' onclick="'+fn+'(\''+id+'\')">'+
-    '<div class="t">'+t+' <span class="cost">'+cost+'</span></div><div class="d">'+d+'</div></button>';
+    '<div class="t"><span class="tl">'+t+'</span> <span class="cost">'+ch+'</span></div><div class="d">'+d+'</div></button>';
 }
+function offMsg(m){ toast(m); }
 function renderTech(){
   if(HEADLESS) return;
   const q=tech.queue.length;
@@ -1630,7 +1679,7 @@ const joy={x:0,y:0,id:null};
 (function(){
   const el=$('joy'), nub=$('jnub');
   function setNub(dx,dy){ nub.style.transform='translate(-50%,-50%) translate('+dx+'px,'+dy+'px)'; }
-  el.addEventListener('pointerdown',e=>{ joy.id=e.pointerId; el.setPointerCapture(e.pointerId); e.preventDefault(); });
+  el.addEventListener('pointerdown',e=>{ joy.id=e.pointerId; try{el.setPointerCapture(e.pointerId);}catch(x){} e.preventDefault(); });
   el.addEventListener('pointermove',e=>{ if(e.pointerId!==joy.id) return;
     const r=el.getBoundingClientRect();
     let dx=e.clientX-(r.left+r.width/2), dy=e.clientY-(r.top+r.height/2);
@@ -1650,7 +1699,7 @@ const joy={x:0,y:0,id:null};
   el.addEventListener('pointerdown',e=>{ ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
     if(ptrs.size===1){ dragging=false; sx=e.clientX; sy=e.clientY; }
     if(ptrs.size===2){ const a=[...ptrs.values()]; pinch0=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y); dist0=camDist; }
-    el.setPointerCapture(e.pointerId); });
+    try{el.setPointerCapture(e.pointerId);}catch(x){} });
   el.addEventListener('pointermove',e=>{ const p=ptrs.get(e.pointerId); if(!p) return;
     const dx=e.clientX-p.x, dy=e.clientY-p.y; p.x=e.clientX; p.y=e.clientY;
     if(ptrs.size===2){ const a=[...ptrs.values()]; const d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);
@@ -1895,7 +1944,8 @@ function updateCam(dt){
   const cp=Math.cos(camPitch), sp=Math.sin(camPitch);
   const la=0.34; // look-ahead: camera leads the walk
   const tx=CH.p.x+(CH.vel?CH.vel.x*la:0), tz=CH.p.z+(CH.vel?CH.vel.y*la:0);
-  _camPos.set(tx+Math.sin(camYaw)*cp*camDist, Math.min(5.15,1.3+sp*camDist), tz+Math.cos(camYaw)*cp*camDist);
+  const cd=camDist*(1-(CH.shb||0)*0.055);   // ease in while the sheet is open
+  _camPos.set(tx+Math.sin(camYaw)*cp*cd, Math.min(5.15,1.3+sp*cd), tz+Math.cos(camYaw)*cp*cd);
   const k=1-Math.pow(0.002,dt);
   camera.position.lerp(_camPos,k);
   // keep the subject framed above an open bottom sheet (bias subject upward,
@@ -1908,7 +1958,7 @@ function updateCam(dt){
   if(shOpen && S.sel && MACH[S.sel]){ const mm=MACH[S.sel];
     ttx=tx*0.65+mm.pos[0]*0.35; ttz=tz*0.65+mm.pos[1]*0.35; }
   _camTgt.set(ttx,1.25-CH.shb,ttz);
-  camera.position.y+=CH.shb*0.25;
+  camera.position.y+=CH.shb*0.45;
   camera.lookAt(_camTgt);
   // trauma shake (decays quadratically-felt); reduced-FX mode softens it
   if(SHK.t>0){ const s=SHK.t*SHK.t*(OPTS.reduceFx?0.3:1);

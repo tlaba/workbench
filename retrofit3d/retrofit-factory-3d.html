@@ -410,6 +410,30 @@ function rollBreakdowns(){
     if(rnd()<p){ seize(m); }
   }
 }
+// On a breakdown, planned inspect/repair/fix jobs for that machine are subsumed
+// by the emergency (which restores every channel and reveals condition). Cancel
+// them with a full refund so labor is never charged twice; a current job still
+// in its travel phase converts into the emergency call (the walk continues).
+// The emergency premium itself is untouched — breakdowns keep their sting.
+function normalizeJobs(m){
+  const canceled=[]; let converted=false;
+  for(let i=tech.queue.length-1;i>=0;i--){ const j=tech.queue[i];
+    if(j.mid===m.id && (j.type==='repair'||j.type==='fix'||j.type==='inspect')){
+      tech.queue.splice(i,1); canceled.push(j); } }
+  if(tech.busy && tech.job && tech.job.mid===m.id && tech.phase==='travel' &&
+     (tech.job.type==='repair'||tech.job.type==='fix'||tech.job.type==='inspect')){
+    canceled.push(tech.job); converted=true;
+    tech.busy=false; tech.job=null; tech.phase='idle'; tech.timer=0; tech.total=0;
+  }
+  if(!canceled.length) return;
+  let refund=0;
+  for(const j of canceled){ const cst=j.cost||0; refund+=cst;
+    if(j.type==='inspect') S.stats.insp=Math.max(0,S.stats.insp-cst);
+    else S.stats.planned=Math.max(0,S.stats.planned-cst); }
+  if(refund>0) S.cash+=refund;
+  GameEvents.emit('jobsNormalized',{mid:m.id, converted, refund,
+    canceled:canceled.map(j=>({type:j.type,cost:j.cost||0}))});
+}
 function seize(m){
   const c=worstChan(m); c.w=1;
   m.broken=true; m.brokenChan=c;
@@ -426,6 +450,7 @@ function seize(m){
   S.stats.nBrk++; S.stats.brk[m.id]=(S.stats.brk[m.id]||0)+1;
   if(S.stats.firstBrkDay==null) S.stats.firstBrkDay=S.day;
   S.stats.emerg+=callout;
+  normalizeJobs(m);
   enqueue({mid:m.id, type:'emergency', chan:c.id});
   alert('⛔ '+m.code+' SEIZED — '+c.nm+'. Emergency call-out −$'+callout+'.','');
   if(m.id==='compressor') alert('Air pressure lost — all pneumatic machines will stall!','');
@@ -462,6 +487,18 @@ const SERVICE_MTTR={mixer:2,conveyor:2,oven:2,slicer:1,packager:1.5,compressor:2
 const FAILMTTR   ={mixer:4,conveyor:3.5,oven:3,slicer:2.5,packager:2,compressor:5};
 
 /* =============================== TECHNICIAN =============================== */
+// Travel scales with where you actually stand. At the panel: 0-4 min of setup.
+// Across the floor: 4..TRAVEL_MIN by distance. Headless runs have no meaningful
+// character position, so they keep the original fixed timing (tuned economy).
+function travelTime(mid){
+  if(!HEADLESS && typeof CH!=='undefined' && CH){
+    const p=panelPt(MACH[mid]);
+    const d=Math.hypot(CH.p.x-p.x, CH.p.z-p.z);
+    if(d<=2.2) return Math.round(clamp(d*2,0,4));
+    return Math.round(clamp(3+d*0.45, 4, C.TRAVEL_MIN));
+  }
+  return tech.atPrev===mid ? 4 : C.TRAVEL_MIN;
+}
 function enqueue(job){ // job: {mid,type,chan?}
   if(job.type==='emergency'){ tech.queue.unshift(job); } else tech.queue.push(job);
   if(!tech.busy) startNext();
@@ -470,7 +507,7 @@ function enqueue(job){ // job: {mid,type,chan?}
 function startNext(){
   if(tech.queue.length===0){ tech.busy=false; tech.job=null; tech.phase='idle'; renderTech(); return; }
   tech.busy=true; tech.job=tech.queue.shift();
-  tech.phase='travel'; tech.timer=(tech.atPrev===tech.job.mid?4:C.TRAVEL_MIN); tech.total=tech.timer;
+  tech.phase='travel'; tech.timer=travelTime(tech.job.mid); tech.total=tech.timer;
   renderTech();
 }
 function advanceTech(){
@@ -580,11 +617,11 @@ function repairPart(id){ return worstChan(MACH[id]).part; }
 function repairCost(id){ return repairLabor(id)+repairPart(id); }
 
 function actInspect(id){ const c=inspectCost(id); if(!canPay(c)){toast('Not enough cash');return;}
-  S.cash-=c; S.stats.insp+=c; enqueue({mid:id,type:'inspect'}); toast('🔍 Inspecting '+MACH[id].code+' (−$'+c+')'); updateHUD(); openSheet(id);
+  S.cash-=c; S.stats.insp+=c; enqueue({mid:id,type:'inspect',cost:c}); toast('🔍 Inspecting '+MACH[id].code+' (−$'+c+')'); updateHUD(); openSheet(id);
   GameEvents.emit('orderPlaced',{id:id,type:'inspect',cost:c}); }
 function actRepair(id){ const m=MACH[id]; if(m.broken){toast('Emergency job already queued');return;}
   const c=repairCost(id); if(!canPay(c)){toast('Not enough cash');return;}
-  S.cash-=c; S.stats.planned+=c; enqueue({mid:id,type:'repair'}); toast('🔧 Servicing '+m.code+' (−$'+c+')'); updateHUD(); openSheet(id);
+  S.cash-=c; S.stats.planned+=c; enqueue({mid:id,type:'repair',cost:c}); toast('🔧 Servicing '+m.code+' (−$'+c+')'); updateHUD(); openSheet(id);
   GameEvents.emit('orderPlaced',{id:id,type:'repair',cost:c}); }
 function actUpgrade(id){ if(!canPay(C.UPGRADE_COST)){toast('Need $'+C.UPGRADE_COST);return;}
   S.cash-=C.UPGRADE_COST; S.stats.capex+=C.UPGRADE_COST; enqueue({mid:id,type:'upgrade'}); toast('⬆ Upgrade queued '+MACH[id].code); updateHUD(); openSheet(id);
@@ -600,7 +637,7 @@ function actFix(id,chanId){ const m=MACH[id]; if(m.broken){toast('Emergency crew
   const c=m.ch.find(x=>x.id===chanId); if(!c) return;
   if(c.reveal==null){toast('Inspect first — a targeted fix needs known condition');return;}
   const cost=fixCost(id,chanId); if(!canPay(cost)){toast('Not enough cash');return;}
-  S.cash-=cost; S.stats.planned+=cost; enqueue({mid:id,type:'fix',chan:chanId});
+  S.cash-=cost; S.stats.planned+=cost; enqueue({mid:id,type:'fix',chan:chanId,cost:cost});
   toast('🔩 Targeted fix: '+c.nm+' (−$'+cost+')'); updateHUD(); openSheet(id);
   GameEvents.emit('orderPlaced',{id:id,type:'fix',cost:cost}); }
 function actStock(id){ const m=MACH[id]; if(m.stocked){toast('Part already stocked');return;}
@@ -639,7 +676,11 @@ function jobStripHTML(id){
   let h='';
   if(fresh) h+='<div class="js-paid">✓ Order placed — paid $'+LASTORDER.amt+'</div>';
   if(cur){ const nm=JOBNAME[cur.type]||cur.type;
-    if(tech.phase==='travel') h+='<div class="js-row">🚶 Walking over — '+nm.toLowerCase()+' starts on arrival</div>';
+    if(tech.phase==='travel'){
+      h+= (tech.total<=4)
+        ? '<div class="js-row">🧰 At the panel — setting up '+nm.toLowerCase()+' ('+Math.ceil(Math.max(0,tech.timer))+'m)</div>'
+        : '<div class="js-row">🚶 Walking over — '+nm.toLowerCase()+' starts on arrival ('+Math.ceil(Math.max(0,tech.timer))+'m)</div>';
+    }
     else { const pct=Math.round((1-tech.timer/Math.max(1,tech.total))*100);
       h+='<div class="js-row">'+(tech.phase==='wait'?'📦 Waiting for emergency part':'🔧 '+nm+' in progress')+
          ' — '+Math.ceil(Math.max(0,tech.timer))+'m left</div>'+
@@ -1866,6 +1907,14 @@ onFx('daySettled',l=>{
 onFx('orderPlaced',({id,cost})=>{
   if(cost>0){ sTick(); popAtMach(id,'−$'+cost,'#ffb23e',0.15);
     LASTORDER={id:id,amt:cost,at:performance.now()}; }
+});
+onFx('jobsNormalized',({mid,converted,refund,canceled})=>{
+  const m=MACH[mid];
+  const what=canceled.map(x=>(JOBNAME[x.type]||x.type).toLowerCase()).join(' + ');
+  alert('↩ '+m.code+': '+what+' '+(converted?'converted into the emergency call':'canceled — the emergency covers it')
+    +(refund>0?' (+$'+refund+' refunded)':''),'info');
+  if(refund>0) popAtMach(mid,'+$'+refund+' refunded','#3ad17a',0.15);
+  sTick();
 });
 onFx('bottleneckChanged',({to})=>{
   if(S.T>1 && !S.over && worldBuilt) popAtMach(to,'◄ LIMIT moved here','#ffb23e',1.0);

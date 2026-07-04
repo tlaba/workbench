@@ -95,8 +95,18 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 .chan .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bar{width:96px;height:9px;background:#0a0e13;border-radius:5px;overflow:hidden;border:1px solid var(--edge);flex:0 0 auto}
 .bar i{display:block;height:100%}
-.chan .pf{font-family:var(--mono);font-size:9px;width:58px;text-align:right;color:var(--dim)}
+.chan .pf{font-family:var(--mono);font-size:9px;width:44px;text-align:right;color:var(--dim)}
+.fixbtn{flex:0 0 auto;background:#12281c;border:1px solid #2c7a48;color:var(--green);border-radius:6px;
+  font-size:9.5px;padding:3px 6px;font-family:var(--mono);font-weight:700}
+.fixbtn:disabled{opacity:.45;border-color:var(--edge);color:var(--dim);background:var(--panel2)}
 .hidden-note{font-size:10px;color:var(--dim);font-style:italic;padding:2px 0 6px}
+/* post-mortem block in the end modal */
+.pm{margin:10px 0 4px;padding:10px 12px;background:#121a24;border:1px solid var(--edge);border-radius:10px}
+.pm h4{margin:0 0 6px;font-size:10px;color:var(--dim);letter-spacing:.5px;text-transform:uppercase}
+.pm-row{font-size:11.5px;margin-bottom:4px;color:var(--ink)}
+.pm-row b{font-family:var(--mono)} .pm-row .neg{color:var(--red)}
+.pm-tip{margin-top:7px;padding-top:7px;border-top:1px solid #1a232e;font-size:11.5px;color:var(--gold);line-height:1.45}
+.pm-best{text-align:center;color:var(--gold);font-weight:800;font-size:13px;letter-spacing:1px;margin:2px 0 4px;animation:spulse 1.2s infinite}
 /* live job-status strip inside the sheet */
 #jobstrip{display:none;margin:2px 14px 0;padding:9px 11px;background:#0f2318;border:1px solid #2c7a48;
   border-radius:10px;font-size:11.5px;line-height:1.55}
@@ -222,14 +232,14 @@ const C = {
   TICKS_PER_DAY:480, D_MAX:10, ALPHA:2.0, MU:3.0, KAPPA:6.0,
   P_NOM:7.0, P_MIN:4.0, LAMBDA_LEAK:0.35, M0:0.05, M_SEAL:0.75,
   AIR_DRAW:32, COMP_CAP:40,
-  STARTING_CASH:8000, WIN_CASH:20000, PRICE:3.50, SALVAGE:1.20,
+  STARTING_CASH:8000, WIN_CASH:20000, PRICE:3.60, SALVAGE:1.20,
   CONTRACT_DEMAND:800, CONTRACT_FLOOR:400, SHORT_SHIP_PENALTY:600,
   ENERGY_PRICE:0.18, TECH_WAGE_DAY:240, OVERHEAD_DAY:110,
   TRAVEL_MIN:15, INSPECT_MIN:30,
   EMERGENCY_PART_MULT:2.5, EMERGENCY_DELIVERY_MIN:180,
-  LABOR_REPAIR:150, LABOR_EMERGENCY_MULT:2.0,
-  CASCADE_DAMAGE:400, WIP_SCRAP_RATE:40,
-  UPGRADE_COST:1500, UPGRADE_TIER:1.4, AUTOMATE_COST:1200,
+  LABOR_REPAIR:150, LABOR_EMERGENCY_MULT:1.75, LABOR_FIX:70, FIX_TIME_FRAC:0.33, SERVICE_TIME_MULT:1.5,
+  CASCADE_DAMAGE:350, WIP_SCRAP_RATE:40,
+  UPGRADE_COST:1500, UPGRADE_TIER:1.4, AUTOMATE_COST:1000,
   REPAIR_FLOOR:0.08, SIGMA_INSPECT:0.05,
   STRIKES_TO_LOSE:3, HEALTH_CONDEMN:0.15, WEAR_SCALE:0.85, HAZARD_SCALE:0.4,
 };
@@ -287,7 +297,7 @@ const DEFS = [
     base:40, energy:6, risk:0.08, crit:5,
     pneumatic:false, deps:[], utility:true, replaceCost:3000, color:'#4a7a8a',
     ch:[
-      {id:'moist',   nm:'Air dryer / moisture', type:'MOIST', k:0.00020, w:0.39, part:75},
+      {id:'moist',   nm:'Air dryer / moisture', type:'MOIST', k:0.00023, w:0.39, part:75},
       {id:'leak',    nm:'Header air leak',      type:'LEAK', k:0.00016, w:0.20, part:35},
       {id:'valve',   nm:'Piston ring & valve',  type:'SEIZE',k:0.00014, w:0.25, part:320},
     ]},
@@ -299,8 +309,9 @@ let S, MACH, tech;
 function machHealth(m){ let mn=1; for(const c of m.ch) mn=Math.min(mn,1-c.w); return mn; }
 function worstChan(m){ let w=null; for(const c of m.ch) if(!w||c.w>w.w) w=c; return w; }
 
-function newGame(){
-  _seed=1234567>>>0;
+function newGame(seed){
+  const sd=(seed==null? Math.floor(Math.random()*4294967295)+1 : seed)>>>0;
+  _seed=sd||1;
   MACH={};
   for(const d of DEFS){
     const m={ ...d, ch:d.ch.map(c=>({...c, w0:c.w, reveal:null, revealHazard:null})),
@@ -313,6 +324,7 @@ function newGame(){
     m.lambda0 = -Math.log(1-m.risk)/C.TICKS_PER_DAY / Math.exp(C.KAPPA*(1-H0)); }
   tech={ busy:false, job:null, queue:[], atPrev:null, phase:'idle', timer:0, total:0, minsToday:0 };
   S={ cash:C.STARTING_CASH, day:1, tick:0, strikes:0, contractLive:true, over:false, won:false,
+    seed:sd, stats:{brk:{},nBrk:0,firstBrkDay:null,emerg:0,planned:0,insp:0,capex:0,peakMoist:0,downH:0},
     // daily accumulators
     produced:0, energyToday:0, downMinToday:0, scrapWipMin:0,
     airP:C.P_NOM, moisture:0, airFactor:1, T:0, bottleneck:'oven',
@@ -370,7 +382,7 @@ function advanceWear(){
     const u=m.u;
     for(const c of m.ch){
       const S_ = c.moist? (1+C.MU*S.moisture):1;
-      const k = (m.automated? c.k*0.4 : c.k)*C.WEAR_SCALE;   // predictive/automate cuts wear rate
+      const k = (m.automated? c.k*0.35 : c.k)*C.WEAR_SCALE;  // predictive/automate cuts wear rate
       c.w=clamp(c.w + k*Math.pow(u,C.ALPHA)*S_, 0, 1);
     }
   }
@@ -389,13 +401,20 @@ function seize(m){
   const c=worstChan(m); c.w=1;
   m.broken=true; m.brokenChan=c;
   const fail=FAILMTTR[m.id];
-  m.awaitDelivery = m.stocked?0:C.EMERGENCY_DELIVERY_MIN;
+  const wasStocked=m.stocked;
+  m.awaitDelivery = wasStocked?0:C.EMERGENCY_DELIVERY_MIN;
   m.downMins = fail*60;
   m.stocked=false;
-  // reactive emergency repair auto-dispatched (plant reacts). Charged as emergency.
+  // reactive emergency repair auto-dispatched. THE premium: 2.5x parts (unless a
+  // spare was stocked) + double labor + collateral damage. Run-to-failure pays here.
+  const callout=C.CASCADE_DAMAGE + Math.round(C.LABOR_REPAIR*C.LABOR_EMERGENCY_MULT)
+    + (wasStocked?0:Math.round(c.part*C.EMERGENCY_PART_MULT));
+  S.cash -= callout; S._lastCallout=callout;
+  S.stats.nBrk++; S.stats.brk[m.id]=(S.stats.brk[m.id]||0)+1;
+  if(S.stats.firstBrkDay==null) S.stats.firstBrkDay=S.day;
+  S.stats.emerg+=callout;
   enqueue({mid:m.id, type:'emergency', chan:c.id});
-  S.cash -= C.CASCADE_DAMAGE;
-  alert('⛔ '+m.code+' SEIZED — '+c.nm+'. Emergency call-out.','');
+  alert('⛔ '+m.code+' SEIZED — '+c.nm+'. Emergency call-out −$'+callout+'.','');
   if(m.id==='compressor') alert('Air pressure lost — all pneumatic machines will stall!','');
   chirp('bad');
 }
@@ -416,6 +435,10 @@ function settleDay(){
   // reset daily accumulators
   S.produced=0; S.energyToday=0; S.downMinToday=0; S.scrapWipMin=0; tech.minsToday=0;
   if(S.strikes>=C.STRIKES_TO_LOSE && S.contractLive){ S.contractLive=false; }
+  S.stats.peakMoist=Math.max(S.stats.peakMoist,S.moisture);
+  S.stats.downH+=ledger.down;
+  // condition monitoring: automated machines re-reveal their true wear daily
+  for(const id in MACH){ const m=MACH[id]; if(m.automated) for(const c of m.ch) c.reveal=c.w; }
   return ledger;
 }
 
@@ -451,7 +474,7 @@ function advanceTech(){
   // work
   if(tech.phase==='work'){
     if(m.broken){ S.downMinToday++; S.scrapWipMin++; } // machine down during emergency teardown
-    else if(j.type==='repair'||j.type==='upgrade'||j.type==='replace'||j.type==='automate'){ S.downMinToday++; S.scrapWipMin++; }
+    else if(j.type==='repair'||j.type==='fix'||j.type==='upgrade'||j.type==='replace'||j.type==='automate'){ S.downMinToday++; S.scrapWipMin++; }
     if(tech.timer<=0) finishJob(j,m);
   }
 }
@@ -459,7 +482,8 @@ function beginWork(j,m){
   tech.phase='work';
   if(j.type==='inspect') tech.timer=C.INSPECT_MIN;
   else if(j.type==='emergency') tech.timer=FAILMTTR[m.id]*60;
-  else if(j.type==='repair') tech.timer=SERVICE_MTTR[m.id]*60;
+  else if(j.type==='repair') tech.timer=Math.round(SERVICE_MTTR[m.id]*60*C.SERVICE_TIME_MULT); // full overhaul: slower than a targeted swap
+  else if(j.type==='fix') tech.timer=Math.max(30,Math.round(SERVICE_MTTR[m.id]*60*C.FIX_TIME_FRAC));
   else if(j.type==='upgrade') tech.timer=180;
   else if(j.type==='automate') tech.timer=150;
   else if(j.type==='replace') tech.timer=SERVICE_MTTR[m.id]*60+120;
@@ -484,6 +508,10 @@ function finishJob(j,m){
     for(const c of m.ch){ c.reveal=c.w; }
     m.broken=false;
     alert('✅ '+m.code+' serviced — health restored.','good'); chirp('good');
+  } else if(j.type==='fix'){
+    const c=m.ch.find(x=>x.id===j.chan);
+    if(c){ c.w=Math.min(c.w,C.REPAIR_FLOOR); c.reveal=c.w; }
+    alert('🔩 '+m.code+' — '+(c?c.nm:'part')+' replaced (targeted fix).','good'); chirp('good');
   } else if(j.type==='upgrade'){
     m.up*=C.UPGRADE_TIER;
     alert('⬆ '+m.code+' upgraded — capacity ×1.4 ('+Math.round(m.base*m.up)+'/hr).','good'); chirp('good');
@@ -536,19 +564,26 @@ function repairPart(id){ return worstChan(MACH[id]).part; }
 function repairCost(id){ return repairLabor(id)+repairPart(id); }
 
 function actInspect(id){ const c=inspectCost(id); if(!canPay(c)){toast('Not enough cash');return;}
-  S.cash-=c; enqueue({mid:id,type:'inspect'}); toast('🔍 Inspecting '+MACH[id].code+' (−$'+c+')'); updateHUD(); openSheet(id); }
+  S.cash-=c; S.stats.insp+=c; enqueue({mid:id,type:'inspect'}); toast('🔍 Inspecting '+MACH[id].code+' (−$'+c+')'); updateHUD(); openSheet(id); }
 function actRepair(id){ const m=MACH[id]; if(m.broken){toast('Emergency job already queued');return;}
   const c=repairCost(id); if(!canPay(c)){toast('Not enough cash');return;}
-  S.cash-=c; enqueue({mid:id,type:'repair'}); toast('🔧 Servicing '+m.code+' (−$'+c+')'); updateHUD(); openSheet(id); }
+  S.cash-=c; S.stats.planned+=c; enqueue({mid:id,type:'repair'}); toast('🔧 Servicing '+m.code+' (−$'+c+')'); updateHUD(); openSheet(id); }
 function actUpgrade(id){ if(!canPay(C.UPGRADE_COST)){toast('Need $'+C.UPGRADE_COST);return;}
-  S.cash-=C.UPGRADE_COST; enqueue({mid:id,type:'upgrade'}); toast('⬆ Upgrade queued '+MACH[id].code); updateHUD(); openSheet(id); }
+  S.cash-=C.UPGRADE_COST; S.stats.capex+=C.UPGRADE_COST; enqueue({mid:id,type:'upgrade'}); toast('⬆ Upgrade queued '+MACH[id].code); updateHUD(); openSheet(id); }
 function actAutomate(id){ if(MACH[id].automated){toast('Already automated');return;} if(!canPay(C.AUTOMATE_COST)){toast('Need $'+C.AUTOMATE_COST);return;}
-  S.cash-=C.AUTOMATE_COST; enqueue({mid:id,type:'automate'}); toast('🤖 Condition-monitoring queued '+MACH[id].code); updateHUD(); openSheet(id); }
+  S.cash-=C.AUTOMATE_COST; S.stats.capex+=C.AUTOMATE_COST; enqueue({mid:id,type:'automate'}); toast('🤖 Condition-monitoring queued '+MACH[id].code); updateHUD(); openSheet(id); }
 function actReplace(id){ const m=MACH[id]; if(!canPay(m.replaceCost)){toast('Need $'+m.replaceCost);return;}
-  S.cash-=m.replaceCost; enqueue({mid:id,type:'replace'}); toast('🆕 Replacement queued '+m.code); updateHUD(); openSheet(id); }
+  S.cash-=m.replaceCost; S.stats.capex+=m.replaceCost; enqueue({mid:id,type:'replace'}); toast('🆕 Replacement queued '+m.code); updateHUD(); openSheet(id); }
+function fixCost(id,chanId){ const c=MACH[id].ch.find(x=>x.id===chanId); return C.LABOR_FIX+(c?c.part:0); }
+function actFix(id,chanId){ const m=MACH[id]; if(m.broken){toast('Emergency crew already on it');return;}
+  const c=m.ch.find(x=>x.id===chanId); if(!c) return;
+  if(c.reveal==null){toast('Inspect first — a targeted fix needs known condition');return;}
+  const cost=fixCost(id,chanId); if(!canPay(cost)){toast('Not enough cash');return;}
+  S.cash-=cost; S.stats.planned+=cost; enqueue({mid:id,type:'fix',chan:chanId});
+  toast('🔩 Targeted fix: '+c.nm+' (−$'+cost+')'); updateHUD(); openSheet(id); }
 function actStock(id){ const m=MACH[id]; if(m.stocked){toast('Part already stocked');return;}
   const p=worstChan(m).part; if(!canPay(p)){toast('Not enough cash');return;}
-  m.stocked=true; S.cash-=p; toast('📦 Spare stocked for '+m.code+' (skips emergency premium)'); updateHUD(); openSheet(id); }
+  m.stocked=true; S.cash-=p; S.stats.planned+=p; toast('📦 Spare stocked for '+m.code+' (skips emergency premium)'); updateHUD(); openSheet(id); }
 
 /* =============================== RENDER: HUD/SHEET (DOM) =============================== */
 const $=id=>document.getElementById(id);
@@ -569,7 +604,7 @@ function updateHUD(){
   renderFloor();
 }
 function selectNone(){ S.sel=null; $('sheet').classList.remove('open'); }
-const JOBNAME={inspect:'Inspection',repair:'Repair service',emergency:'Emergency repair',
+const JOBNAME={inspect:'Inspection',repair:'Repair service',fix:'Targeted fix',emergency:'Emergency repair',
   upgrade:'Upgrade install',automate:'Automation install',replace:'Replacement'};
 let LASTORDER=null; // {id,amt,at} — set by the spend wrapper; shows "order placed" in the sheet
 function jobStripHTML(id){
@@ -595,17 +630,25 @@ function openSheet(id){
   const near = charNear(id);
   const upNext=Math.round(m.base*m.up*C.UPGRADE_TIER);
   const pn=m.pneumatic?'<span class="chip">air ✓</span>':'';
+  const pendFix=new Set(tech.queue.filter(j=>j.mid===id&&j.type==='fix').map(j=>j.chan));
+  if(tech.busy&&tech.job&&tech.job.mid===id&&tech.job.type==='fix') pendFix.add(tech.job.chan);
   let cond='';
   cond+='<div class="cond"><h4>Condition '+(rev?'(last inspection)':'(hidden — inspect to reveal)')+'</h4>';
   for(const c of m.ch){
     const shown = c.reveal!=null;
     const w = shown? c.reveal : null;
     const barw = shown? Math.round(w*100):0;
+    let fx='';
+    if(shown && near && !m.broken){
+      const pf=pendFix.has(c.id), ok=w<0.18;
+      fx='<button class="fixbtn" '+((pf||ok)?'disabled':'')+
+        ' onclick="actFix(\''+id+'\',\''+c.id+'\')">🔩 '+(pf?'✓':ok?'OK':'$'+fixCost(id,c.id))+'</button>';
+    }
     cond+='<div class="chan"><span class="nm">'+c.nm+(c.moist?' 💧':'')+'</span>'+
       '<span class="bar"><i style="width:'+(shown?barw:0)+'%;background:'+(shown?chanColor(w):'#2b3a4a')+'"></i></span>'+
-      '<span class="pf">'+(shown?(Math.round((1-w)*100)+'% H'):'??')+'</span></div>';
+      '<span class="pf">'+(shown?(Math.round((1-w)*100)+'% H'):'??')+'</span>'+fx+'</div>';
   }
-  if(!rev) cond+='<div class="hidden-note">You are guessing. A $'+inspectCost(id)+' inspection reveals per-part wear with zero downtime.</div>';
+  if(!rev) cond+='<div class="hidden-note">You are guessing. A $'+inspectCost(id)+' inspection reveals per-part wear — and unlocks 🔩 targeted fixes (cheaper + faster than a full service).</div>';
   cond+='</div>';
   const disB = m.broken;
   const curType=(tech.busy&&tech.job&&tech.job.mid===id)?tech.job.type:null;
@@ -711,33 +754,59 @@ function endGame(l,lose){
       lose==='L3'?'Fleet average health fell below 15%. The plant is unsafe.':'Day 10 ended under the $20,000 target.';
   } else {
     const cash=S.cash; S.won=cash>=C.WIN_CASH;
-    if(cash>=28000&&S.strikes===0){grade='★★★';gc='var(--gold)';}
-    else if(cash>=24000&&S.strikes===0){grade='★★';gc='var(--green)';}
+    if(cash>=23500&&S.strikes===0){grade='★★★';gc='var(--gold)';}
+    else if(cash>=22000&&S.strikes===0){grade='★★';gc='var(--green)';}
     else if(cash>=C.WIN_CASH){grade='★';gc='var(--green)';}
     else {grade='✗';gc='var(--red)';}
     title=S.won?'CONTRACT KEPT':'OBJECTIVE FAILED';
     sub='Finished Day 10 with '+money(cash)+' (target $20,000).';
   }
+  // ---- post-mortem: what actually happened this run ----
+  const st=S.stats||{brk:{},nBrk:0,emerg:0,planned:0,insp:0,peakMoist:0,downH:0};
+  let worstId=null,wn=0; for(const k in st.brk) if(st.brk[k]>wn){wn=st.brk[k];worstId=k;}
+  let tip='';
+  if(lose==='L2'||S.strikes>=2) tip='Keep output above 400/day: the ◄ LIMIT machine sets the whole line — service it first.';
+  else if(st.emerg>st.planned+st.insp) tip='Emergencies bill 2.5× parts + double labor. Inspect early and 🔩 fix the worn part before it lets go.';
+  else if(st.peakMoist>0.55) tip='Automate the compressor: the auto-drain kills the moisture that eats seals on Mixer, Slicer and Packager.';
+  else if(!S.won) tip='Thin margin? 🔩 targeted fixes ($'+C.LABOR_FIX+' + one part) beat full services once you know which part is worn.';
+  else tip='Chasing ★★★? Automate the cascade roots early, then run on inspections + targeted fixes only.';
+  const pm='<div class="pm"><h4>Shift post-mortem</h4>'+
+    '<div class="pm-row">⛔ Breakdowns: <b>'+st.nBrk+'</b>'+(worstId?(' — worst '+MACH[worstId].code+' ×'+wn+', first on day '+st.firstBrkDay):'')+'</div>'+
+    '<div class="pm-row">💸 Emergency call-outs <b class="neg">'+money(-st.emerg).replace('−','−')+'</b> vs planned upkeep <b>'+money(st.planned+st.insp)+'</b></div>'+
+    '<div class="pm-row">💧 Compressor moisture peaked at <b>'+Math.round(st.peakMoist*100)+'%</b>'+(st.peakMoist>0.55?' — accelerating 3 machines\' seals':'')+'</div>'+
+    '<div class="pm-row">⏱ Total downtime <b>'+st.downH.toFixed(1)+'h</b></div>'+
+    '<div class="pm-tip">💡 '+tip+'</div></div>';
+  // ---- personal best (localStorage) ----
+  let pb=null; try{ pb=JSON.parse(localStorage.getItem('rf3d_best')||'null'); }catch(e){}
+  let pbLine='';
+  if(!lose && S.won && (!pb || S.cash>pb.cash)){
+    pb={cash:Math.round(S.cash), grade:grade, seed:S.seed};
+    try{ localStorage.setItem('rf3d_best',JSON.stringify(pb)); }catch(e){}
+    pbLine='<div class="pm-best">▲ NEW PERSONAL BEST</div>';
+  }
+  if(pb) pbLine+='<div class="sub" style="text-align:center">Personal best: $'+pb.cash.toLocaleString()+' '+(pb.grade||'')+'</div>';
   rev.innerHTML='<h2>'+title+'</h2><div class="sub">'+sub+'</div>'+
-    '<div class="grade" style="color:'+gc+'">'+grade+'</div>'+
+    '<div class="grade" style="color:'+gc+'">'+grade+'</div>'+ pbLine +
     '<table class="ledger">'+
     '<tr><td>Final cash</td><td>'+money(S.cash)+'</td></tr>'+
     '<tr><td>Started with</td><td>$8,000</td></tr>'+
     '<tr class="tot"><td>Net over 10 days</td><td class="'+(S.cash-8000>=0?'pos':'neg')+'">'+money(S.cash-8000)+'</td></tr>'+
     '<tr><td>Short-ship strikes</td><td>'+S.strikes+'/3</td></tr>'+
     '<tr><td>Fleet health</td><td>'+Math.round(avgHealth()*100)+'%</td></tr>'+
-    '</table>'+ body +
-    '<button class="btn go" onclick="restart()">▶ New run</button>';
+    '</table>'+ pm + body +
+    '<button class="btn go" onclick="restart()">▶ New run <span style="color:var(--dim);font-weight:400">(new seed)</span></button>'+
+    '<button class="btn" onclick="retrySeed()">↻ Retry this shift <span style="color:var(--dim);font-weight:400">(seed #'+(S.seed%100000)+')</span></button>';
   $('modal').classList.add('show');
 }
 function avgHealth(){ let s=0,n=0; for(const id in MACH){s+=machHealth(MACH[id]);n++;} return s/n; }
-function restart(){ $('modal').classList.remove('show'); newGame(); setSpeed(1); }
+function restart(seed){ $('modal').classList.remove('show'); newGame(seed); setSpeed(1); }
+function retrySeed(){ restart(S.seed); }
 
 /* =============================== TUTORIAL =============================== */
 const TUT=[
  '<b>Welcome to the Old Bakery Plant.</b> You are the maintenance technician. Ship <b>800 loaves/day</b> and finish Day 10 with <b>$20,000</b>. <b>Walk</b> with the joystick or <span class="k">WASD</span>, drag to look around, tap the floor to walk there.',
  '<b>The oven is your bottleneck</b> — the amber <b>◄ LIMIT</b> tag floats over it. Throughput = the slowest machine. Walk up to a machine and tap the <span class="k">⚙ Open panel</span> prompt (or press <span class="k">E</span>).',
- '<b>Wear is invisible until you look.</b> At a machine: <span class="k">🔍 Inspect</span> ($25–60, no downtime) reveals which part is failing. Guessing wastes parts.',
+ '<b>Wear is invisible until you look.</b> <span class="k">🔍 Inspect</span> ($25–60, no downtime) reveals which part is failing — then order a <span class="k">🔩 targeted fix</span> on just that part: cheaper and faster than a full service.',
  '<b>The compressor (front-left) is a trap.</b> Its moisture 💧 silently speeds up seal wear on the Mixer, Slicer AND Packager — one root cause, three symptoms. Visit it early.',
 ];
 function tutorialStep(){
@@ -752,11 +821,13 @@ $('helpbtn').onclick=()=>{ setSpeed(0); const rev=$('modalcard');
    '<ul>'+
    '<li><b>You are the technician.</b> Walk: joystick / <span class="k">WASD</span> / tap the floor. Look: drag. Zoom: pinch or scroll. Interact: walk up to a machine and tap <span class="k">⚙ Open panel</span> (or <span class="k">E</span>).</li>'+
    '<li><b>Wear is hidden.</b> <span class="k">Inspect</span> to reveal per-part condition (no downtime).</li>'+
-   '<li><b>Repair</b> takes a machine down now to avoid a costly breakdown later. A breakdown = 2.5× parts, 3h delivery, +$400 damage.</li>'+
+   '<li><b>Repair</b> takes a machine down now to avoid a costly breakdown later. A breakdown bills <b>2.5× parts + double labor + $400 damage</b> (a stocked spare skips the parts premium and the 3h wait).</li>'+
+   '<li><b>🔩 Targeted fix:</b> once a part\'s wear is revealed, fix just that part — $'+C.LABOR_FIX+' labor + the part, ~40% of the downtime. Automated machines re-reveal condition every morning.</li>'+
    '<li><b>Bottleneck</b> = slowest machine (◄ LIMIT). Upgrade it to ship more — but faster line speed wears everything quicker, and the limit moves.</li>'+
    '<li><b>Compressor 💧</b> feeds pneumatics on Mixer/Slicer/Packager. Its moisture accelerates their seals — one root cause, three symptoms.</li>'+
    '<li><b>One pair of hands:</b> while you are on a job you are committed — plan your route, or ⏩ speed up time.</li>'+
-   '<li><b>Predictive</b> (inspect → act on data) beats <b>preventive</b> (fixed schedule) beats <b>run-to-failure</b> (ignore).</li>'+
+   '<li><b>Predictive</b> (inspect → targeted fix) beats <b>preventive</b> (blind full services) beats <b>run-to-failure</b> (ignore).</li>'+
+   '<li>Every run is a new <b>seed</b> — breakdown luck differs. The end screen lets you retry the same shift, and your best result is saved on this device.</li>'+
    '</ul></div><button class="btn go" onclick="closeReview()">Got it</button>'; $('modal').classList.add('show'); };
 
 /* =============================== 3D ENGINE =============================== */
@@ -1487,8 +1558,8 @@ function setSpeed(s){ S.speed=s; document.querySelectorAll('.spd').forEach(b=>b.
 document.querySelectorAll('.spd').forEach(b=>b.onclick=()=>{ initAudio(); setSpeed(+b.dataset.s); });
 
 // ---- headless harness (for tuning/verification) ----
-window.__sim = function(policy){
-  newGame(); const log=[]; let lastDay=1; let dayShip=0;
+window.__sim = function(policy,seed){
+  newGame(seed==null?1234567:seed); const log=[]; let lastDay=1; let dayShip=0;
   const maxTicks=C.D_MAX*C.TICKS_PER_DAY+5;
   for(let i=0;i<maxTicks;i++){
     if(policy) policy(S.day, S.tick, S, MACH);
@@ -1500,7 +1571,7 @@ window.__sim = function(policy){
     }
     if(S.over) break;
   }
-  return {log,end:Math.round(S.cash),won:S.won,strikes:S.strikes,over:S.over,days:log.length};
+  return {log,end:Math.round(S.cash),won:S.won,strikes:S.strikes,over:S.over,days:log.length,seed:S.seed,stats:S.stats};
 };
 
 // boot
@@ -1615,7 +1686,16 @@ function juiceStep(alt,p){
     spawnPuff(p.x+(MR()-0.5)*0.2,0.06,p.z+(MR()-0.5)*0.2,0x8a8f94,{scale:0.12,vy:0.25,ttl:0.5,op:0.2,grow:0.35});
 }
 
-/* ---------- event wrappers (presentation only — sim math untouched) ---------- */
+/* ---------- event wrappers (presentation only — sim math untouched) ----------
+   MECHANISM (and why it works): the sim's functions are top-level `function`
+   declarations in this same concatenated classic script, so `seize`, `settleDay`
+   and `finishJob` are MUTABLE global bindings. Reassigning them here makes every
+   internal sim call (rollBreakdowns→seize, stepTick→settleDay, advanceTech→
+   finishJob) go through the wrapper; the same is true for the window.act* spend
+   wrappers used by both the UI (inline onclick) and __sim policies.
+   FRAGILITY: if a refactor turns these into `const`/class methods/module scope,
+   the reassignment below throws or silently stops intercepting. If you refactor
+   the sim, convert these wrappers to explicit event hooks first. */
 const _seize0=seize;
 seize=function(m){
   _seize0(m);
@@ -1623,7 +1703,7 @@ seize=function(m){
   addShake(clamp(0.85-dist*0.03,0.25,0.85));
   sBoom();
   popAtMach(m.id,'⛔ BREAKDOWN','#ff5a5a',1.0);
-  popAtMach(m.id,'−$'+C.CASCADE_DAMAGE+' damage','#ff8a7a',0.35);
+  popAtMach(m.id,'−$'+(S._lastCallout||C.CASCADE_DAMAGE)+' emergency call-out','#ff8a7a',0.35);
 };
 const _finish0=finishJob;
 finishJob=function(j,m){
@@ -1636,6 +1716,7 @@ finishJob=function(j,m){
       spawnPuff(m.pos[0]+(MR()-0.5)*1.2, 1.1+MR()*0.8, m.pos[1]+(MR()-0.5)*0.9, 0x5af08a,
         {scale:0.12,vy:0.7+MR()*0.5,ttl:0.7,add:true,op:0.85,grow:-0.05});
   }
+  else if(j.type==='fix'){ sDing(); popAtMach(m.id,'🔩 part replaced','#3ad17a',0.55); }
   else if(j.type==='upgrade'){ sCash(); popAtMach(m.id,'⬆ capacity ×1.4','#e8c15a',0.55); }
   else if(j.type==='automate'){ sDing(); popAtMach(m.id,'🤖 monitored — wear cut','#38d6cf',0.55); }
   else if(j.type==='replace'){ sCash(); popAtMach(m.id,'🆕 like new','#3ad17a',0.55); }
@@ -1650,11 +1731,11 @@ settleDay=function(){
   return l;
 };
 // spend feedback on every player order
-for(const fn of ['actInspect','actRepair','actUpgrade','actAutomate','actReplace','actStock']){
+for(const fn of ['actInspect','actRepair','actFix','actUpgrade','actAutomate','actReplace','actStock']){
   const orig=window[fn];
-  window[fn]=function(id){ const c0=S.cash; orig(id);
+  window[fn]=function(...a){ const c0=S.cash; orig(...a);
     const d=Math.round(c0-S.cash);
-    if(d>0){ sTick(); popAtMach(id,'−$'+d,'#ffb23e',0.15); LASTORDER={id,amt:d,at:performance.now()}; } };
+    if(d>0){ sTick(); popAtMach(a[0],'−$'+d,'#ffb23e',0.15); LASTORDER={id:a[0],amt:d,at:performance.now()}; } };
 }
 
 /* ---------- per-frame juice: popups, voices, wrench clanks, vignette, HUD ---------- */

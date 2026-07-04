@@ -75,7 +75,14 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
   border:1px solid var(--edge);color:var(--dim);border-radius:50%;width:30px;height:30px;font-weight:700}
 #planbtn{position:absolute;right:10px;top:46px;z-index:6;background:rgba(30,40,54,.85);
   border:1px solid var(--edge);color:var(--ink);border-radius:8px;width:30px;height:30px;font-size:14px}
-#planner{position:absolute;right:10px;top:82px;width:min(324px,88%);background:rgba(14,21,30,.96);
+#mutebtn,#fxbtn{position:absolute;right:10px;z-index:6;background:rgba(30,40,54,.85);
+  border:1px solid var(--edge);color:var(--dim);border-radius:8px;width:30px;height:30px;font-size:13px}
+#mutebtn{top:82px} #fxbtn{top:118px}
+#mutebtn.off{color:var(--red);border-color:#7a2c2c}
+#fxbtn.on{color:var(--amber);border-color:#7a5a2c}
+@keyframes pl1{0%{box-shadow:0 0 0 0 rgba(255,178,62,.7)}100%{box-shadow:0 0 0 12px rgba(255,178,62,0)}}
+#planbtn.pulse1{animation:pl1 .9s ease-out 2}
+#planner{position:absolute;right:46px;top:46px;width:min(324px,88%);background:rgba(14,21,30,.96);
   border:1px solid var(--edge);border-radius:10px;z-index:8;display:none;font-size:11.5px;line-height:1.55;
   box-shadow:0 8px 26px #000a}
 #planner.open{display:block;animation:strippop .22s}
@@ -93,7 +100,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 /* ---- bottom action sheet ---- */
 #sheet{position:absolute;left:0;right:0;bottom:0;width:min(100%,560px);margin:0 auto;background:var(--panel);border-top:1px solid var(--edge);
   border-radius:14px 14px 0 0;transform:translateY(102%);transition:transform .22s cubic-bezier(.3,.7,.3,1);
-  z-index:20;max-height:74%;overflow:auto;box-shadow:0 -8px 30px #000a}
+  z-index:20;max-height:60%;overflow:auto;box-shadow:0 -8px 30px #000a}
 #sheet.open{transform:translateY(0)}
 .sheet-head{display:flex;align-items:center;gap:8px;padding:12px 14px 6px}
 .sheet-head .mi{width:34px;height:34px;border-radius:8px;flex:0 0 auto}
@@ -209,6 +216,8 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
     <div id="alerts"></div>
     <button id="helpbtn">?</button>
     <button id="planbtn" title="Shift planner">📋</button>
+    <button id="mutebtn" title="Sound on/off">🔊</button>
+    <button id="fxbtn" title="Reduced effects">✦</button>
     <div id="planner"><div class="pl-head">📋 SHIFT PLANNER<button class="x" id="planx">×</button></div><div class="pl-body"></div></div>
     <div id="techchip">🔧 <b id="techstate">Idle</b><div id="techqueue"></div><div id="techbar"><div id="techfill"></div></div></div>
     <div id="joy"><div id="jnub"></div></div>
@@ -875,7 +884,7 @@ function alert(msg,cls){ if(HEADLESS) return; const box=$('alerts'); const d=doc
 let _tt;
 function toast(m){ if(HEADLESS) return; const t=$('toast'); t.textContent=m; t.style.opacity=1; clearTimeout(_tt); _tt=setTimeout(()=>t.style.opacity=0,1600); }
 let AC=null, hum=null;
-function chirp(kind){ if(HEADLESS) return; try{ if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();
+function chirp(kind){ if(HEADLESS||OPTS.mute) return; try{ if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();
   const o=AC.createOscillator(),g=AC.createGain(); o.connect(g); g.connect(AC.destination);
   const t=AC.currentTime; if(kind==='good'){o.frequency.setValueAtTime(560,t);o.frequency.setValueAtTime(760,t+0.09);}
   else{o.frequency.setValueAtTime(300,t);o.frequency.setValueAtTime(200,t+0.12);}
@@ -898,12 +907,20 @@ function showReview(l){
     row('Revenue',l.revenue,1)+ row('Energy',-l.energy)+ row('Technician wage',-l.wages)+
     row('Overhead',-l.overhead)+ (l.wipScrap>0?row('Scrapped WIP',-l.wipScrap):'')+
     (l.penalty>0?row('⚠ Short-ship penalty (STRIKE)',-l.penalty):'')+
-    '<tr class="tot"><td>Net day</td><td class="'+(l.net>=0?'pos':'neg')+'">'+money(l.net)+'</td></tr>'+
-    '<tr class="tot"><td>Cash on hand</td><td>'+money(S.cash)+'</td></tr>'+
+    '<tr class="tot"><td>Net day</td><td id="rv-net" class="'+(l.net>=0?'pos':'neg')+'">'+money(0)+'</td></tr>'+
+    '<tr class="tot"><td>Cash on hand</td><td id="rv-cash">'+money(S.cash-l.net)+'</td></tr>'+
     '</table>'+
     (S.strikes>0?'<div class="sub" style="color:var(--red)">Strikes: '+S.strikes+'/3 — 3 short-ship days cancels the bread contract.</div>':'')+
     '<button class="btn go" onclick="closeReview()">▶ Plan Day '+(l.day+1)+'</button>';
   $('modal').classList.add('show');
+  // count-up: the day's money lands, rather than appearing
+  (function(){ const e1=$('rv-net'), e2=$('rv-cash'); if(!e1) return;
+    const v1=l.net, c0=S.cash-l.net, c1=S.cash, t0=performance.now();
+    const iv=setInterval(()=>{ const k=Math.min(1,(performance.now()-t0)/850);
+      const e=1-Math.pow(1-k,3);
+      e1.textContent=money(v1*e); e2.textContent=money(c0+(c1-c0)*e);
+      if(k>=1) clearInterval(iv); },33);
+  })();
 }
 function row(label,val,pos){ return '<tr><td>'+label+'</td><td class="'+(val>=0?'pos':'neg')+'">'+money(val)+'</td></tr>'; }
 function closeReview(){ $('modal').classList.remove('show'); updateHUD(); }
@@ -1554,6 +1571,7 @@ function buildCharacter(){
 /* =============================== PARTICLES =============================== */
 function spawnPuff(x,y,z,color,opts){
   if(PUFFS.length>180) return;   // hard cap: no uncontrolled growth
+  if(typeof OPTS!=='undefined' && OPTS.reduceFx && PUFFS.length>70) return;
   opts=opts||{};
   const s=dotSprite(color, opts.scale||0.5, !!opts.add);
   s.position.set(x+(MR()-0.5)*0.24, y, z+(MR()-0.5)*0.24);
@@ -1880,10 +1898,20 @@ function updateCam(dt){
   _camPos.set(tx+Math.sin(camYaw)*cp*camDist, Math.min(5.15,1.3+sp*camDist), tz+Math.cos(camYaw)*cp*camDist);
   const k=1-Math.pow(0.002,dt);
   camera.position.lerp(_camPos,k);
-  _camTgt.set(tx,1.25,tz);
+  // keep the subject framed above an open bottom sheet (bias subject upward,
+  // and blend framing toward the selected machine so both stay visible)
+  const shOpen=!HEADLESS && document.getElementById('sheet').classList.contains('open');
+  CH.shb=CH.shb||0;
+  const portrait=stage.clientHeight>stage.clientWidth*1.05;
+  CH.shb+=(((shOpen?(portrait?3.8:1.3):0))-CH.shb)*Math.min(1,dt*5);
+  let ttx=tx, ttz=tz;
+  if(shOpen && S.sel && MACH[S.sel]){ const mm=MACH[S.sel];
+    ttx=tx*0.65+mm.pos[0]*0.35; ttz=tz*0.65+mm.pos[1]*0.35; }
+  _camTgt.set(ttx,1.25-CH.shb,ttz);
+  camera.position.y+=CH.shb*0.25;
   camera.lookAt(_camTgt);
-  // trauma shake (decays quadratically-felt)
-  if(SHK.t>0){ const s=SHK.t*SHK.t;
+  // trauma shake (decays quadratically-felt); reduced-FX mode softens it
+  if(SHK.t>0){ const s=SHK.t*SHK.t*(OPTS.reduceFx?0.3:1);
     camera.position.x+=(MR()-0.5)*s*0.5; camera.position.y+=(MR()-0.5)*s*0.34; camera.position.z+=(MR()-0.5)*s*0.5;
     camera.rotation.z+=(MR()-0.5)*s*0.05;
     SHK.t=Math.max(0,SHK.t-dt*1.5);
@@ -2001,7 +2029,7 @@ function sync3D(dt,t){
       chip.style.display='block'; }
     else { chip.style.display='none'; chip.dataset.mid=''; }
   } else { chip.style.display='none'; chip.dataset.mid=''; }
-  if(hum) hum.gain.value+=(((S.over||S.speed===0)?0:Math.min(0.05,(S.T/800)*0.05))-hum.gain.value)*0.06;
+  if(hum) hum.gain.value+=((((S.over||S.speed===0)||OPTS.mute)?0:Math.min(0.05,(S.T/800)*0.05))-hum.gain.value)*0.06;
 }
 
 /* =============================== MAIN LOOP =============================== */
@@ -2081,8 +2109,23 @@ function popup(x,y,z,text,color){
 function popAtMach(id,text,color,dy){ const m=MACH[id], R=M3D[id];
   popup(m.pos[0], (R?R.topY:2.2)+(dy||0.4), m.pos[1], text, color); }
 
+/* ---------- accessibility options (persisted) ---------- */
+let OPTS={mute:false,reduceFx:false};
+try{ Object.assign(OPTS,JSON.parse(localStorage.getItem('rf3d_opts')||'{}')); }catch(e){}
+function saveOpts(){ try{ localStorage.setItem('rf3d_opts',JSON.stringify(OPTS)); }catch(e){} }
+function applyOpts(){
+  $('mutebtn').textContent=OPTS.mute?'🔇':'🔊';
+  $('mutebtn').classList.toggle('off',OPTS.mute);
+  $('fxbtn').classList.toggle('on',OPTS.reduceFx);
+  if(AE) AE.master.gain.value=OPTS.mute?0:0.5;
+}
+$('mutebtn').onclick=()=>{ OPTS.mute=!OPTS.mute; saveOpts(); applyOpts();
+  toast(OPTS.mute?'🔇 Sound off':'🔊 Sound on'); };
+$('fxbtn').onclick=()=>{ OPTS.reduceFx=!OPTS.reduceFx; saveOpts(); applyOpts();
+  toast(OPTS.reduceFx?'✦ Reduced effects on (less shake/particles)':'✦ Full effects'); };
 /* ---------- procedural audio engine (built on first gesture) ---------- */
 let AE=null, NOISEBUF=null;
+applyOpts();
 function initAudio(){
   try{
     if(AE){ if(AE.ctx.state==='suspended') AE.ctx.resume(); return; }
@@ -2094,6 +2137,7 @@ function initAudio(){
     const len=ctx.sampleRate*2, buf=ctx.createBuffer(1,len,ctx.sampleRate), dd=buf.getChannelData(0);
     let l=0; for(let i=0;i<len;i++){ const w=Math.random()*2-1; l=(l+0.02*w)/1.02; dd[i]=l*3.5; }
     NOISEBUF=buf;
+    if(OPTS.mute) master.gain.value=0;
     AE={ctx,master,voices:{}};
     for(const d of DEFS) AE.voices[d.id]=machineVoice(d.id);
     ensureHum();
@@ -2141,7 +2185,7 @@ function updVoices(){
   }
 }
 /* one-shot SFX */
-function sfx(f){ if(!AE) return; try{ f(AE.ctx,AE.master,AE.ctx.currentTime); }catch(e){} }
+function sfx(f){ if(!AE||OPTS.mute) return; try{ f(AE.ctx,AE.master,AE.ctx.currentTime); }catch(e){} }
 function tone(c,m,t0,type,f0,f1,g0,dur){
   const o=c.createOscillator(),g=c.createGain();
   o.type=type; o.frequency.setValueAtTime(f0,t0);
@@ -2170,14 +2214,19 @@ function juiceStep(alt,p){
 
 /* ---------- presentation listeners on the sim's GameEvents ---------- */
 function onFx(type,fn){ GameEvents.on(type, p=>{ if(HEADLESS) return; fn(p); }); }
+const _alarm={};
+const sAlarmBeep=(g0)=>sfx((c,m,t)=>{ tone(c,m,t,'square',880,null,g0,0.09);
+  tone(c,m,t+0.12,'square',622,null,g0*0.9,0.12); });
 onFx('breakdown',({m,callout})=>{
   const dist=CH?Math.hypot(CH.p.x-m.pos[0],CH.p.z-m.pos[1]):10;
-  addShake(clamp(0.85-dist*0.03,0.25,0.85));
+  addShake(clamp(0.85-dist*0.03,0.25,0.85)*(OPTS.reduceFx?0.4:1));
+  _alarm[m.id]={t0:performance.now(), next:2.2};
   sBoom();
   popAtMach(m.id,'⛔ BREAKDOWN','#ff5a5a',1.0);
   popAtMach(m.id,'−$'+callout+' emergency call-out','#ff8a7a',0.35);
 });
 onFx('jobFinished',({job:j,m})=>{
+  if(j.type==='emergency') delete _alarm[m.id];
   if(j.type==='inspect'){ sDing(); popAtMach(m.id,'🔍 condition revealed','#bcd8f5',0.55); }
   else if(j.type==='emergency'||j.type==='repair'){
     sDing(); addShake(0.12);
@@ -2211,7 +2260,10 @@ onFx('jobsNormalized',({mid,converted,refund,canceled})=>{
 });
 onFx('nursed',({id,on})=>{ popAtMach(id, on?'🐢 nursed — half speed':'▶ full speed', on?'#ffb23e':'#3ad17a', 0.3); });
 onFx('bottleneckChanged',({to})=>{
-  if(S.T>1 && !S.over && worldBuilt) popAtMach(to,'◄ LIMIT moved here','#ffb23e',1.0);
+  if(S.T>1 && !S.over && worldBuilt){
+    popAtMach(to,'◄ LIMIT moved here','#ffb23e',1.0);
+    const b=$('planbtn'); b.classList.remove('pulse1'); void b.offsetWidth; b.classList.add('pulse1');
+  }
 });
 
 /* ---------- per-frame juice: popups, voices, wrench clanks, vignette, HUD ---------- */
@@ -2228,12 +2280,26 @@ function juiceFrame(dt,t){
     if(_clank<=0){ _clank=0.48+MR()*0.3; sClank();
       if(worldBuilt&&PUFFS.length<160)
         spawnPuff(CH.p.x+(MR()-0.5)*0.3,1.05,CH.p.z+(MR()-0.5)*0.3,0xffd070,{scale:0.1,vy:0.9,ttl:0.5,add:true,op:0.9,grow:-0.05}); } }
+  // broken-machine alarms: audible but decaying — first minute chirps, then rare
+  for(const id in _alarm){ const m=MACH[id];
+    if(!m || !m.broken){ delete _alarm[id]; continue; }
+    const a=_alarm[id]; a.next-=dt;
+    if(a.next<=0){
+      const el=(performance.now()-a.t0)/1000;
+      a.next=Math.min(14, 3+el*0.4);                       // interval stretches with time
+      if(CH && S.speed>0 && !S.over){
+        const dist=Math.hypot(CH.p.x-m.pos[0],CH.p.z-m.pos[1]);
+        const g0=0.09/(1+dist*dist*0.03)*(el>30?0.55:1);   // quieter with distance and age
+        if(g0>0.008) sAlarmBeep(g0);
+      }
+    }
+  }
   // danger vignette: red pulse while anything is down; amber when cash is thin
   const vig=$('vig'); let vo=0, amber=false;
   let anyB=false; for(const id in MACH){ if(MACH[id].broken){anyB=true;break;} }
   if(anyB) vo=0.3+0.16*Math.sin(t*4.2);
   else if(S.cash<1500&&!S.over){ vo=0.18+0.08*Math.sin(t*2.2); amber=true; }
-  vig.style.opacity=vo.toFixed(3); vig.classList.toggle('amber',amber);
+  vig.style.opacity=(vo*(OPTS.reduceFx?0.5:1)).toFixed(3); vig.classList.toggle('amber',amber);
   // cash odometer + delta flash
   if(_dispCash==null){ _dispCash=S.cash; _lastCash=S.cash; }
   if(Math.abs(S.cash-_lastCash)>0.5){

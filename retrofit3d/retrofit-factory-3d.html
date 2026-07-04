@@ -1954,28 +1954,39 @@ function updateChar(dt){
   CH.grp.position.set(CH.p.x, Math.abs(Math.sin(CH.phase))*0.035*CH.spd, CH.p.z);
   CH.grp.rotation.set(0,CH.yaw,CH.lean);
 }
-const _camTgt=new THREE.Vector3(), _camPos=new THREE.Vector3();
+const _camTgt=new THREE.Vector3(), _camPos=new THREE.Vector3(), _camLook=new THREE.Vector3();
+let _lookInit=false;
 function updateCam(dt){
   if(!CH||!renderer) return;
-  const cp=Math.cos(camPitch), sp=Math.sin(camPitch);
-  const la=0.34; // look-ahead: camera leads the walk
-  const tx=CH.p.x+(CH.vel?CH.vel.x*la:0), tz=CH.p.z+(CH.vel?CH.vel.y*la:0);
-  const cd=camDist*(1-(CH.shb||0)*0.055);   // ease in while the sheet is open
-  _camPos.set(tx+Math.sin(camYaw)*cp*cd, Math.min(5.15,1.3+sp*cd), tz+Math.cos(camYaw)*cp*cd);
-  const k=1-Math.pow(0.002,dt);
-  camera.position.lerp(_camPos,k);
-  // keep the subject framed above an open bottom sheet (bias subject upward,
-  // and blend framing toward the selected machine so both stay visible)
+  // sheet bias first: it feeds both the position and framing targets below
   const shOpen=!HEADLESS && document.getElementById('sheet').classList.contains('open');
   CH.shb=CH.shb||0;
   const portrait=stage.clientHeight>stage.clientWidth*1.05;
   CH.shb+=(((shOpen?(portrait?3.8:1.3):0))-CH.shb)*Math.min(1,dt*5);
+  const cp=Math.cos(camPitch), sp=Math.sin(camPitch);
+  const la=0.34; // look-ahead: camera leads the walk
+  const tx=CH.p.x+(CH.vel?CH.vel.x*la:0), tz=CH.p.z+(CH.vel?CH.vel.y*la:0);
+  const cd=camDist*(1-CH.shb*0.055);   // ease in while the sheet is open
+  // sheet lift is folded into the target BEFORE smoothing: a post-lerp add
+  // settles at offset/k, which swings with frame time and reads as bounce
+  _camPos.set(tx+Math.sin(camYaw)*cp*cd,
+    Math.min(5.15,1.3+sp*cd)+CH.shb*4.57,   // 4.57 ≈ 0.45/k@60fps keeps prior framing
+    tz+Math.cos(camYaw)*cp*cd);
+  const k=1-Math.pow(0.002,dt);
+  camera.position.lerp(_camPos,k);
+  // keep the subject framed above an open bottom sheet (bias subject upward,
+  // and blend framing toward the selected machine so both stay visible)
   let ttx=tx, ttz=tz;
   if(shOpen && S.sel && MACH[S.sel]){ const mm=MACH[S.sel];
     ttx=tx*0.65+mm.pos[0]*0.35; ttz=tz*0.65+mm.pos[1]*0.35; }
   _camTgt.set(ttx,1.25-CH.shb,ttz);
-  camera.position.y+=CH.shb*0.45;
-  camera.lookAt(_camTgt);
+  // smooth the look target with the same time constant as the position: raw
+  // velocity look-ahead + collision push-out rotate the camera instantly
+  // otherwise — worst at steep pitch, where the camera sits closest to the
+  // subject and small target hops become large angles
+  if(!_lookInit){ _camLook.copy(_camTgt); _lookInit=true; }
+  _camLook.lerp(_camTgt,k);
+  camera.lookAt(_camLook);
   // trauma shake (decays quadratically-felt); reduced-FX mode softens it
   if(SHK.t>0){ const s=SHK.t*SHK.t*(OPTS.reduceFx?0.3:1);
     camera.position.x+=(MR()-0.5)*s*0.5; camera.position.y+=(MR()-0.5)*s*0.34; camera.position.z+=(MR()-0.5)*s*0.5;

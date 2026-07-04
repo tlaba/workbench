@@ -1457,6 +1457,7 @@ function resetDynamics(){
   CH.p.set(7.5,0,1.2); CH.yaw=Math.PI; CH.phase=0; CH.lean=0; CH.prevYaw=CH.yaw;
   if(CH.vel) CH.vel.set(0,0);
   camYaw=0.52; camPitch=0.62; camDist=9.0; SHK.t=0;
+  CH.jobKey=null; CH.jobPath=null; hideRoute();
   for(let i=PUFFS.length-1;i>=0;i--){ if(!PUFFS[i].mote){ scene.remove(PUFFS[i].spr); PUFFS.splice(i,1); } }
 }
 function panelPt(m){ return {x:m.pos[0], z:m.pos[1]+m.face*(m.hd+1.0)}; }
@@ -1469,7 +1470,7 @@ function nearestInRange(){ let best=null,bd=1e9;
   return best; }
 function walkTo(id,open){
   if(tech.busy){ toast('Hands full — finish the current job (or ⏩ time)'); return; }
-  const p=panelPt(MACH[id]); S.walk={x:p.x,z:p.z,open:open?id:null}; selectNone();
+  const p=panelPt(MACH[id]); routeTo(p.x,p.z, open?id:null); selectNone();
 }
 function tryInteract(){ const id=nearestInRange(); if(id) openSheet(id); }
 
@@ -1525,7 +1526,7 @@ const joy={x:0,y:0,id:null};
       if(h.object.userData && h.object.userData.mid){ openSheet(h.object.userData.mid); return; }
       if(h.object.name==='floor'){
         if(tech.busy){ toast('Hands full — finish the current job'); return; }
-        S.walk={x:clamp(h.point.x,-14.2,14.2), z:clamp(h.point.z,-8.2,8.2), open:null};
+        routeTo(h.point.x, h.point.z, null);
         selectNone(); return; }
     }
   }
@@ -1550,6 +1551,132 @@ function collide(p){
 }
 function lerpAngle(a,b,t){ let d=b-a; while(d>Math.PI)d-=Math.PI*2; while(d<-Math.PI)d+=Math.PI*2; return a+d*t; }
 
+/* =============================== NAVIGATION (grid A*) ===============================
+   0.5 m grid over the hall; obstacle cells padded for the character radius.
+   Built lazily once from HALL/OBST; A* work arrays are reused between calls. */
+let NAV=null;
+function buildNav(){
+  const cs=0.5, w=Math.round(HALL.w/cs), h=Math.round(HALL.d/cs);
+  const ox=-HALL.w/2, oz=-HALL.d/2, blocked=new Uint8Array(w*h), pad=0.5;
+  for(let cz=0;cz<h;cz++) for(let cx=0;cx<w;cx++){
+    const x=ox+(cx+0.5)*cs, z=oz+(cz+0.5)*cs;
+    let bl=(x<-14.2||x>14.2||z<-8.2||z>8.2)?1:0;
+    if(!bl) for(const o of OBST){
+      if(x>o.x-o.hw-pad&&x<o.x+o.hw+pad&&z>o.z-o.hd-pad&&z<o.z+o.hd+pad){bl=1;break;} }
+    blocked[cz*w+cx]=bl;
+  }
+  NAV={cs,w,h,ox,oz,blocked, g:new Float32Array(w*h), came:new Int32Array(w*h), vis:new Uint8Array(w*h)};
+}
+function navCell(x,z){ return [clamp(Math.floor((x-NAV.ox)/NAV.cs),0,NAV.w-1),
+                               clamp(Math.floor((z-NAV.oz)/NAV.cs),0,NAV.h-1)]; }
+function cellXZ(ci){ const cx=ci%NAV.w, cz=(ci/NAV.w)|0;
+  return {x:NAV.ox+(cx+0.5)*NAV.cs, z:NAV.oz+(cz+0.5)*NAV.cs}; }
+function nearestFree(ci){
+  if(!NAV.blocked[ci]) return ci;
+  const cx0=ci%NAV.w, cz0=(ci/NAV.w)|0;
+  for(let r=1;r<=12;r++) for(let dz=-r;dz<=r;dz++) for(let dx=-r;dx<=r;dx++){
+    if(Math.max(Math.abs(dx),Math.abs(dz))!==r) continue;
+    const cx=cx0+dx, cz=cz0+dz;
+    if(cx<0||cz<0||cx>=NAV.w||cz>=NAV.h) continue;
+    if(!NAV.blocked[cz*NAV.w+cx]) return cz*NAV.w+cx;
+  }
+  return -1;
+}
+function losNav(ax,az,bx,bz){
+  const d=Math.hypot(bx-ax,bz-az), n=Math.max(1,Math.ceil(d/(NAV.cs*0.45)));
+  for(let i=1;i<=n;i++){ const t=i/n, x=ax+(bx-ax)*t, z=az+(bz-az)*t;
+    const [cx,cz]=navCell(x,z); if(NAV.blocked[cz*NAV.w+cx]) return false; }
+  return true;
+}
+function findPath(ax,az,bx,bz){
+  if(typeof worldBuilt==='undefined'||!worldBuilt) return [{x:bx,z:bz}];
+  if(!NAV) buildNav();
+  if(losNav(ax,az,bx,bz)) return [{x:bx,z:bz}];
+  const s0=navCell(ax,az), g0=navCell(bx,bz);
+  const sc=nearestFree(s0[1]*NAV.w+s0[0]), gc=nearestFree(g0[1]*NAV.w+g0[0]);
+  if(sc<0||gc<0) return null;
+  const {w,h,blocked,g,came,vis}=NAV;
+  g.fill(Infinity); vis.fill(0); came.fill(-1);
+  const gx=gc%w, gz=(gc/w)|0;
+  const H=ci=>{ const cx=ci%w, cz=(ci/w)|0, dx=Math.abs(cx-gx), dz=Math.abs(cz-gz);
+    return (dx+dz)+(Math.SQRT2-2)*Math.min(dx,dz); };
+  const open=[sc]; g[sc]=0; let found=false;
+  while(open.length){
+    let bi=0, bf=g[open[0]]+H(open[0]);
+    for(let i=1;i<open.length;i++){ const f=g[open[i]]+H(open[i]); if(f<bf){bf=f;bi=i;} }
+    const cur=open.splice(bi,1)[0];
+    if(cur===gc){ found=true; break; }
+    if(vis[cur]) continue; vis[cur]=1;
+    const cx=cur%w, cz=(cur/w)|0;
+    for(let dz=-1;dz<=1;dz++) for(let dx=-1;dx<=1;dx++){
+      if(!dx&&!dz) continue;
+      const nx=cx+dx, nz=cz+dz;
+      if(nx<0||nz<0||nx>=w||nz>=h) continue;
+      const ni=nz*w+nx;
+      if(blocked[ni]||vis[ni]) continue;
+      if(dx&&dz&&(blocked[cz*w+nx]||blocked[nz*w+cx])) continue;   // no corner cutting
+      const ng=g[cur]+((dx&&dz)?Math.SQRT2:1);
+      if(ng<g[ni]){ g[ni]=ng; came[ni]=cur; if(open.indexOf(ni)<0) open.push(ni); }
+    }
+  }
+  if(!found) return null;
+  const cells=[]; let c=gc;
+  while(c!==-1&&c!==sc){ cells.push(c); c=came[c]; }
+  cells.reverse();
+  const raw=[{x:ax,z:az}].concat(cells.map(cellXZ));
+  const gb=navCell(bx,bz);
+  if(!blocked[gb[1]*w+gb[0]]) raw.push({x:bx,z:bz});   // end on the exact target when reachable
+  // string-pull: drop waypoints with clear line of sight
+  const out=[]; let i=0;
+  while(i<raw.length-1){
+    let j=raw.length-1;
+    for(;j>i+1;j--){ if(losNav(raw[i].x,raw[i].z,raw[j].x,raw[j].z)) break; }
+    out.push({x:raw[j].x,z:raw[j].z}); i=j;
+  }
+  return out.length?out:[{x:bx,z:bz}];
+}
+/* route feedback: one reusable dashed line + pulsing destination dot */
+let routeLine=null, routeRing=null;
+function ensureRoute(){
+  if(routeLine||!renderer) return;
+  routeLine=new THREE.Line(new THREE.BufferGeometry(),
+    new THREE.LineDashedMaterial({color:0x38d6cf,dashSize:0.32,gapSize:0.22,transparent:true,opacity:0.55,depthWrite:false}));
+  routeLine.frustumCulled=false; routeLine.visible=false; scene.add(routeLine);
+  routeRing=dotSprite(0x38d6cf,0.55,true); routeRing.visible=false; scene.add(routeRing);
+}
+function showRoute(path){
+  ensureRoute(); if(!routeLine) return;
+  const pts=[new THREE.Vector3(CH.p.x,0.07,CH.p.z)];
+  for(const wp of path) pts.push(new THREE.Vector3(wp.x,0.07,wp.z));
+  routeLine.geometry.dispose();
+  routeLine.geometry=new THREE.BufferGeometry().setFromPoints(pts);
+  routeLine.computeLineDistances();
+  routeLine.visible=true;
+  const end=path[path.length-1];
+  routeRing.position.set(end.x,0.09,end.z); routeRing.visible=true;
+}
+function hideRoute(){ if(routeLine) routeLine.visible=false; if(routeRing) routeRing.visible=false; }
+function cancelWalk(){ if(S.walk) S.walk=null; hideRoute(); }
+function routeTo(x,z,open){
+  if(!CH) return false;
+  const path=findPath(CH.p.x,CH.p.z,clamp(x,-14.2,14.2),clamp(z,-8.2,8.2));
+  if(!path||!path.length){ toast("Can't find a way there"); return false; }
+  S.walk={path:path, i:0, open:open||null};
+  showRoute(path);
+  return true;
+}
+// shared waypoint follower: full speed between waypoints, brake into the last
+function followWps(st,mult){
+  for(;;){
+    const last=st.i>=st.path.length-1;
+    const wp=st.path[Math.min(st.i,st.path.length-1)];
+    const dx=wp.x-CH.p.x, dz=wp.z-CH.p.z, d=Math.hypot(dx,dz);
+    if(d<=(last?0.42:0.6)){ if(last) return {tvx:0,tvz:0,arrived:true}; st.i++; continue; }
+    const sp=WALK_SPEED*(mult||1)*(last?clamp(d/1.1,0.35,1):1);
+    return {tvx:dx/d*sp, tvz:dz/d*sp, arrived:false};
+  }
+}
+
 /* ---- movement with weight: accelerate, brake near targets, lean into turns ---- */
 const SHK={t:0};
 function addShake(x){ SHK.t=Math.min(1,Math.max(SHK.t,x)); }
@@ -1560,32 +1687,34 @@ function updateChar(dt){
   let working=false, tvx=0, tvz=0;
   if(tech.busy&&tech.job){
     const m=MACH[tech.job.mid], p=panelPt(m);
-    const dx=p.x-CH.p.x, dz=p.z-CH.p.z, d=Math.hypot(dx,dz);
-    if(d>0.4){
-      let sp=(tech.phase==='travel'?WALK_SPEED*1.12:WALK_SPEED)*clamp(d/1.1,0.35,1);
-      tvx=dx/d*sp; tvz=dz/d*sp;
-    }
-    if(tech.phase!=='travel'){
+    if(tech.phase==='travel'){
+      if(CH.jobKey!==tech.job){ CH.jobKey=tech.job;
+        CH.jobPath={path:findPath(CH.p.x,CH.p.z,p.x,p.z)||[{x:p.x,z:p.z}], i:0}; }
+      const r=followWps(CH.jobPath,1.12); tvx=r.tvx; tvz=r.tvz;
+    } else {
+      CH.jobKey=null; CH.jobPath=null;
+      const dx=p.x-CH.p.x, dz=p.z-CH.p.z, d=Math.hypot(dx,dz);
+      if(d>0.4){ const sp=WALK_SPEED*clamp(d/1.1,0.35,1); tvx=dx/d*sp; tvz=dz/d*sp; }
       working=(tech.phase==='work');
       if(d<=1.2) CH.yaw=lerpAngle(CH.yaw,Math.atan2(m.pos[0]-CH.p.x, m.pos[1]-CH.p.z),Math.min(1,dt*7));
     }
-    S.walk=null;
+    if(S.walk) cancelWalk();
   } else {
+    CH.jobKey=null; CH.jobPath=null;
     let ix=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0);
     let iz=(keys.KeyS||keys.ArrowDown?1:0)-(keys.KeyW||keys.ArrowUp?1:0);
     ix+=joy.x; iz+=joy.y;
     const L=Math.hypot(ix,iz);
     if(L>0.15){
-      S.walk=null;
+      cancelWalk();   // manual control stays direct and wins immediately
       const n=Math.min(1,L), fwd=-iz, side=ix;
       const fx=-Math.sin(camYaw), fz=-Math.cos(camYaw), rx=-fz, rz=fx;
       const vx=(fx*fwd+rx*side), vz=(fz*fwd+rz*side), vl=Math.hypot(vx,vz)||1;
       tvx=vx/vl*WALK_SPEED*n; tvz=vz/vl*WALK_SPEED*n;
     } else if(S.walk){
-      const dx=S.walk.x-CH.p.x, dz=S.walk.z-CH.p.z, d=Math.hypot(dx,dz);
-      if(d<=0.42){ const w=S.walk; S.walk=null;
-        if(w.open && charNear(w.open)) openSheet(w.open);
-      } else { const sp=WALK_SPEED*clamp(d/1.1,0.35,1); tvx=dx/d*sp; tvz=dz/d*sp; }
+      const r=followWps(S.walk,1); tvx=r.tvx; tvz=r.tvz;
+      if(r.arrived){ const w=S.walk; cancelWalk();
+        if(w.open && charNear(w.open)) openSheet(w.open); }
     }
   }
   // acceleration toward target velocity (weight)
@@ -1701,6 +1830,8 @@ function sync3D(dt,t){
     LIMITSPR.visible=show;
     if(show) LIMITSPR.position.set(bm.pos[0], M3D[bn].topY+1.15+Math.sin(t*2)*0.09, bm.pos[1]);
   }
+  if(routeRing&&routeRing.visible){ const sc2=0.5+0.16*Math.sin(t*5);
+    routeRing.scale.set(sc2,sc2,1); routeRing.material.opacity=0.45+0.3*Math.sin(t*5); }
   updatePuffs(dt,t);
   const chip=$('ichip');
   if(!tech.busy && !$('sheet').classList.contains('open') && !S.over){

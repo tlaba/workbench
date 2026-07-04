@@ -17,6 +17,7 @@ https://tlaba.github.io/workbench/retrofit3d/retrofit-factory-3d.html
 |---|---|
 | [`retrofit-factory-3d.html`](./retrofit-factory-3d.html) | **Playable browser prototype.** Single self-contained HTML — no build, no deps (three.js inlined). A real-time 3D factory hall you walk around as the technician, six animated machines, the full tuned economy running a deterministic seeded simulation. |
 | [`GDD.md`](./GDD.md) | The 25-section developer-ready Game Design Document — vision, pillars, canonical machine stats, economy formulas, and the tuned constants the prototype uses verbatim. |
+| [`MONETIZATION.md`](./MONETIZATION.md) | A staged, product-fit monetization plan — free web build as the funnel, premium plant packs, a paid Complete Edition, and an education/B2B licensing channel built on the game's reliability-engineering core. |
 
 ## You are the technician — walk the floor
 

@@ -184,6 +184,16 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
   width:min(calc(100% - 24px),520px);margin:0 auto}
 .tut b{color:var(--blue)} .tut .x{float:right;color:var(--dim);background:none;border:none;font-size:16px;margin:-2px -2px 0 0}
 
+#preshift{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:9;
+  display:none;align-items:center;gap:10px;background:rgba(18,35,58,.96);border:1px solid var(--blue);
+  border-radius:12px;padding:9px 12px;font-size:12px;line-height:1.4;max-width:min(92%,520px);
+  box-shadow:0 8px 24px #000a;animation:strippop .3s}
+#preshift b{color:var(--blue)}
+#startshift{flex:0 0 auto;background:#12351f;border:1px solid #2c7a48;color:var(--green);
+  border-radius:9px;padding:9px 14px;font-size:13px;font-weight:700;white-space:nowrap;
+  animation:startpulse 1.6s infinite}
+@keyframes startpulse{0%,100%{box-shadow:0 0 0 0 rgba(58,209,122,.5)}60%{box-shadow:0 0 0 9px rgba(58,209,122,0)}}
+
 /* ---- touch layout: phones & coarse pointers ---- */
 @media (max-width:520px), (pointer:coarse){
   .spd{width:44px;height:38px;font-size:13px;border-radius:8px}
@@ -203,6 +213,8 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
   #jnub{width:54px;height:54px}
   #ichip{padding:12px 20px;bottom:152px}
   #sheet{max-height:54%}
+  #preshift{flex-direction:column;text-align:center;gap:8px;padding:10px 14px;top:8px}
+  #preshift #startshift{width:100%}
 }
 
 /* ---- game-feel layer ---- */
@@ -251,6 +263,10 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
     <div id="techchip">🔧 <b id="techstate">Idle</b><div id="techqueue"></div><div id="techbar"><div id="techfill"></div></div></div>
     <div id="joy"><div id="jnub"></div></div>
     <div id="ichip"></div>
+    <div id="preshift">
+      <span>🕕 <b>Pre-shift</b> — time is paused. Walk the floor, open panels, check the 📋 planner.</span>
+      <button id="startshift">▶ Start Day 1</button>
+    </div>
     <div id="toast"></div>
     <div class="tut" id="tut" style="display:none">
       <button class="x" id="tutx">×</button>
@@ -1029,12 +1045,12 @@ function endGame(l,lose){
   $('modal').classList.add('show');
 }
 function avgHealth(){ let s=0,n=0; for(const id in MACH){s+=machHealth(MACH[id]);n++;} return s/n; }
-function restart(seed){ $('modal').classList.remove('show'); newGame(seed); setSpeed(1); }
+function restart(seed){ $('modal').classList.remove('show'); newGame(seed); enterPreshift(); }
 function retrySeed(){ restart(S.seed); }
 
 /* =============================== TUTORIAL =============================== */
 const TUT=[
- '<b>Welcome to the Old Bakery Plant.</b> You are the maintenance technician. Ship <b>800 loaves/day</b> and finish Day 10 with <b>$20,000</b>. <b>Walk</b> with the joystick or <span class="k">WASD</span>, drag to look around, tap the floor to walk there.',
+ '<b>Welcome to the Old Bakery Plant.</b> You are the maintenance technician. Ship <b>800 loaves/day</b> and finish Day 10 with <b>$20,000</b>. <b>Walk</b> with the joystick or <span class="k">WASD</span>, drag to look around, tap the floor to walk there. <b>Time is paused</b> until you press <span class="k">▶</span> — look around first.',
  '<b>The oven is your bottleneck</b> — the amber <b>◄ LIMIT</b> tag floats over it. Throughput = the slowest machine. Walk up to a machine and tap the <span class="k">⚙ Open panel</span> prompt (or press <span class="k">E</span>).',
  '<b>Wear is invisible until you look.</b> <span class="k">🔍 Inspect</span> ($25–60, no downtime) reveals which part is failing — then order a <span class="k">🔩 targeted fix</span> on just that part: cheaper and faster than a full service.',
  '<b>The compressor (front-left) is a trap.</b> Its moisture 💧 silently speeds up seal wear on the Mixer, Slicer AND Packager — one root cause, three symptoms. Visit it early.',
@@ -2100,7 +2116,11 @@ function setSpeed(s){ if(s>0) S._lastSpd=s; S.speed=s;
   if(HEADLESS) return;
   document.querySelectorAll('.spd').forEach(b=>b.classList.toggle('on',+b.dataset.s===s));
   const p0=$('sp0'); if(p0) p0.textContent = (s===0?'▶':'❚❚');
+  if(s>0){ const ps=$('preshift'); if(ps) ps.style.display='none'; }   // any play input ends pre-shift
 }
+function enterPreshift(){ if(HEADLESS) return;
+  setSpeed(0); const ps=$('preshift'); if(ps) ps.style.display='flex'; }
+$('startshift').onclick=()=>{ initAudio(); setSpeed(S._lastSpd||1); };
 document.querySelectorAll('.spd').forEach(b=>b.onclick=()=>{ initAudio();
   const v=+b.dataset.s;
   if(v===0) setSpeed(S.speed===0 ? (S._lastSpd||1) : 0);   // ❚❚ toggles pause/play
@@ -2207,8 +2227,8 @@ window.__matrix=function(seeds){
   return out;
 };
 
-// boot
-newGame(); setSpeed(1); requestAnimationFrame(frame);
+// boot: the shift doesn't start until the player says so — walk around first
+newGame(); enterPreshift(); requestAnimationFrame(frame);
 window.S=()=>S; window.MACH=()=>MACH;
 window.__tp=(x,z)=>{ if(CH){CH.p.set(x,0,z);} };
 window.__cam=(y,p,d)=>{ camYaw=y; if(p!=null)camPitch=p; if(d!=null)camDist=d; };

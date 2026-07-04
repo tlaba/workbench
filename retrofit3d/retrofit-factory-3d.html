@@ -73,6 +73,22 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 
 #helpbtn{position:absolute;right:10px;top:10px;z-index:6;background:rgba(30,40,54,.85);
   border:1px solid var(--edge);color:var(--dim);border-radius:50%;width:30px;height:30px;font-weight:700}
+#planbtn{position:absolute;right:10px;top:46px;z-index:6;background:rgba(30,40,54,.85);
+  border:1px solid var(--edge);color:var(--ink);border-radius:8px;width:30px;height:30px;font-size:14px}
+#planner{position:absolute;right:10px;top:82px;width:min(324px,88%);background:rgba(14,21,30,.96);
+  border:1px solid var(--edge);border-radius:10px;z-index:8;display:none;font-size:11.5px;line-height:1.55;
+  box-shadow:0 8px 26px #000a}
+#planner.open{display:block;animation:strippop .22s}
+.pl-head{display:flex;align-items:center;padding:8px 11px 4px;font-size:10px;color:var(--dim);
+  letter-spacing:.6px;font-weight:700}
+.pl-head .x{margin-left:auto;background:none;border:none;color:var(--dim);font-size:15px}
+.pl-body{padding:2px 11px 10px}
+.pl-row{margin-bottom:4px}
+.pl-k{color:var(--dim);font-size:9px;text-transform:uppercase;letter-spacing:.4px;margin-right:6px}
+.pl-link{cursor:pointer;border-bottom:1px dotted var(--dim)}
+.pl-good{color:var(--green)} .pl-warn{color:var(--amber)} .pl-bad{color:var(--red)} .pl-dim{color:var(--dim)}
+.pv{display:block;margin-top:3px;font-size:9.5px;line-height:1.35}
+.pv.good{color:var(--green)} .pv.warn{color:var(--amber)} .pv.dim{color:var(--dim)}
 
 /* ---- bottom action sheet ---- */
 #sheet{position:absolute;left:0;right:0;bottom:0;width:min(100%,560px);margin:0 auto;background:var(--panel);border-top:1px solid var(--edge);
@@ -192,6 +208,8 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
     <div id="glfail">This device could not create a WebGL 3D context.<br/>The simulation still runs, but nothing can be displayed.</div>
     <div id="alerts"></div>
     <button id="helpbtn">?</button>
+    <button id="planbtn" title="Shift planner">📋</button>
+    <div id="planner"><div class="pl-head">📋 SHIFT PLANNER<button class="x" id="planx">×</button></div><div class="pl-body"></div></div>
     <div id="techchip">🔧 <b id="techstate">Idle</b><div id="techqueue"></div><div id="techbar"><div id="techfill"></div></div></div>
     <div id="joy"><div id="jnub"></div></div>
     <div id="ichip"></div>
@@ -377,7 +395,7 @@ function effPower(m){
 // F7/F8 throughput
 function solveThroughput(){
   for(const id in MACH){ const m=MACH[id]; m.effRate=effRate(m);
-    m.rate = m.effRate*(m.pneumatic?S.airFactor:1)*(m.broken?0:1); }
+    m.rate = m.effRate*(m.pneumatic?S.airFactor:1)*(m.broken?0:1)*(m.nursed?0.55:1); }
   let T=Infinity, bn='oven';
   for(const id of CHAIN){ const m=MACH[id]; if(m.rate<T){T=m.rate;bn=id;} }
   if(T===Infinity)T=0;
@@ -392,7 +410,7 @@ function solveThroughput(){
 function advanceWear(){
   for(const id in MACH){ const m=MACH[id];
     if(m.broken){ continue; }
-    const u=m.u;
+    const u=m.u*(m.nursed?0.6:1);   // nursed: run gently, wear ~1/3 (u^2 coupling)
     for(const c of m.ch){
       const S_ = c.moist? (1+C.MU*S.moisture):1;
       const k = (m.automated? c.k*0.35 : c.k)*C.WEAR_SCALE;  // predictive/automate cuts wear rate
@@ -441,7 +459,7 @@ function seize(m){
   const wasStocked=m.stocked;
   m.awaitDelivery = wasStocked?0:C.EMERGENCY_DELIVERY_MIN;
   m.downMins = fail*60;
-  m.stocked=false;
+  m.stocked=false; m.rushed=false;
   // reactive emergency repair auto-dispatched. THE premium: 2.5x parts (unless a
   // spare was stocked) + double labor + collateral damage. Run-to-failure pays here.
   const callout=C.CASCADE_DAMAGE + Math.round(C.LABOR_REPAIR*C.LABOR_EMERGENCY_MULT)
@@ -640,6 +658,23 @@ function actFix(id,chanId){ const m=MACH[id]; if(m.broken){toast('Emergency crew
   S.cash-=cost; S.stats.planned+=cost; enqueue({mid:id,type:'fix',chan:chanId,cost:cost});
   toast('🔩 Targeted fix: '+c.nm+' (−$'+cost+')'); updateHUD(); openSheet(id);
   GameEvents.emit('orderPlaced',{id:id,type:'fix',cost:cost}); }
+function actRush(id){ const m=MACH[id];
+  if(!m.broken){toast('No emergency at '+m.code);return;}
+  if(m.rushed){toast('Courier already rushed');return;}
+  const waiting=(tech.busy&&tech.job&&tech.job.mid===id&&tech.phase==='wait');
+  if(!(m.awaitDelivery>0.5||waiting)){toast('Part is already on site');return;}
+  const cost=250; if(!canPay(cost)){toast('Need $'+cost);return;}
+  S.cash-=cost; S.stats.emerg+=cost; m.rushed=true;
+  m.awaitDelivery=Math.min(m.awaitDelivery,30);
+  if(waiting){ tech.timer=Math.min(tech.timer,30); tech.total=Math.min(tech.total,30); }
+  toast('🚚 Courier rushed — part in ~30m'); updateHUD(); openSheet(id);
+  GameEvents.emit('orderPlaced',{id:id,type:'rush',cost:cost}); }
+function actNurse(id){ const m=MACH[id];
+  if(m.utility){toast('Compressor load is set by the line');return;}
+  if(m.broken){toast(m.code+' is down');return;}
+  m.nursed=!m.nursed;
+  toast(m.nursed?('🐢 '+m.code+' nursed — half speed, gentle wear'):('▶ '+m.code+' back to full speed'));
+  updateHUD(); openSheet(id); GameEvents.emit('nursed',{id:id,on:m.nursed}); }
 function actStock(id){ const m=MACH[id]; if(m.stocked){toast('Part already stocked');return;}
   const p=worstChan(m).part; if(!canPay(p)){toast('Not enough cash');return;}
   m.stocked=true; S.cash-=p; S.stats.planned+=p; toast('📦 Spare stocked for '+m.code+' (skips emergency premium)'); updateHUD(); openSheet(id);
@@ -689,6 +724,37 @@ function jobStripHTML(id){
   return h;
 }
 function chanColor(w){ return w<0.4?'#3ad17a':w<0.7?'#ffb23e':'#ff5a5a'; }
+/* ---- shift planner: dense read of the floor, built only from what the player
+   can legitimately see (observable rates, REVEALED wear, ambient moisture) ---- */
+function plannerHTML(){
+  const bn=S.bottleneck, bm=MACH[bn];
+  let h='<div class="pl-row"><span class="pl-k">◄ Limit</span><b class="pl-link pl-warn" onclick="openSheet(\''+bn+'\')">'+bm.code+'</b> · '+Math.round(S.T)+'/hr</div>';
+  const est=Math.round(S.produced + S.T*((C.TICKS_PER_DAY-S.tick)/60));
+  const eCls=est>=C.CONTRACT_DEMAND?'pl-good':est>=C.CONTRACT_FLOOR?'pl-warn':'pl-bad';
+  h+='<div class="pl-row"><span class="pl-k">Est. today</span><b class="'+eCls+'">~'+est+'</b> / '+C.CONTRACT_DEMAND+' <span class="pl-dim">(floor '+C.CONTRACT_FLOOR+')</span></div>';
+  const ids=CHAIN.concat(['compressor']);
+  const risks=[], unknown=[];
+  for(const id of ids){ const m=MACH[id]; let mx=0, any=false;
+    for(const c of m.ch){ if(c.reveal!=null){ any=true; if(c.reveal>mx) mx=c.reveal; } }
+    if(m.broken) continue;
+    if(!any) unknown.push(m.code);
+    else if(mx>0.45) risks.push({id,code:m.code,mx});
+  }
+  risks.sort((a,b)=>b.mx-a.mx);
+  h+='<div class="pl-row"><span class="pl-k">⚠ Known risk</span>'+
+    (risks.length? risks.slice(0,2).map(r=>'<b class="pl-link '+(r.mx>0.7?'pl-bad':'pl-warn')+'" onclick="openSheet(\''+r.id+'\')">'+r.code+'</b> '+Math.round(r.mx*100)+'%').join(' · ')
+      : '<span class="pl-dim">none known — inspect to be sure</span>')+'</div>';
+  if(unknown.length) h+='<div class="pl-row"><span class="pl-k">🔍 Not inspected</span><span class="pl-dim">'+unknown.join(', ')+'</span></div>';
+  if(S.moisture>=0.4)
+    h+='<div class="pl-row"><b class="'+(S.moisture>0.6?'pl-bad':'pl-warn')+'">💧 Moisture '+Math.round(S.moisture*100)+'%</b> <span class="pl-dim">— eating MIX/SLC/PKG seals · see CMP-900</span></div>';
+  const nursed=ids.filter(id=>MACH[id].nursed).map(id=>MACH[id].code);
+  if(nursed.length) h+='<div class="pl-row"><span class="pl-k">🐢 Nursed</span><span class="pl-dim">'+nursed.join(', ')+'</span></div>';
+  const stocked=ids.filter(id=>MACH[id].stocked).map(id=>MACH[id].code);
+  if(stocked.length) h+='<div class="pl-row"><span class="pl-k">📦 Spares</span><span class="pl-dim">'+stocked.join(', ')+'</span></div>';
+  return h;
+}
+$('planbtn').onclick=()=>{ $('planner').classList.toggle('open'); };
+$('planx').onclick=()=>{ $('planner').classList.remove('open'); };
 function openSheet(id){
   if(HEADLESS) return;
   S.sel=id; const m=MACH[id]; const sh=$('sheet');
@@ -717,6 +783,30 @@ function openSheet(id){
   if(!rev) cond+='<div class="hidden-note">You are guessing. A $'+inspectCost(id)+' inspection reveals per-part wear — and unlocks 🔩 targeted fixes (cheaper + faster than a full service).</div>';
   cond+='</div>';
   const disB = m.broken;
+  // honest previews from observable numbers only (rate/cap shown in chips, revealed wear)
+  const isBn=(id===S.bottleneck);
+  const capNow=Math.round(m.base*m.up), rateNow=Math.round(m.rate);
+  const svcH=(SERVICE_MTTR[id]*C.SERVICE_TIME_MULT).toFixed(1);
+  const worstRev=Math.max(0,...m.ch.map(c=>c.reveal!=null?c.reveal:0));
+  const PV=(txt,cls)=>'<span class="pv '+(cls||'dim')+'">'+txt+'</span>';
+  const gainLikely=isBn && (capNow-rateNow)>Math.max(4,S.T*0.05);
+  const pvInsp=PV('no downtime · unlocks 🔩 targeted fixes','dim');
+  const pvRep =PV('⏱ ~'+svcH+'h down · '+(gainLikely?'▲ likely line gain':(worstRev>0.55?'▼ high known risk — cuts it':'▼ cuts breakdown risk')), gainLikely?'good':'warn');
+  const pvUpg =PV('⏱ 3h down · '+(isBn?'▲ line gain — the limit will move':'no line gain now (not the limit)'), isBn?'good':'dim');
+  const pvAuto=PV('⏱ 2.5h down · ▼ wear −65% for good'+((id==='compressor'&&S.moisture>=0.4)?' · ends the moisture cascade':''), (id==='compressor'&&S.moisture>=0.4)?'good':'dim');
+  const pvRepl=PV('⏱ ~'+(SERVICE_MTTR[id]*C.SERVICE_TIME_MULT+2).toFixed(1)+'h down · like-new +10% cap'+(isBn?' · ▲ line gain':''), isBn?'good':'dim');
+  const pvStock=PV('no downtime · a breakdown then skips 2.5× parts + 3h wait','dim');
+  const rushAvail=m.broken && !m.rushed &&
+    (m.awaitDelivery>0.5 || (tech.busy&&tech.job&&tech.job.mid===id&&tech.phase==='wait'));
+  const rushBtn = m.broken ? (m.rushed
+    ? act('🚚 Rush courier','<span style="color:var(--green)">✓ rushed</span>','Expedited courier en route.','actRush',id,'disabled')
+    : (rushAvail? act('🚚 Rush courier','$250','Phone order — no need to be on site.'+PV('part in ~30m instead of 3h','good'),'actRush',id,'primary'):''))
+    :'';
+  const nurseBtn = (!m.utility && !m.broken)
+    ? act(m.nursed?'▶ Full speed':'🐢 Nurse machine', m.nursed?'free':'free',
+        (m.nursed?'Restore full rate and normal wear.':'Run at half speed while it awaits service.')+
+        PV(m.nursed?'▲ output back to normal':'▼ −45% output here · ▼ ~⅓ wear','warn'),'actNurse',id,'')
+    :'';
   const curType=(tech.busy&&tech.job&&tech.job.mid===id)?tech.job.type:null;
   const pend=new Set(tech.queue.filter(j=>j.mid===id).map(j=>j.type)); if(curType) pend.add(curType);
   const Q='<span style="color:var(--green)">✓ queued</span>';
@@ -724,14 +814,17 @@ function openSheet(id){
   let actsHtml;
   if(near){
     actsHtml=
-      A('🔍 Inspect','$'+inspectCost(id),'Reveal per-part wear. No downtime. 30 min.','actInspect','inspect','')+
-      A('🔧 Repair','$'+repairCost(id),(m.broken?'Emergency crew handles this breakdown.':'Service worst parts to like-new. Machine down '+SERVICE_MTTR[id]+'h.'),'actRepair',m.broken?'emergency':'repair',disB?'disabled':'primary')+
-      act('📦 Stock spare','$'+worstChan(m).part,'Pre-buy the part. A breakdown then skips the 2.5× premium + 3h delivery.','actStock',id,m.stocked?'disabled':'buy')+
-      A('⬆ Upgrade','$'+C.UPGRADE_COST,'Capacity ×1.4 → '+upNext+'/hr. 3h install. (Raises line speed → faster wear everywhere.)','actUpgrade','upgrade','')+
-      A('🤖 Automate','$'+C.AUTOMATE_COST,'Condition-monitor + auto-drain: cuts this machine\'s wear rate ~60%.','actAutomate','automate',m.automated?'disabled':'')+
-      A('🆕 Replace','$'+m.replaceCost,'Brand-new unit, +10% capacity. Capital-heavy.','actReplace','replace','danger');
+      rushBtn+
+      A('🔍 Inspect','$'+inspectCost(id),'Reveal per-part wear.'+pvInsp,'actInspect','inspect','')+
+      A('🔧 Repair','$'+repairCost(id),(m.broken?'Emergency crew handles this breakdown.':'Overhaul all parts to like-new.'+pvRep),'actRepair',m.broken?'emergency':'repair',disB?'disabled':'primary')+
+      act('📦 Stock spare','$'+worstChan(m).part,'Pre-buy the likeliest part.'+pvStock,'actStock',id,m.stocked?'disabled':'buy')+
+      A('⬆ Upgrade','$'+C.UPGRADE_COST,'Capacity ×1.4 → '+upNext+'/hr. Faster line = faster wear.'+pvUpg,'actUpgrade','upgrade','')+
+      A('🤖 Automate','$'+C.AUTOMATE_COST,'Condition-monitor + auto-drain, re-reveals daily.'+pvAuto,'actAutomate','automate',m.automated?'disabled':'')+
+      nurseBtn+
+      A('🆕 Replace','$'+m.replaceCost,'Brand-new unit.'+pvRepl,'actReplace','replace','danger');
   } else {
     actsHtml=
+      rushBtn+
       '<button class="act walk" onclick="walkTo(\''+id+'\',true)">'+
       '<div class="t">🚶 Walk to machine</div>'+
       '<div class="d">You have to be at the machine to work on it. Tap to walk over; the panel reopens when you arrive.</div></button>';
@@ -747,7 +840,8 @@ function openSheet(id){
       '<span class="chip">Energy <b>$'+effPower(m).toFixed(1)+'</b>/hr</span>'+
       (m.broken?'<span class="chip bad">DOWN <b>'+Math.ceil((m.awaitDelivery||0)+m.downMins)+'m</b></span>':'')+
       (m.stocked?'<span class="chip good">spare ✓</span>':'')+
-      (m.automated?'<span class="chip good">auto ✓</span>':'')+pn+
+      (m.automated?'<span class="chip good">auto ✓</span>':'')+
+      (m.nursed?'<span class="chip warn">nursed 🐢</span>':'')+pn+
       (near?'':'<span class="chip warn">too far <b>🚶</b></span>')+
     '</div>'+ cond +
     '<div id="jobstrip"></div>'+
@@ -2047,6 +2141,7 @@ onFx('jobsNormalized',({mid,converted,refund,canceled})=>{
   if(refund>0) popAtMach(mid,'+$'+refund+' refunded','#3ad17a',0.15);
   sTick();
 });
+onFx('nursed',({id,on})=>{ popAtMach(id, on?'🐢 nursed — half speed':'▶ full speed', on?'#ffb23e':'#3ad17a', 0.3); });
 onFx('bottleneckChanged',({to})=>{
   if(S.T>1 && !S.over && worldBuilt) popAtMach(to,'◄ LIMIT moved here','#ffb23e',1.0);
 });
@@ -2082,6 +2177,10 @@ function juiceFrame(dt,t){
   if(Math.abs(_dispCash-S.cash)<1) _dispCash=S.cash;
   $('cashv').textContent='$'+Math.round(_dispCash).toLocaleString();
   $('strikev').classList.toggle('pulse',S.strikes>0&&!S.over);
+  // live shift planner
+  const pl=$('planner');
+  if(pl.classList.contains('open')){ const ph=plannerHTML();
+    if(pl._h!==ph){ pl._h=ph; pl.querySelector('.pl-body').innerHTML=ph; } }
   // live job-status strip inside the open sheet
   if($('sheet').classList.contains('open') && S.sel){
     const el=document.getElementById('jobstrip');

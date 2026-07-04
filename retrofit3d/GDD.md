@@ -3,7 +3,7 @@
 **Lead Game Director's cut. Single source of truth. Level 1: Old Bakery Plant.**
 Target platform: Unity 2022 LTS+ / URP, mobile-first Android, portrait. One Unity developer. One shippable level proving six pillars.
 
-**▶ Play the prototype (no install):** https://tlaba.github.io/workbench/retrofit3d/retrofit-factory-3d.html — a single self-contained HTML file ([`retrofit-factory-3d.html`](./retrofit-factory-3d.html)) that runs this design's tuned economy live: per-channel wear, emergent breakdowns, the compressor→pneumatics moisture cascade, and bottleneck migration, all read through the `effParam()` chokepoint. Neglect loses by ~day 6; disciplined maintenance keeps the contract.
+**▶ Play the prototype (no install):** https://tlaba.github.io/workbench/retrofit3d/retrofit-factory-3d.html — a single self-contained HTML file ([`retrofit-factory-3d.html`](./retrofit-factory-3d.html)): a real-time 3D plant you walk around as the technician, running this design's tuned economy live — per-channel wear, emergent breakdowns, the compressor→pneumatics moisture cascade, and bottleneck migration, all read through the `effParam()` chokepoint. Neglect loses by ~day 6; disciplined maintenance keeps the contract.
 
 **The one rule that governs everything below:** *a fault is data, not code.* A machine is a small component model; every symptom, breakdown and cascade emerges from `params + runtime + load` read through two chokepoints — `effParam()` (physics) and `effCost()` (economy). No code path anywhere is allowed to *know* that "compressor moisture stops the slicer." It falls out of ordinary throughput math on a shared air bus. Where this document lists a canonical number, that number is identical in §5, §18 and §24 — no drift.
 

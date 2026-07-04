@@ -1088,6 +1088,106 @@ function ensureWorld(){
     const door=box(0.06,2.0,0.9,stdMat(0x3a424a,0.7,0.2),-2.2,1.0,-1.4,g);
     scene.add(g); })();
   addObst(12.7,6.6,2.2,2.2);
+  // ---- supporting equipment (dressing; solid but not interactive) ----
+  const steelS=stdMat(0x9aa3ab,0.5,0.65), galv=stdMat(0x8d979f,0.45,0.6), dk=stdMat(0x2a3038,0.7,0.3);
+  // flour silo (NW corner) with feed pipe over to the mixer
+  (function(){ const g=new THREE.Group(); g.position.set(-13.5,0,-7.1);
+    for(const a of [0,1,2,3]){ const lx=Math.cos(a*Math.PI/2)*0.62, lz=Math.sin(a*Math.PI/2)*0.62;
+      cyl(0.07,0.07,1.3,dk,lx,0.65,lz,g,8); }
+    const cone=new THREE.Mesh(new THREE.CylinderGeometry(0.78,0.16,1.0,18),galv); cone.position.y=1.75; cone.castShadow=true; g.add(cone);
+    cyl(0.8,0.8,2.3,galv,0,3.35,0,g,18);
+    const dome=new THREE.Mesh(new THREE.SphereGeometry(0.8,18,10,0,Math.PI*2,0,Math.PI/2),galv); dome.position.y=4.5; g.add(dome);
+    const sign=makeTextSprite('FLOUR','#dfe8f0','rgba(20,26,32,.7)',24,7); sign.position.set(0,3.4,0.95); g.add(sign);
+    scene.add(g); })();
+  addObst(-13.5,-7.1,1.0,1.0);
+  (function(){ // pneumatic flour line silo → mixer head
+    const pm=stdMat(0x9aa4ad,0.4,0.7);
+    function seg(ax,ay,az,bx,by,bz){ const dx=bx-ax,dy=by-ay,dz=bz-az,L=Math.sqrt(dx*dx+dy*dy+dz*dz);
+      const m=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,L,8),pm);
+      m.position.set((ax+bx)/2,(ay+by)/2,(az+bz)/2);
+      m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),new THREE.Vector3(dx/L,dy/L,dz/L));
+      scene.add(m); }
+    seg(-13.5,4.4,-7.1, -13.5,5.0,-7.1); seg(-13.5,5.0,-7.1, -11.0,5.0,-6.2); seg(-11.0,5.0,-6.2, -11.0,3.1,-5.4); })();
+  // proofer cabinet behind the conveyor
+  (function(){ const g=new THREE.Group(); g.position.set(-8.8,0,-7.8);
+    box(2.0,2.2,1.1,steelS,0,1.1,0,g);
+    box(0.9,1.9,0.04,stdMat(0x6a747d,0.35,0.8),-0.5,1.05,0.58,g);
+    box(0.9,1.9,0.04,stdMat(0x6a747d,0.35,0.8), 0.5,1.05,0.58,g);
+    for(const hx of [-0.5,0.5]) box(0.05,0.5,0.06,dk,hx+0.3,1.1,0.62,g);
+    const scr2=new THREE.Mesh(new THREE.PlaneGeometry(0.4,0.22),
+      new THREE.MeshStandardMaterial({color:0x0a1410,emissive:0x37e07a,emissiveIntensity:0.5}));
+    scr2.position.set(0,2.05,0.56); g.add(scr2);
+    const lbl=makeTextSprite('PROOFER','#cfd8e2','rgba(20,26,32,.7)',20,6); lbl.position.set(0,2.7,0); g.add(lbl);
+    scene.add(g); })();
+  addObst(-8.8,-7.8,1.0,0.55);
+  // bread rack trolleys
+  function rack(x,z,ry){ const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=ry;
+    const fm=stdMat(0x9aa2aa,0.4,0.75);
+    for(const sx of [-0.45,0.45]) for(const sz of [-0.3,0.3]) cyl(0.03,0.03,1.7,fm,sx,0.85,sz,g,6);
+    for(let i=0;i<5;i++){ box(0.95,0.03,0.65,fm,0,0.25+i*0.33,0,g);
+      if(MR()<0.8) for(let l=0;l<3;l++) box(0.26,0.14,0.5,stdMat(0xc8913f,0.85,0),-0.3+l*0.3,0.34+i*0.33,0,g); }
+    for(const sx of [-0.45,0.45]) for(const sz of [-0.3,0.3]){ const w=cyl(0.06,0.06,0.05,dk,sx,0.03,sz,g,8); w.rotation.z=Math.PI/2; }
+    scene.add(g); }
+  rack(3.1,-7.8,0.15); rack(4.5,-7.6,-0.2);
+  addObst(3.8,-7.7,1.4,0.6);
+  // wash station (east back corner)
+  (function(){ const g=new THREE.Group(); g.position.set(12.9,0,-7.6);
+    box(1.9,0.08,0.95,steelS,0,0.9,0,g);
+    for(const sx of [-0.85,0.85]) for(const sz of [-0.38,0.38]) cyl(0.04,0.04,0.9,dk,sx,0.45,sz,g,6);
+    box(0.8,0.3,0.6,stdMat(0x818b93,0.3,0.85),-0.4,0.82,0,g); // basin
+    const f=cyl(0.035,0.035,0.4,steelS,-0.4,1.2,-0.15,g,8);
+    const f2=cyl(0.035,0.035,0.3,steelS,-0.4,1.38,0,g,8); f2.rotation.x=Math.PI/2;
+    for(let i=0;i<3;i++) box(0.5,0.06,0.35,stdMat(0x7a8a5b,0.6,0.2),0.55,0.98+i*0.08,-0.1+i*0.06,g); // trays
+    scene.add(g); })();
+  addObst(12.9,-7.6,1.0,0.55);
+  // boiler / water heater near the compressor corner
+  (function(){ const g=new THREE.Group(); g.position.set(-14.0,0,2.0);
+    cyl(0.52,0.52,1.9,stdMat(0xb8bfc6,0.4,0.6),0,0.95,0,g,16);
+    const top=new THREE.Mesh(new THREE.SphereGeometry(0.52,16,8,0,Math.PI*2,0,Math.PI/2),stdMat(0xb8bfc6,0.4,0.6));
+    top.position.y=1.9; g.add(top);
+    cyl(0.05,0.05,2.2,galv,0.2,3.0,0,g,8);
+    box(0.3,0.4,0.25,dk,0,0.9,0.55,g);
+    const flame=new THREE.Mesh(new THREE.PlaneGeometry(0.16,0.1),
+      new THREE.MeshStandardMaterial({color:0x0a0602,emissive:0xff7a1e,emissiveIntensity:1.2}));
+    flame.position.set(0,0.72,0.68); g.add(flame);
+    scene.add(g); })();
+  addObst(-14.0,2.0,0.7,0.7);
+  // MCC electrical panel on the east wall + conduit
+  (function(){ const g=new THREE.Group(); g.position.set(14.75,0,-4.5); g.rotation.y=-Math.PI/2;
+    box(1.6,2.1,0.35,stdMat(0x7d8792,0.5,0.5),0,1.25,0,g);
+    box(0.7,1.9,0.04,stdMat(0x6a747d,0.4,0.6),-0.4,1.25,0.2,g);
+    box(0.7,1.9,0.04,stdMat(0x6a747d,0.4,0.6), 0.4,1.25,0.2,g);
+    const warn=new THREE.Mesh(new THREE.PlaneGeometry(0.42,0.3),
+      new THREE.MeshStandardMaterial({color:0xd8a020,emissive:0x442a00,emissiveIntensity:0.3}));
+    warn.position.set(0,1.7,0.23); g.add(warn);
+    for(const cx of [-0.3,0,0.3]) cyl(0.035,0.035,3.6,galv,cx,4.1,0,g,6);
+    scene.add(g); })();
+  addObst(14.55,-4.5,0.35,0.9);
+  // maintenance workbench near the office (your bench)
+  (function(){ const g=new THREE.Group(); g.position.set(9.6,0,7.6); g.rotation.y=Math.PI;
+    box(2.2,0.09,0.85,stdMat(0x8a6f4d,0.8,0.05),0,0.92,0,g);
+    for(const sx of [-1.0,1.0]) for(const sz of [-0.32,0.32]) box(0.08,0.9,0.08,dk,sx,0.46,sz,g);
+    box(0.55,0.35,0.4,stdMat(0x9a4030,0.5,0.4),-0.6,1.14,0,g);       // toolbox
+    box(0.02,0.9,1.8,stdMat(0x55606a,0.8,0.2),0,1.85,-0.44,g);       // pegboard
+    for(let i=0;i<5;i++) box(0.03,0.22,0.05,steelS,-0.7+i*0.35,1.8,-0.41,g);
+    cyl(0.16,0.16,0.5,dk,0.8,1.2,0,g,12);                            // bench grinder-ish
+    scene.add(g); })();
+  addObst(9.6,7.6,1.2,0.55);
+  // pallet jack
+  (function(){ const g=new THREE.Group(); g.position.set(1.0,0,6.9); g.rotation.y=0.7;
+    const or2=stdMat(0xd8641e,0.5,0.4);
+    box(0.16,0.08,1.3,or2,-0.22,0.12,0.3,g); box(0.16,0.08,1.3,or2,0.22,0.12,0.3,g);
+    box(0.5,0.5,0.3,or2,0,0.3,-0.45,g);
+    const hd2=cyl(0.03,0.03,0.9,dk,0,0.75,-0.75,g,6); hd2.rotation.x=0.6;
+    box(0.3,0.05,0.12,dk,0,1.08,-1.05,g);
+    scene.add(g); })();
+  addObst(1.0,6.9,0.55,0.75);
+  // fire extinguisher on the mid column
+  (function(){ const g=new THREE.Group(); g.position.set(0.18,0,8.62);
+    cyl(0.09,0.09,0.5,stdMat(0xb02020,0.4,0.4),0,1.15,0,g,10);
+    cyl(0.03,0.03,0.12,dk,0,1.47,0,g,6);
+    box(0.24,0.3,0.02,stdMat(0xb02020,0.6,0.1),0,1.15,-0.12,g);
+    scene.add(g); })();
   // safety bollards along the walkway edge
   for(let x=-13;x<=12;x+=2.6){ if(Math.abs(x-(-11.6))<2.4 && false) continue;
     const b=cyl(0.09,0.11,0.75,stdMat(0xd8a020,0.5,0.3),x,0.37,-2.55,scene,10); }
@@ -1304,7 +1404,7 @@ function tryInteract(){ const id=nearestInRange(); if(id) openSheet(id); }
 const keys={};
 window.addEventListener('keydown',e=>{ keys[e.code]=1;
   if(e.code==='KeyE') tryInteract();
-  if(e.code==='Space'){ setSpeed(S.speed===0?1:0); e.preventDefault(); } });
+  if(e.code==='Space'){ setSpeed(S.speed===0?(S._lastSpd||1):0); e.preventDefault(); } });
 window.addEventListener('keyup',e=>{ delete keys[e.code]; });
 
 // virtual joystick
@@ -1554,8 +1654,14 @@ function frame(now){
   if(renderer){ resize3d(); renderer.render(scene,camera); }
   requestAnimationFrame(frame);
 }
-function setSpeed(s){ S.speed=s; document.querySelectorAll('.spd').forEach(b=>b.classList.toggle('on',+b.dataset.s===s)); }
-document.querySelectorAll('.spd').forEach(b=>b.onclick=()=>{ initAudio(); setSpeed(+b.dataset.s); });
+function setSpeed(s){ if(s>0) S._lastSpd=s; S.speed=s;
+  document.querySelectorAll('.spd').forEach(b=>b.classList.toggle('on',+b.dataset.s===s));
+  const p0=$('sp0'); if(p0) p0.textContent = (s===0?'▶':'❚❚');
+}
+document.querySelectorAll('.spd').forEach(b=>b.onclick=()=>{ initAudio();
+  const v=+b.dataset.s;
+  if(v===0) setSpeed(S.speed===0 ? (S._lastSpd||1) : 0);   // ❚❚ toggles pause/play
+  else setSpeed(v); });
 
 // ---- headless harness (for tuning/verification) ----
 window.__sim = function(policy,seed){

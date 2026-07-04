@@ -132,6 +132,21 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
   border-radius:10px;padding:10px 12px;z-index:9;font-size:12.5px;line-height:1.45;box-shadow:0 6px 20px #0009;
   width:min(calc(100% - 24px),520px);margin:0 auto}
 .tut b{color:var(--blue)} .tut .x{float:right;color:var(--dim);background:none;border:none;font-size:16px;margin:-2px -2px 0 0}
+
+/* ---- game-feel layer ---- */
+#vig{position:absolute;inset:0;pointer-events:none;z-index:6;opacity:0;
+  box-shadow:inset 0 0 110px 34px rgba(255,42,30,.55);transition:opacity .18s}
+#vig.amber{box-shadow:inset 0 0 110px 34px rgba(255,178,62,.42)}
+@keyframes flup{0%{transform:scale(1.22)}100%{transform:scale(1)}}
+#cashv.flash-up{animation:flup .45s;color:var(--green)!important}
+@keyframes fldn{0%{transform:scale(1.22)}100%{transform:scale(1)}}
+#cashv.flash-down{animation:fldn .45s;color:var(--red)!important}
+@keyframes spulse{0%,100%{transform:scale(1)}50%{transform:scale(1.3)}}
+#strikev.pulse{animation:spulse 1.1s infinite}
+@keyframes chippulse{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.05)}}
+#ichip{animation:chippulse 1.6s infinite}
+@keyframes cardpop{0%{transform:translateY(16px) scale(.94);opacity:0}100%{transform:none;opacity:1}}
+.card{animation:cardpop .24s cubic-bezier(.2,.9,.3,1.25)}
 </style>
 </head>
 <body>
@@ -153,6 +168,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
   </div>
 
   <div id="stage">
+    <div id="vig"></div>
     <div id="glfail">This device could not create a WebGL 3D context.<br/>The simulation still runs, but nothing can be displayed.</div>
     <div id="alerts"></div>
     <button id="helpbtn">?</button>
@@ -1161,8 +1177,9 @@ const WALK_SPEED=3.5;
 function buildFloor(){ ensureWorld(); resetDynamics(); }   // called by newGame()
 function resetDynamics(){
   if(!CH) return;
-  CH.p.set(7.5,0,1.2); CH.yaw=Math.PI; CH.phase=0;
-  camYaw=0.52; camPitch=0.62; camDist=9.0;
+  CH.p.set(7.5,0,1.2); CH.yaw=Math.PI; CH.phase=0; CH.lean=0; CH.prevYaw=CH.yaw;
+  if(CH.vel) CH.vel.set(0,0);
+  camYaw=0.52; camPitch=0.62; camDist=9.0; SHK.t=0;
   for(let i=PUFFS.length-1;i>=0;i--){ if(!PUFFS[i].mote){ scene.remove(PUFFS[i].spr); PUFFS.splice(i,1); } }
 }
 function panelPt(m){ return {x:m.pos[0], z:m.pos[1]+m.face*(m.hd+1.0)}; }
@@ -1255,27 +1272,25 @@ function collide(p){
   p.x=clamp(p.x,-14.3,14.3); p.z=clamp(p.z,-8.3,8.3);
 }
 function lerpAngle(a,b,t){ let d=b-a; while(d>Math.PI)d-=Math.PI*2; while(d<-Math.PI)d+=Math.PI*2; return a+d*t; }
-function steer(tx,tz,dt,sp){
-  const dx=tx-CH.p.x, dz=tz-CH.p.z, d=Math.hypot(dx,dz);
-  if(d<0.34) return false;
-  CH.p.x+=dx/d*sp*dt; CH.p.z+=dz/d*sp*dt;
-  CH.yaw=lerpAngle(CH.yaw,Math.atan2(dx,dz),0.22);
-  return true;
-}
-let _spark=0;
+
+/* ---- movement with weight: accelerate, brake near targets, lean into turns ---- */
+const SHK={t:0};
+function addShake(x){ SHK.t=Math.min(1,Math.max(SHK.t,x)); }
+let footAlt=0, stepAcc=0;
 function updateChar(dt){
   if(!CH) return;
-  let moving=false, working=false;
+  CH.vel=CH.vel||new THREE.Vector2(0,0);
+  let working=false, tvx=0, tvz=0;
   if(tech.busy&&tech.job){
     const m=MACH[tech.job.mid], p=panelPt(m);
-    if(tech.phase==='travel'){ moving=steer(p.x,p.z,dt,WALK_SPEED*1.12); }
-    else {
-      steer(p.x,p.z,dt,WALK_SPEED); // settle onto the panel point
-      CH.yaw=lerpAngle(CH.yaw,Math.atan2(m.pos[0]-CH.p.x, m.pos[1]-CH.p.z),0.18);
+    const dx=p.x-CH.p.x, dz=p.z-CH.p.z, d=Math.hypot(dx,dz);
+    if(d>0.4){
+      let sp=(tech.phase==='travel'?WALK_SPEED*1.12:WALK_SPEED)*clamp(d/1.1,0.35,1);
+      tvx=dx/d*sp; tvz=dz/d*sp;
+    }
+    if(tech.phase!=='travel'){
       working=(tech.phase==='work');
-      if(working){ _spark-=dt;
-        if(_spark<=0){ _spark=0.22+MR()*0.3;
-          spawnPuff(CH.p.x+(MR()-0.5)*0.3,1.05,CH.p.z+(MR()-0.5)*0.3,0xffd070,{scale:0.1,vy:0.9,ttl:0.5,add:true,op:0.9,grow:-0.05}); } }
+      if(d<=1.2) CH.yaw=lerpAngle(CH.yaw,Math.atan2(m.pos[0]-CH.p.x, m.pos[1]-CH.p.z),Math.min(1,dt*7));
     }
     S.walk=null;
   } else {
@@ -1288,42 +1303,68 @@ function updateChar(dt){
       const n=Math.min(1,L), fwd=-iz, side=ix;
       const fx=-Math.sin(camYaw), fz=-Math.cos(camYaw), rx=-fz, rz=fx;
       const vx=(fx*fwd+rx*side), vz=(fz*fwd+rz*side), vl=Math.hypot(vx,vz)||1;
-      CH.p.x+=vx/vl*WALK_SPEED*n*dt; CH.p.z+=vz/vl*WALK_SPEED*n*dt;
-      CH.yaw=lerpAngle(CH.yaw,Math.atan2(vx,vz),0.25); moving=true;
+      tvx=vx/vl*WALK_SPEED*n; tvz=vz/vl*WALK_SPEED*n;
     } else if(S.walk){
-      moving=steer(S.walk.x,S.walk.z,dt,WALK_SPEED);
-      if(!moving){ const w=S.walk; S.walk=null;
-        if(w.open && charNear(w.open)) openSheet(w.open); }
+      const dx=S.walk.x-CH.p.x, dz=S.walk.z-CH.p.z, d=Math.hypot(dx,dz);
+      if(d<=0.42){ const w=S.walk; S.walk=null;
+        if(w.open && charNear(w.open)) openSheet(w.open);
+      } else { const sp=WALK_SPEED*clamp(d/1.1,0.35,1); tvx=dx/d*sp; tvz=dz/d*sp; }
     }
   }
+  // acceleration toward target velocity (weight)
+  const ak=Math.min(1,dt*7.5);
+  CH.vel.x+=(tvx-CH.vel.x)*ak; CH.vel.y+=(tvz-CH.vel.y)*ak;
+  let spd=Math.hypot(CH.vel.x,CH.vel.y);
+  if(spd<0.05 && !tvx && !tvz){ CH.vel.set(0,0); spd=0; }
+  CH.p.x+=CH.vel.x*dt; CH.p.z+=CH.vel.y*dt;
   collide(CH.p);
+  const moving=spd>0.35, spdN=Math.min(1,spd/WALK_SPEED);
+  if(spd>0.6) CH.yaw=lerpAngle(CH.yaw,Math.atan2(CH.vel.x,CH.vel.y),Math.min(1,dt*10));
+  // lean into turns
+  let yr=lerpAngle(CH.prevYaw,CH.yaw,1)-CH.prevYaw; CH.prevYaw=CH.yaw;
+  const leanT=clamp(-(yr/Math.max(dt,1e-3))*0.045,-0.14,0.14)*spdN;
+  CH.lean+=(leanT-CH.lean)*Math.min(1,dt*8);
+  // footsteps
+  stepAcc+=spdN*dt*3.0;
+  if(stepAcc>=1){ stepAcc-=1; footAlt^=1; juiceStep(footAlt,CH.p); }
   // animation
-  const targetSpd=moving?1:0; CH.spd+=(targetSpd-CH.spd)*Math.min(1,dt*10);
-  CH.phase+=dt*(moving?9:working?7:2);
+  CH.spd+=(spdN-CH.spd)*Math.min(1,dt*10);
+  CH.phase+=dt*(9*CH.spd + (working?7:0) + (!moving&&!working?2:0));
   const sw=Math.sin(CH.phase);
   CH.legL.rotation.x=sw*0.62*CH.spd; CH.legR.rotation.x=-sw*0.62*CH.spd;
   if(working){ CH.armR.rotation.x=-1.2+Math.sin(CH.phase)*0.5; CH.armL.rotation.x=-0.25;
     CH.wrench.visible=true; }
   else { CH.armL.rotation.x=-sw*0.5*CH.spd; CH.armR.rotation.x=sw*0.5*CH.spd; CH.wrench.visible=false; }
   CH.grp.position.set(CH.p.x, Math.abs(Math.sin(CH.phase))*0.035*CH.spd, CH.p.z);
-  CH.grp.rotation.y=CH.yaw;
+  CH.grp.rotation.set(0,CH.yaw,CH.lean);
 }
 const _camTgt=new THREE.Vector3(), _camPos=new THREE.Vector3();
 function updateCam(dt){
   if(!CH||!renderer) return;
   const cp=Math.cos(camPitch), sp=Math.sin(camPitch);
-  _camPos.set(CH.p.x+Math.sin(camYaw)*cp*camDist, Math.min(5.15,1.3+sp*camDist), CH.p.z+Math.cos(camYaw)*cp*camDist);
+  const la=0.34; // look-ahead: camera leads the walk
+  const tx=CH.p.x+(CH.vel?CH.vel.x*la:0), tz=CH.p.z+(CH.vel?CH.vel.y*la:0);
+  _camPos.set(tx+Math.sin(camYaw)*cp*camDist, Math.min(5.15,1.3+sp*camDist), tz+Math.cos(camYaw)*cp*camDist);
   const k=1-Math.pow(0.002,dt);
   camera.position.lerp(_camPos,k);
-  _camTgt.set(CH.p.x,1.25,CH.p.z);
+  _camTgt.set(tx,1.25,tz);
   camera.lookAt(_camTgt);
+  // trauma shake (decays quadratically-felt)
+  if(SHK.t>0){ const s=SHK.t*SHK.t;
+    camera.position.x+=(MR()-0.5)*s*0.5; camera.position.y+=(MR()-0.5)*s*0.34; camera.position.z+=(MR()-0.5)*s*0.5;
+    camera.rotation.z+=(MR()-0.5)*s*0.05;
+    SHK.t=Math.max(0,SHK.t-dt*1.5);
+  }
 }
 
 /* =============================== PER-FRAME VISUAL SYNC =============================== */
 const _lampC={good:new THREE.Color(0x3ad17a),warn:new THREE.Color(0xffb23e),bad:new THREE.Color(0xff5a5a),down:new THREE.Color(0xff2222)};
-const _smokeT={}; let _strobe=null, _strobeAt=null;
+const _smokeT={}; let _strobe=null;
+let ANIMT=0; // machine-animation clock: scales with game speed, freezes on pause
 function sync3D(dt,t){
   if(!worldBuilt) return;
+  const asc=S.speed?Math.min(S.speed,3):0;   // plant runs faster at 2x/4x, freezes on pause
+  ANIMT+=dt*asc; const at=ANIMT;
   // sun through the shift (06:00 → 14:00)
   const f=S.tick/C.TICKS_PER_DAY;
   SUN.intensity=0.38+0.55*Math.sin(Math.PI*clamp(f,0.02,0.98));
@@ -1333,11 +1374,9 @@ function sync3D(dt,t){
   for(const d of DEFS){
     const m=MACH[d.id], R=M3D[d.id]; if(!R) continue;
     const H=machHealth(m);
-    // status lamp + gentle pulse when broken
     const lc = m.broken?_lampC.down : H>0.5?_lampC.good : H>0.25?_lampC.warn : _lampC.bad;
     R.lamp.material.color.copy(lc);
     R.lamp.material.opacity = m.broken? (0.55+0.45*Math.sin(t*9)) : 0.95;
-    // paint tint: age toward rust, near-black when broken
     for(const pm of R.paint){
       const base=new THREE.Color(d.color);
       if(m.broken) base.lerp(new THREE.Color(0x2c211c),0.7);
@@ -1345,52 +1384,47 @@ function sync3D(dt,t){
       pm.color.copy(base);
     }
     const running=!m.broken && m.rate>1;
-    // per-machine animation
     const A=R.anim;
-    if(A.agit) A.agit.rotation.y+= (running? dt*3.2*(m.rate/m.base):0);
-    if(A.belt){ A.belt.material.map.offset.x-= (running? dt*(S.T/800)*0.9:0); }
-    if(A.loaves){ const sp=running?(S.T/800)*1.05:0;
+    if(A.agit) A.agit.rotation.y+= (running? dt*asc*3.2*(m.rate/m.base):0);
+    if(A.belt){ A.belt.material.map.offset.x-= (running? dt*asc*(S.T/800)*0.9:0); }
+    if(A.loaves){ const sp=running?(S.T/800)*1.05*asc:0;
       for(const l of A.loaves){ l.position.x+=sp*dt; if(l.position.x>2.25) l.position.x=-2.25;
         l.visible = S.T>4 && !m.broken; } }
     if(A.glows){ const gi=running?(0.6+1.3*(1-m.ch[0].w)):0.08;
       for(const gl of A.glows) gl.material.emissiveIntensity=gi; }
     if(A.glowL) A.glowL.intensity=running?0.7:0.04;
-    if(A.blade) A.blade.position.y=1.45+(running?Math.sin(t*15)*0.2:0);
-    if(A.roll) A.roll.rotation.x+=(running?dt*1.6:0);
-    if(A.head) A.head.position.y=1.55+(running?Math.abs(Math.sin(t*5))*0.12:0);
+    if(A.blade) A.blade.position.y=1.45+(running?Math.sin(at*15)*0.2:0);
+    if(A.roll) A.roll.rotation.x+=(running?dt*asc*1.6:0);
+    if(A.head) A.head.position.y=1.55+(running?Math.abs(Math.sin(at*5))*0.12:0);
     if(A.needle) A.needle.rotation.z=-(-2.2+(S.airP/C.P_NOM)*3.1);
-    if(A.tank && running) A.tank.position.y=0.78+Math.sin(t*40)*0.004;
+    if(A.tank) A.tank.position.y=0.78+(running&&asc?Math.sin(at*40)*0.004:0);
     if(A.puddle){ const s=0.4+S.moisture*1.6; A.puddle.scale.set(s,s,1);
       A.puddle.material.opacity=0.15+S.moisture*0.3; }
-    // smoke when broken; steam from oven vent; condensate steam when moist
     _smokeT[d.id]=(_smokeT[d.id]||0)-dt;
     if(m.broken && _smokeT[d.id]<=0){ _smokeT[d.id]=0.14;
-      spawnPuff(d.pos[0]+(MR()-0.5)*0.8, R.topY*0.85, d.pos[1]+(MR()-0.5)*0.5, 0x30343a,
-        {scale:0.4,vy:0.75,ttl:2.4,op:0.5,grow:0.5});
+      spawnPuff(d.pos[0]+(MR()-0.5)*0.8, R.topY*0.85, d.pos[1]+(MR()-0.5)*0.5, 0x3c4046,
+        {scale:0.55,vy:0.8,ttl:2.6,op:0.62,grow:0.6});
       if(!brokenAny) brokenAny=d;
     } else if(m.broken && !brokenAny) brokenAny=d;
-    if(d.id==='oven' && running && MR()<dt*3)
+    if(d.id==='oven' && running && MR()<dt*3*asc)
       spawnPuff(d.pos[0]+A.ventAt.x, A.ventAt.y, d.pos[1]+A.ventAt.z, 0xdfe4e8,{scale:0.28,vy:0.9,ttl:1.6,op:0.28,grow:0.6});
-    if(d.id==='compressor' && !m.broken && S.moisture>0.45 && MR()<dt*2.2){
+    if(d.id==='compressor' && !m.broken && S.moisture>0.45 && MR()<dt*2.2*asc){
       const dr=A.drainAt;
       spawnPuff(d.pos[0]-dr.x, dr.y, d.pos[1]-dr.z, 0xcfd8e0,{scale:0.16,vy:0.4,ttl:1.2,op:0.3,grow:0.35});
     }
   }
-  // red strobe follows (first) broken machine
   if(brokenAny){
     if(!_strobe){ _strobe=new THREE.PointLight(0xff2a20,0,9,1.8); scene.add(_strobe); }
     _strobe.position.set(brokenAny.pos[0], M3D[brokenAny.id].topY+0.6, brokenAny.pos[1]);
     _strobe.intensity=0.5+0.9*Math.max(0,Math.sin(t*10));
   } else if(_strobe) _strobe.intensity=0;
-  // bottleneck badge
   const bn=S.bottleneck, bm=MACH[bn];
   if(LIMITSPR){
     const show=bm && !bm.broken && CHAIN.includes(bn) && S.T>0.5;
     LIMITSPR.visible=show;
-    if(show) LIMITSPR.position.set(bm.pos[0], M3D[bn].topY+1.15, bm.pos[1]);
+    if(show) LIMITSPR.position.set(bm.pos[0], M3D[bn].topY+1.15+Math.sin(t*2)*0.09, bm.pos[1]);
   }
   updatePuffs(dt,t);
-  // interact chip
   const chip=$('ichip');
   if(!tech.busy && !$('sheet').classList.contains('open') && !S.over){
     const id=nearestInRange();
@@ -1398,7 +1432,6 @@ function sync3D(dt,t){
       chip.style.display='block'; }
     else { chip.style.display='none'; chip.dataset.mid=''; }
   } else { chip.style.display='none'; chip.dataset.mid=''; }
-  // plant hum
   if(hum) hum.gain.value+=(((S.over||S.speed===0)?0:Math.min(0.05,(S.T/800)*0.05))-hum.gain.value)*0.06;
 }
 
@@ -1411,12 +1444,13 @@ function frame(now){
     let guard=0; while(acc>=1 && guard++<200){ stepTick(); acc-=1; if(S.over)break; } }
   updateChar(dt); updateCam(dt);
   sync3D(dt,now/1000);
+  juiceFrame(dt,now/1000);
   renderTech();
   if(renderer){ resize3d(); renderer.render(scene,camera); }
   requestAnimationFrame(frame);
 }
 function setSpeed(s){ S.speed=s; document.querySelectorAll('.spd').forEach(b=>b.classList.toggle('on',+b.dataset.s===s)); }
-document.querySelectorAll('.spd').forEach(b=>b.onclick=()=>{ if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}} ensureHum(); setSpeed(+b.dataset.s); });
+document.querySelectorAll('.spd').forEach(b=>b.onclick=()=>{ initAudio(); setSpeed(+b.dataset.s); });
 
 // ---- headless harness (for tuning/verification) ----
 window.__sim = function(policy){
@@ -1441,6 +1475,190 @@ window.S=()=>S; window.MACH=()=>MACH;
 window.__tp=(x,z)=>{ if(CH){CH.p.set(x,0,z);} };
 window.__cam=(y,p,d)=>{ camYaw=y; if(p!=null)camPitch=p; if(d!=null)camDist=d; };
 window.__char=()=>CH?[+CH.p.x.toFixed(2),+CH.p.z.toFixed(2)]:null;
+
+/* =============================================================================
+   GAME FEEL LAYER — pure presentation. Wraps sim events (seize/settleDay/
+   finishJob/act*) without touching their math; uses Math.random only, so the
+   seeded simulation stays byte-identical and __sim results are unchanged.
+   ============================================================================= */
+
+/* ---------- floating world-space popups (money, events) ---------- */
+const POPS=[];
+function popup(x,y,z,text,color){
+  if(!worldBuilt||POPS.length>22) return;
+  const sp=makeTextSprite(text,color,'rgba(8,11,16,.82)',30,9);
+  sp.material.depthTest=false;
+  sp.position.set(x+(MR()-0.5)*0.5, y, z+(MR()-0.5)*0.3);
+  scene.add(sp);
+  POPS.push({sp,life:0,ttl:1.35});
+}
+function popAtMach(id,text,color,dy){ const m=MACH[id], R=M3D[id];
+  popup(m.pos[0], (R?R.topY:2.2)+(dy||0.4), m.pos[1], text, color); }
+
+/* ---------- procedural audio engine (built on first gesture) ---------- */
+let AE=null, NOISEBUF=null;
+function initAudio(){
+  try{
+    if(AE){ if(AE.ctx.state==='suspended') AE.ctx.resume(); return; }
+    const Ctx=window.AudioContext||window.webkitAudioContext; if(!Ctx) return;
+    const ctx=AC||new Ctx(); AC=ctx;
+    if(ctx.state==='suspended') ctx.resume();
+    const compn=ctx.createDynamicsCompressor(); compn.connect(ctx.destination);
+    const master=ctx.createGain(); master.gain.value=0.5; master.connect(compn);
+    const len=ctx.sampleRate*2, buf=ctx.createBuffer(1,len,ctx.sampleRate), dd=buf.getChannelData(0);
+    let l=0; for(let i=0;i<len;i++){ const w=Math.random()*2-1; l=(l+0.02*w)/1.02; dd[i]=l*3.5; }
+    NOISEBUF=buf;
+    AE={ctx,master,voices:{}};
+    for(const d of DEFS) AE.voices[d.id]=machineVoice(d.id);
+    ensureHum();
+  }catch(e){}
+}
+document.addEventListener('pointerdown',initAudio,true);
+function machineVoice(id){
+  const ctx=AE.ctx;
+  const g=ctx.createGain(); g.gain.value=0;
+  const pan=ctx.createStereoPanner?ctx.createStereoPanner():null;
+  if(pan){ g.connect(pan); pan.connect(AE.master); } else g.connect(AE.master);
+  let main=null;
+  function noise(){ const s=ctx.createBufferSource(); s.buffer=NOISEBUF; s.loop=true; s.start(); return s; }
+  if(id==='conveyor'||id==='oven'||id==='slicer'){
+    const n=noise(); const f=ctx.createBiquadFilter();
+    if(id==='slicer'){ f.type='bandpass'; f.frequency.value=900; f.Q.value=2.2; }
+    else { f.type='lowpass'; f.frequency.value=(id==='oven'?120:320); }
+    n.connect(f); f.connect(g);
+  } else {
+    const o=ctx.createOscillator(); main=o;
+    o.type=(id==='compressor')?'sawtooth':'triangle';
+    o.frequency.value=(id==='compressor')?52:(id==='mixer')?85:150;
+    const f=ctx.createBiquadFilter(); f.type='lowpass'; f.frequency.value=(id==='compressor')?260:520;
+    o.connect(f); f.connect(g); o.start();
+    if(id==='compressor'){ // piston chug
+      const lfo=ctx.createOscillator(), lg=ctx.createGain();
+      lfo.frequency.value=7; lg.gain.value=0.45; lfo.connect(lg); lg.connect(g.gain); lfo.start();
+    }
+  }
+  const base={mixer:0.05,conveyor:0.07,oven:0.09,slicer:0.05,packager:0.045,compressor:0.08}[id];
+  return {g,pan,main,base};
+}
+const _pv=new THREE.Vector3();
+function updVoices(){
+  if(!AE||!CH) return;
+  const t=AE.ctx.currentTime;
+  for(const d of DEFS){ const v=AE.voices[d.id], m=MACH[d.id]; if(!v) continue;
+    const running=!m.broken && m.rate>1 && S.speed>0 && !S.over;
+    const dist=Math.hypot(CH.p.x-d.pos[0], CH.p.z-d.pos[1]);
+    v.g.gain.setTargetAtTime(running? v.base/(1+dist*dist*0.045):0, t, 0.12);
+    if(v.pan){ _pv.set(d.pos[0],1.2,d.pos[1]).project(camera);
+      v.pan.pan.setTargetAtTime(clamp(_pv.x,-0.85,0.85), t, 0.15); }
+    if(v.main&&d.id==='compressor') v.main.detune.setTargetAtTime((S.airP/C.P_NOM-1)*300, t, 0.2);
+  }
+}
+/* one-shot SFX */
+function sfx(f){ if(!AE) return; try{ f(AE.ctx,AE.master,AE.ctx.currentTime); }catch(e){} }
+function tone(c,m,t0,type,f0,f1,g0,dur){
+  const o=c.createOscillator(),g=c.createGain();
+  o.type=type; o.frequency.setValueAtTime(f0,t0);
+  if(f1!=null) o.frequency.exponentialRampToValueAtTime(Math.max(1,f1),t0+dur);
+  g.gain.setValueAtTime(g0,t0); g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  o.connect(g); g.connect(m); o.start(t0); o.stop(t0+dur+0.02);
+}
+function nburst(c,m,t0,fq,g0,dur,type){
+  const s=c.createBufferSource(); s.buffer=NOISEBUF; s.loop=true;
+  const f=c.createBiquadFilter(); f.type=type||'lowpass'; f.frequency.value=fq;
+  const g=c.createGain(); g.gain.setValueAtTime(g0,t0); g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  s.connect(f); f.connect(g); g.connect(m); s.start(t0); s.stop(t0+dur+0.05);
+}
+const sBoom  =()=>sfx((c,m,t)=>{ tone(c,m,t,'sine',120,26,0.9,0.65); nburst(c,m,t,220,0.6,0.5); });
+const sClank =()=>sfx((c,m,t)=>{ tone(c,m,t,'square',760,540,0.09,0.06); tone(c,m,t+0.035,'square',1150,880,0.05,0.05); });
+const sDing  =()=>sfx((c,m,t)=>{ tone(c,m,t,'sine',880,null,0.15,0.28); tone(c,m,t+0.07,'sine',1318,null,0.11,0.3); });
+const sCash  =()=>sfx((c,m,t)=>{ tone(c,m,t,'sine',988,null,0.11,0.18); tone(c,m,t+0.06,'sine',1480,null,0.1,0.22); nburst(c,m,t,5200,0.05,0.18,'highpass'); });
+const sKlaxon=()=>sfx((c,m,t)=>{ for(let i=0;i<3;i++){ tone(c,m,t+i*0.21,'sawtooth',640,null,0.13,0.1); tone(c,m,t+i*0.21+0.1,'sawtooth',455,null,0.13,0.1);} });
+const sErr   =()=>sfx((c,m,t)=>{ tone(c,m,t,'sawtooth',170,150,0.09,0.14); tone(c,m,t+0.15,'sawtooth',140,120,0.09,0.16); });
+const sTick  =()=>sfx((c,m,t)=>{ tone(c,m,t,'square',1250,null,0.045,0.03); });
+function juiceStep(alt,p){
+  sfx((c,m,t)=>nburst(c,m,t,300+alt*140,0.06,0.06));
+  if(worldBuilt&&PUFFS.length<160)
+    spawnPuff(p.x+(MR()-0.5)*0.2,0.06,p.z+(MR()-0.5)*0.2,0x8a8f94,{scale:0.12,vy:0.25,ttl:0.5,op:0.2,grow:0.35});
+}
+
+/* ---------- event wrappers (presentation only — sim math untouched) ---------- */
+const _seize0=seize;
+seize=function(m){
+  _seize0(m);
+  const dist=CH?Math.hypot(CH.p.x-m.pos[0],CH.p.z-m.pos[1]):10;
+  addShake(clamp(0.85-dist*0.03,0.25,0.85));
+  sBoom();
+  popAtMach(m.id,'⛔ BREAKDOWN','#ff5a5a',1.0);
+  popAtMach(m.id,'−$'+C.CASCADE_DAMAGE+' damage','#ff8a7a',0.35);
+};
+const _finish0=finishJob;
+finishJob=function(j,m){
+  _finish0(j,m);
+  if(j.type==='inspect'){ sDing(); popAtMach(m.id,'🔍 condition revealed','#bcd8f5',0.55); }
+  else if(j.type==='emergency'||j.type==='repair'){
+    sDing(); addShake(0.12);
+    popAtMach(m.id, j.type==='repair'?'✓ serviced':'✓ back online','#3ad17a',0.55);
+    if(worldBuilt) for(let i=0;i<7;i++)
+      spawnPuff(m.pos[0]+(MR()-0.5)*1.2, 1.1+MR()*0.8, m.pos[1]+(MR()-0.5)*0.9, 0x5af08a,
+        {scale:0.12,vy:0.7+MR()*0.5,ttl:0.7,add:true,op:0.85,grow:-0.05});
+  }
+  else if(j.type==='upgrade'){ sCash(); popAtMach(m.id,'⬆ capacity ×1.4','#e8c15a',0.55); }
+  else if(j.type==='automate'){ sDing(); popAtMach(m.id,'🤖 monitored — wear cut','#38d6cf',0.55); }
+  else if(j.type==='replace'){ sCash(); popAtMach(m.id,'🆕 like new','#3ad17a',0.55); }
+};
+const _settle0=settleDay;
+settleDay=function(){
+  const l=_settle0();
+  if(l.struck){ sKlaxon(); addShake(0.4);
+    if(CH) popup(CH.p.x,2.2,CH.p.z,'⚠ STRIKE '+S.strikes+'/3','#ff5a5a'); }
+  else if(l.net>0){ sCash(); if(CH) popup(CH.p.x,2.2,CH.p.z,'day net +$'+Math.round(l.net),'#3ad17a'); }
+  else { sErr(); if(CH) popup(CH.p.x,2.2,CH.p.z,'day net −$'+Math.abs(Math.round(l.net)),'#ffb23e'); }
+  return l;
+};
+// spend feedback on every player order
+for(const fn of ['actInspect','actRepair','actUpgrade','actAutomate','actReplace','actStock']){
+  const orig=window[fn];
+  window[fn]=function(id){ const c0=S.cash; orig(id);
+    const d=Math.round(c0-S.cash);
+    if(d>0){ sTick(); popAtMach(id,'−$'+d,'#ffb23e',0.15); } };
+}
+
+/* ---------- per-frame juice: popups, voices, wrench clanks, vignette, HUD ---------- */
+let _clank=0, _dispCash=null, _lastCash=null, _prevBn=null;
+function juiceFrame(dt,t){
+  // popups rise & fade
+  for(let i=POPS.length-1;i>=0;i--){ const p=POPS[i]; p.life+=dt;
+    const f=p.life/p.ttl;
+    if(f>=1){ scene.remove(p.sp); if(p.sp.material.map)p.sp.material.map.dispose(); p.sp.material.dispose(); POPS.splice(i,1); continue; }
+    p.sp.position.y+=dt*0.85; p.sp.material.opacity=1-f*f; }
+  updVoices();
+  // wrench clanks + sparks while working
+  if(tech.busy&&tech.phase==='work'&&CH){ _clank-=dt;
+    if(_clank<=0){ _clank=0.48+MR()*0.3; sClank();
+      if(worldBuilt&&PUFFS.length<160)
+        spawnPuff(CH.p.x+(MR()-0.5)*0.3,1.05,CH.p.z+(MR()-0.5)*0.3,0xffd070,{scale:0.1,vy:0.9,ttl:0.5,add:true,op:0.9,grow:-0.05}); } }
+  // danger vignette: red pulse while anything is down; amber when cash is thin
+  const vig=$('vig'); let vo=0, amber=false;
+  let anyB=false; for(const id in MACH){ if(MACH[id].broken){anyB=true;break;} }
+  if(anyB) vo=0.3+0.16*Math.sin(t*4.2);
+  else if(S.cash<1500&&!S.over){ vo=0.18+0.08*Math.sin(t*2.2); amber=true; }
+  vig.style.opacity=vo.toFixed(3); vig.classList.toggle('amber',amber);
+  // cash odometer + delta flash
+  if(_dispCash==null){ _dispCash=S.cash; _lastCash=S.cash; }
+  if(Math.abs(S.cash-_lastCash)>0.5){
+    const up=S.cash>_lastCash; _lastCash=S.cash;
+    const cv=$('cashv'); cv.classList.remove('flash-up','flash-down'); void cv.offsetWidth;
+    cv.classList.add(up?'flash-up':'flash-down');
+  }
+  _dispCash+=(S.cash-_dispCash)*Math.min(1,dt*7);
+  if(Math.abs(_dispCash-S.cash)<1) _dispCash=S.cash;
+  $('cashv').textContent='$'+Math.round(_dispCash).toLocaleString();
+  $('strikev').classList.toggle('pulse',S.strikes>0&&!S.over);
+  // bottleneck migration callout
+  if(_prevBn && S.bottleneck!==_prevBn && S.T>1 && !S.over && worldBuilt)
+    popAtMach(S.bottleneck,'◄ LIMIT moved here','#ffb23e',1.0);
+  _prevBn=S.bottleneck;
+}
 
 </script>
 </body>

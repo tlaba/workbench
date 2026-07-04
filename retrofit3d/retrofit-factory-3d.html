@@ -97,6 +97,16 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 .bar i{display:block;height:100%}
 .chan .pf{font-family:var(--mono);font-size:9px;width:58px;text-align:right;color:var(--dim)}
 .hidden-note{font-size:10px;color:var(--dim);font-style:italic;padding:2px 0 6px}
+/* live job-status strip inside the sheet */
+#jobstrip{display:none;margin:2px 14px 0;padding:9px 11px;background:#0f2318;border:1px solid #2c7a48;
+  border-radius:10px;font-size:11.5px;line-height:1.55}
+#jobstrip.on{display:block;animation:strippop .28s cubic-bezier(.2,.9,.3,1.3)}
+@keyframes strippop{0%{transform:translateY(6px) scale(.97);opacity:0}100%{transform:none;opacity:1}}
+#jobstrip .js-paid{color:var(--green);font-weight:700}
+#jobstrip .js-row{color:var(--ink)}
+#jobstrip .js-q{color:var(--dim)}
+#jobstrip .js-bar{height:5px;background:#0a0e13;border-radius:3px;margin-top:5px;overflow:hidden;border:1px solid #1c2a22}
+#jobstrip .js-bar i{display:block;height:100%;background:var(--cyan);transition:width .3s linear}
 /* actions */
 .acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px 14px 16px}
 .act{background:var(--panel2);border:1px solid var(--edge);border-radius:10px;padding:10px;text-align:left;color:var(--ink)}
@@ -559,6 +569,25 @@ function updateHUD(){
   renderFloor();
 }
 function selectNone(){ S.sel=null; $('sheet').classList.remove('open'); }
+const JOBNAME={inspect:'Inspection',repair:'Repair service',emergency:'Emergency repair',
+  upgrade:'Upgrade install',automate:'Automation install',replace:'Replacement'};
+let LASTORDER=null; // {id,amt,at} — set by the spend wrapper; shows "order placed" in the sheet
+function jobStripHTML(id){
+  const fresh=LASTORDER&&LASTORDER.id===id&&(performance.now()-LASTORDER.at)<2600;
+  const cur=(tech.busy&&tech.job&&tech.job.mid===id)?tech.job:null;
+  const qd=tech.queue.filter(j=>j.mid===id);
+  if(!fresh&&!cur&&!qd.length) return '';
+  let h='';
+  if(fresh) h+='<div class="js-paid">✓ Order placed — paid $'+LASTORDER.amt+'</div>';
+  if(cur){ const nm=JOBNAME[cur.type]||cur.type;
+    if(tech.phase==='travel') h+='<div class="js-row">🚶 Walking over — '+nm.toLowerCase()+' starts on arrival</div>';
+    else { const pct=Math.round((1-tech.timer/Math.max(1,tech.total))*100);
+      h+='<div class="js-row">'+(tech.phase==='wait'?'📦 Waiting for emergency part':'🔧 '+nm+' in progress')+
+         ' — '+Math.ceil(Math.max(0,tech.timer))+'m left</div>'+
+         '<div class="js-bar"><i style="width:'+pct+'%"></i></div>'; } }
+  for(const j of qd) h+='<div class="js-q">⏳ '+(JOBNAME[j.type]||j.type)+' queued'+(cur?' (after current job)':'')+'</div>';
+  return h;
+}
 function chanColor(w){ return w<0.4?'#3ad17a':w<0.7?'#ffb23e':'#ff5a5a'; }
 function openSheet(id){
   S.sel=id; const m=MACH[id]; const sh=$('sheet');
@@ -579,15 +608,19 @@ function openSheet(id){
   if(!rev) cond+='<div class="hidden-note">You are guessing. A $'+inspectCost(id)+' inspection reveals per-part wear with zero downtime.</div>';
   cond+='</div>';
   const disB = m.broken;
+  const curType=(tech.busy&&tech.job&&tech.job.mid===id)?tech.job.type:null;
+  const pend=new Set(tech.queue.filter(j=>j.mid===id).map(j=>j.type)); if(curType) pend.add(curType);
+  const Q='<span style="color:var(--green)">✓ queued</span>';
+  const A=(label,cost,desc,fn,type,cls)=> pend.has(type)? act(label,Q,desc,fn,id,'disabled') : act(label,cost,desc,fn,id,cls);
   let actsHtml;
   if(near){
     actsHtml=
-      act('🔍 Inspect','$'+inspectCost(id),'Reveal per-part wear. No downtime. 30 min.','actInspect',id,'')+
-      act('🔧 Repair','$'+repairCost(id),(m.broken?'Emergency job already queued.':'Service worst parts to like-new. Machine down '+SERVICE_MTTR[id]+'h.'),'actRepair',id,disB?'disabled':'primary')+
+      A('🔍 Inspect','$'+inspectCost(id),'Reveal per-part wear. No downtime. 30 min.','actInspect','inspect','')+
+      A('🔧 Repair','$'+repairCost(id),(m.broken?'Emergency crew handles this breakdown.':'Service worst parts to like-new. Machine down '+SERVICE_MTTR[id]+'h.'),'actRepair',m.broken?'emergency':'repair',disB?'disabled':'primary')+
       act('📦 Stock spare','$'+worstChan(m).part,'Pre-buy the part. A breakdown then skips the 2.5× premium + 3h delivery.','actStock',id,m.stocked?'disabled':'buy')+
-      act('⬆ Upgrade','$'+C.UPGRADE_COST,'Capacity ×1.4 → '+upNext+'/hr. 3h install. (Raises line speed → faster wear everywhere.)','actUpgrade',id,'')+
-      act('🤖 Automate','$'+C.AUTOMATE_COST,'Condition-monitor + auto-drain: cuts this machine\'s wear rate ~60%.','actAutomate',id,m.automated?'disabled':'')+
-      act('🆕 Replace','$'+m.replaceCost,'Brand-new unit, +10% capacity. Capital-heavy.','actReplace',id,'danger');
+      A('⬆ Upgrade','$'+C.UPGRADE_COST,'Capacity ×1.4 → '+upNext+'/hr. 3h install. (Raises line speed → faster wear everywhere.)','actUpgrade','upgrade','')+
+      A('🤖 Automate','$'+C.AUTOMATE_COST,'Condition-monitor + auto-drain: cuts this machine\'s wear rate ~60%.','actAutomate','automate',m.automated?'disabled':'')+
+      A('🆕 Replace','$'+m.replaceCost,'Brand-new unit, +10% capacity. Capital-heavy.','actReplace','replace','danger');
   } else {
     actsHtml=
       '<button class="act walk" onclick="walkTo(\''+id+'\',true)">'+
@@ -608,6 +641,7 @@ function openSheet(id){
       (m.automated?'<span class="chip good">auto ✓</span>':'')+pn+
       (near?'':'<span class="chip warn">too far <b>🚶</b></span>')+
     '</div>'+ cond +
+    '<div id="jobstrip"></div>'+
     '<div class="acts">'+actsHtml+'</div>';
   sh.innerHTML=html; sh.classList.add('open');
 }
@@ -1620,7 +1654,7 @@ for(const fn of ['actInspect','actRepair','actUpgrade','actAutomate','actReplace
   const orig=window[fn];
   window[fn]=function(id){ const c0=S.cash; orig(id);
     const d=Math.round(c0-S.cash);
-    if(d>0){ sTick(); popAtMach(id,'−$'+d,'#ffb23e',0.15); } };
+    if(d>0){ sTick(); popAtMach(id,'−$'+d,'#ffb23e',0.15); LASTORDER={id,amt:d,at:performance.now()}; } };
 }
 
 /* ---------- per-frame juice: popups, voices, wrench clanks, vignette, HUD ---------- */
@@ -1654,6 +1688,12 @@ function juiceFrame(dt,t){
   if(Math.abs(_dispCash-S.cash)<1) _dispCash=S.cash;
   $('cashv').textContent='$'+Math.round(_dispCash).toLocaleString();
   $('strikev').classList.toggle('pulse',S.strikes>0&&!S.over);
+  // live job-status strip inside the open sheet
+  if($('sheet').classList.contains('open') && S.sel){
+    const el=document.getElementById('jobstrip');
+    if(el){ const h=jobStripHTML(S.sel);
+      if(el._h!==h){ el._h=h; el.innerHTML=h; el.classList.toggle('on',!!h); } }
+  }
   // bottleneck migration callout
   if(_prevBn && S.bottleneck!==_prevBn && S.T>1 && !S.over && worldBuilt)
     popAtMach(S.bottleneck,'◄ LIMIT moved here','#ffb23e',1.0);

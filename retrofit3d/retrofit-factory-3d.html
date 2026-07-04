@@ -227,6 +227,17 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
    walk the floor to attend to machines. The simulation math is unchanged.
    ========================================================================= */
 
+/* ---- presentation event bus ----------------------------------------------
+   The sim emits plain events; the presentation layer subscribes (g5). Emits
+   consume no PRNG state, so the seeded simulation is unaffected. HEADLESS is
+   set by window.__sim so headless runs render nothing (no modals, popups,
+   audio, tutorial or HUD writes) while sim math runs identically. */
+const GameEvents={ handlers:{},
+  on(type,fn){ (this.handlers[type]=this.handlers[type]||[]).push(fn); return fn; },
+  emit(type,payload){ const hs=this.handlers[type]; if(!hs) return;
+    for(const fn of hs){ try{ fn(payload); }catch(e){} } } };
+let HEADLESS=false;
+
 // ---- tuned constants (GDD §24) ----
 const C = {
   TICKS_PER_DAY:480, D_MAX:10, ALPHA:2.0, MU:3.0, KAPPA:6.0,
@@ -370,7 +381,9 @@ function solveThroughput(){
   let T=Infinity, bn='oven';
   for(const id of CHAIN){ const m=MACH[id]; if(m.rate<T){T=m.rate;bn=id;} }
   if(T===Infinity)T=0;
+  const prevBn=S.bottleneck;
   S.T=T; S.bottleneck=bn;
+  if(bn!==prevBn) GameEvents.emit('bottleneckChanged',{from:prevBn,to:bn});
   // duty = how hard THIS machine works vs what it can currently do: bottleneck pins at u=1
   // (the wear hotspot); upgrading it raises T, drops its u, and moves the limit (whack-a-mole).
   for(const id in MACH){ const m=MACH[id]; m.u = m.utility? 0.8 : clamp(T/Math.max(1,m.effRate),0,1); }
@@ -409,7 +422,7 @@ function seize(m){
   // spare was stocked) + double labor + collateral damage. Run-to-failure pays here.
   const callout=C.CASCADE_DAMAGE + Math.round(C.LABOR_REPAIR*C.LABOR_EMERGENCY_MULT)
     + (wasStocked?0:Math.round(c.part*C.EMERGENCY_PART_MULT));
-  S.cash -= callout; S._lastCallout=callout;
+  S.cash -= callout;
   S.stats.nBrk++; S.stats.brk[m.id]=(S.stats.brk[m.id]||0)+1;
   if(S.stats.firstBrkDay==null) S.stats.firstBrkDay=S.day;
   S.stats.emerg+=callout;
@@ -417,6 +430,7 @@ function seize(m){
   alert('⛔ '+m.code+' SEIZED — '+c.nm+'. Emergency call-out −$'+callout+'.','');
   if(m.id==='compressor') alert('Air pressure lost — all pneumatic machines will stall!','');
   chirp('bad');
+  GameEvents.emit('breakdown',{m:m, chan:c, callout:callout});
 }
 // daily settlement
 function settleDay(){
@@ -439,6 +453,7 @@ function settleDay(){
   S.stats.downH+=ledger.down;
   // condition monitoring: automated machines re-reveal their true wear daily
   for(const id in MACH){ const m=MACH[id]; if(m.automated) for(const c of m.ch) c.reveal=c.w; }
+  GameEvents.emit('daySettled', ledger);
   return ledger;
 }
 
@@ -526,6 +541,7 @@ function finishJob(j,m){
   tech.atPrev=j.mid; startNext();
   if(S.sel===j.mid) openSheet(j.mid);
   updateHUD();
+  GameEvents.emit('jobFinished',{job:j, m:m});
 }
 
 /* =============================== TICK LOOP =============================== */
@@ -564,31 +580,39 @@ function repairPart(id){ return worstChan(MACH[id]).part; }
 function repairCost(id){ return repairLabor(id)+repairPart(id); }
 
 function actInspect(id){ const c=inspectCost(id); if(!canPay(c)){toast('Not enough cash');return;}
-  S.cash-=c; S.stats.insp+=c; enqueue({mid:id,type:'inspect'}); toast('🔍 Inspecting '+MACH[id].code+' (−$'+c+')'); updateHUD(); openSheet(id); }
+  S.cash-=c; S.stats.insp+=c; enqueue({mid:id,type:'inspect'}); toast('🔍 Inspecting '+MACH[id].code+' (−$'+c+')'); updateHUD(); openSheet(id);
+  GameEvents.emit('orderPlaced',{id:id,type:'inspect',cost:c}); }
 function actRepair(id){ const m=MACH[id]; if(m.broken){toast('Emergency job already queued');return;}
   const c=repairCost(id); if(!canPay(c)){toast('Not enough cash');return;}
-  S.cash-=c; S.stats.planned+=c; enqueue({mid:id,type:'repair'}); toast('🔧 Servicing '+m.code+' (−$'+c+')'); updateHUD(); openSheet(id); }
+  S.cash-=c; S.stats.planned+=c; enqueue({mid:id,type:'repair'}); toast('🔧 Servicing '+m.code+' (−$'+c+')'); updateHUD(); openSheet(id);
+  GameEvents.emit('orderPlaced',{id:id,type:'repair',cost:c}); }
 function actUpgrade(id){ if(!canPay(C.UPGRADE_COST)){toast('Need $'+C.UPGRADE_COST);return;}
-  S.cash-=C.UPGRADE_COST; S.stats.capex+=C.UPGRADE_COST; enqueue({mid:id,type:'upgrade'}); toast('⬆ Upgrade queued '+MACH[id].code); updateHUD(); openSheet(id); }
+  S.cash-=C.UPGRADE_COST; S.stats.capex+=C.UPGRADE_COST; enqueue({mid:id,type:'upgrade'}); toast('⬆ Upgrade queued '+MACH[id].code); updateHUD(); openSheet(id);
+  GameEvents.emit('orderPlaced',{id:id,type:'upgrade',cost:C.UPGRADE_COST}); }
 function actAutomate(id){ if(MACH[id].automated){toast('Already automated');return;} if(!canPay(C.AUTOMATE_COST)){toast('Need $'+C.AUTOMATE_COST);return;}
-  S.cash-=C.AUTOMATE_COST; S.stats.capex+=C.AUTOMATE_COST; enqueue({mid:id,type:'automate'}); toast('🤖 Condition-monitoring queued '+MACH[id].code); updateHUD(); openSheet(id); }
+  S.cash-=C.AUTOMATE_COST; S.stats.capex+=C.AUTOMATE_COST; enqueue({mid:id,type:'automate'}); toast('🤖 Condition-monitoring queued '+MACH[id].code); updateHUD(); openSheet(id);
+  GameEvents.emit('orderPlaced',{id:id,type:'automate',cost:C.AUTOMATE_COST}); }
 function actReplace(id){ const m=MACH[id]; if(!canPay(m.replaceCost)){toast('Need $'+m.replaceCost);return;}
-  S.cash-=m.replaceCost; S.stats.capex+=m.replaceCost; enqueue({mid:id,type:'replace'}); toast('🆕 Replacement queued '+m.code); updateHUD(); openSheet(id); }
+  S.cash-=m.replaceCost; S.stats.capex+=m.replaceCost; enqueue({mid:id,type:'replace'}); toast('🆕 Replacement queued '+m.code); updateHUD(); openSheet(id);
+  GameEvents.emit('orderPlaced',{id:id,type:'replace',cost:m.replaceCost}); }
 function fixCost(id,chanId){ const c=MACH[id].ch.find(x=>x.id===chanId); return C.LABOR_FIX+(c?c.part:0); }
 function actFix(id,chanId){ const m=MACH[id]; if(m.broken){toast('Emergency crew already on it');return;}
   const c=m.ch.find(x=>x.id===chanId); if(!c) return;
   if(c.reveal==null){toast('Inspect first — a targeted fix needs known condition');return;}
   const cost=fixCost(id,chanId); if(!canPay(cost)){toast('Not enough cash');return;}
   S.cash-=cost; S.stats.planned+=cost; enqueue({mid:id,type:'fix',chan:chanId});
-  toast('🔩 Targeted fix: '+c.nm+' (−$'+cost+')'); updateHUD(); openSheet(id); }
+  toast('🔩 Targeted fix: '+c.nm+' (−$'+cost+')'); updateHUD(); openSheet(id);
+  GameEvents.emit('orderPlaced',{id:id,type:'fix',cost:cost}); }
 function actStock(id){ const m=MACH[id]; if(m.stocked){toast('Part already stocked');return;}
   const p=worstChan(m).part; if(!canPay(p)){toast('Not enough cash');return;}
-  m.stocked=true; S.cash-=p; S.stats.planned+=p; toast('📦 Spare stocked for '+m.code+' (skips emergency premium)'); updateHUD(); openSheet(id); }
+  m.stocked=true; S.cash-=p; S.stats.planned+=p; toast('📦 Spare stocked for '+m.code+' (skips emergency premium)'); updateHUD(); openSheet(id);
+  GameEvents.emit('orderPlaced',{id:id,type:'stock',cost:p}); }
 
 /* =============================== RENDER: HUD/SHEET (DOM) =============================== */
 const $=id=>document.getElementById(id);
 function renderFloor(){} // visuals sync every frame in sync3D()
 function updateHUD(){
+  if(HEADLESS) return;
   const cv=$('cashv'); cv.textContent='$'+Math.round(S.cash).toLocaleString();
   cv.className=S.cash<1500?'bad':S.cash<4000?'warn':'good';
   $('dayv').textContent=S.day+'/10';
@@ -603,7 +627,7 @@ function updateHUD(){
   $('dayfill').style.width=(S.tick/C.TICKS_PER_DAY*100)+'%';
   renderFloor();
 }
-function selectNone(){ S.sel=null; $('sheet').classList.remove('open'); }
+function selectNone(){ S.sel=null; if(!HEADLESS) $('sheet').classList.remove('open'); }
 const JOBNAME={inspect:'Inspection',repair:'Repair service',fix:'Targeted fix',emergency:'Emergency repair',
   upgrade:'Upgrade install',automate:'Automation install',replace:'Replacement'};
 let LASTORDER=null; // {id,amt,at} — set by the spend wrapper; shows "order placed" in the sheet
@@ -625,6 +649,7 @@ function jobStripHTML(id){
 }
 function chanColor(w){ return w<0.4?'#3ad17a':w<0.7?'#ffb23e':'#ff5a5a'; }
 function openSheet(id){
+  if(HEADLESS) return;
   S.sel=id; const m=MACH[id]; const sh=$('sheet');
   const H=machHealth(m); const rev = m.ch.some(c=>c.reveal!=null);
   const near = charNear(id);
@@ -694,6 +719,7 @@ function act(t,cost,d,fn,id,cls){
     '<div class="t">'+t+' <span class="cost">'+cost+'</span></div><div class="d">'+d+'</div></button>';
 }
 function renderTech(){
+  if(HEADLESS) return;
   const q=tech.queue.length;
   let st='Idle — walk the floor';
   if(tech.busy&&tech.job){ const m=MACH[tech.job.mid];
@@ -708,13 +734,13 @@ function renderTech(){
 }
 
 /* =============================== ALERTS / TOAST / SOUND =============================== */
-function alert(msg,cls){ const box=$('alerts'); const d=document.createElement('div'); d.className='alert '+(cls||'');
+function alert(msg,cls){ if(HEADLESS) return; const box=$('alerts'); const d=document.createElement('div'); d.className='alert '+(cls||'');
   d.textContent=msg; box.appendChild(d); setTimeout(()=>{d.style.opacity=0;setTimeout(()=>d.remove(),300);}, 4200);
   while(box.children.length>4) box.removeChild(box.firstChild); }
 let _tt;
-function toast(m){ const t=$('toast'); t.textContent=m; t.style.opacity=1; clearTimeout(_tt); _tt=setTimeout(()=>t.style.opacity=0,1600); }
+function toast(m){ if(HEADLESS) return; const t=$('toast'); t.textContent=m; t.style.opacity=1; clearTimeout(_tt); _tt=setTimeout(()=>t.style.opacity=0,1600); }
 let AC=null, hum=null;
-function chirp(kind){ try{ if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();
+function chirp(kind){ if(HEADLESS) return; try{ if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();
   const o=AC.createOscillator(),g=AC.createGain(); o.connect(g); g.connect(AC.destination);
   const t=AC.currentTime; if(kind==='good'){o.frequency.setValueAtTime(560,t);o.frequency.setValueAtTime(760,t+0.09);}
   else{o.frequency.setValueAtTime(300,t);o.frequency.setValueAtTime(200,t+0.12);}
@@ -729,6 +755,7 @@ function clamp(v,a,b){ return v<a?a:v>b?b:v; }
 /* =============================== REVIEW / END MODALS =============================== */
 function money(n){ const s=(n<0?'−$':'$')+Math.abs(Math.round(n)).toLocaleString(); return s; }
 function showReview(l){
+  if(HEADLESS) return;
   const rev=$('modalcard');
   rev.innerHTML='<h2>Day '+l.day+' — Shift report</h2>'+
     '<div class="sub">Shipped '+l.shipped+' / 800 loaves'+(l.produced>l.shipped?(' (+'+(l.produced-l.shipped)+' salvage)'):'')+' · '+l.down.toFixed(1)+'h downtime</div>'+
@@ -747,6 +774,8 @@ function row(label,val,pos){ return '<tr><td>'+label+'</td><td class="'+(val>=0?
 function closeReview(){ $('modal').classList.remove('show'); updateHUD(); }
 function endGame(l,lose){
   S.over=true; setSpeed(0);
+  if(!lose) S.won=S.cash>=C.WIN_CASH;
+  if(HEADLESS) return;   // headless runs keep the outcome but render nothing (and never touch the personal best)
   const rev=$('modalcard'); let grade,gc,title,sub,body='';
   if(lose){ grade='✗'; gc='var(--red)';
     title = lose==='L1'?'BANKRUPT':lose==='L2'?'CONTRACT CANCELLED':lose==='L3'?'PLANT CONDEMNED':'OBJECTIVE FAILED';
@@ -810,8 +839,10 @@ const TUT=[
  '<b>The compressor (front-left) is a trap.</b> Its moisture 💧 silently speeds up seal wear on the Mixer, Slicer AND Packager — one root cause, three symptoms. Visit it early.',
 ];
 function tutorialStep(){
-  if(S.tutStep>=TUT.length){ $('tut').style.display='none'; return; }
-  if(S.day===1 && S.tutStep<TUT.length){ $('tuttext').innerHTML=TUT[S.tutStep]; $('tut').style.display='block'; }
+  if(HEADLESS) return;
+  const el=$('tut');
+  if(S.day!==1 || S.tutStep>=TUT.length){ el.style.display='none'; return; }
+  $('tuttext').innerHTML=TUT[S.tutStep]; el.style.display='block';
 }
 $('tutx').onclick=()=>{ S.tutStep++; if(S.tutStep>=TUT.length){$('tut').style.display='none';} else tutorialStep(); };
 
@@ -1379,7 +1410,7 @@ function updatePuffs(dt,t){
 
 /* =============================== WALKING / INTERACTION =============================== */
 const WALK_SPEED=3.5;
-function buildFloor(){ ensureWorld(); resetDynamics(); }   // called by newGame()
+function buildFloor(){ if(HEADLESS) return; ensureWorld(); resetDynamics(); }   // called by newGame()
 function resetDynamics(){
   if(!CH) return;
   CH.p.set(7.5,0,1.2); CH.yaw=Math.PI; CH.phase=0; CH.lean=0; CH.prevYaw=CH.yaw;
@@ -1655,6 +1686,7 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 function setSpeed(s){ if(s>0) S._lastSpd=s; S.speed=s;
+  if(HEADLESS) return;
   document.querySelectorAll('.spd').forEach(b=>b.classList.toggle('on',+b.dataset.s===s));
   const p0=$('sp0'); if(p0) p0.textContent = (s===0?'▶':'❚❚');
 }
@@ -1664,20 +1696,29 @@ document.querySelectorAll('.spd').forEach(b=>b.onclick=()=>{ initAudio();
   else setSpeed(v); });
 
 // ---- headless harness (for tuning/verification) ----
+// Runs the identical sim with HEADLESS set: no modals, popups, audio, HUD
+// writes, tutorial, or presentation events reach the screen.
 window.__sim = function(policy,seed){
-  newGame(seed==null?1234567:seed); const log=[]; let lastDay=1; let dayShip=0;
-  const maxTicks=C.D_MAX*C.TICKS_PER_DAY+5;
-  for(let i=0;i<maxTicks;i++){
-    if(policy) policy(S.day, S.tick, S, MACH);
-    const preDay=S.day, prevProd=S.produced;
-    stepTick();
-    if(S.day!==preDay || S.over){ // a day just settled
-      log.push({day:preDay, cash:Math.round(S.cash), strikes:S.strikes, health:Math.round(avgHealth()*100),
-        bottleneck:S.bottleneck, moisture:+S.moisture.toFixed(2)});
+  HEADLESS=true;
+  try{
+    newGame(seed==null?1234567:seed); const log=[];
+    const maxTicks=C.D_MAX*C.TICKS_PER_DAY+5;
+    for(let i=0;i<maxTicks;i++){
+      if(policy) policy(S.day, S.tick, S, MACH);
+      const preDay=S.day;
+      stepTick();
+      if(S.day!==preDay || S.over){ // a day just settled
+        log.push({day:preDay, cash:Math.round(S.cash), strikes:S.strikes, health:Math.round(avgHealth()*100),
+          bottleneck:S.bottleneck, moisture:+S.moisture.toFixed(2)});
+      }
+      if(S.over) break;
     }
-    if(S.over) break;
+    return {log,end:Math.round(S.cash),won:S.won,strikes:S.strikes,over:S.over,days:log.length,seed:S.seed,stats:S.stats};
+  } finally {
+    HEADLESS=false;
+    // one presentation sync so the screen reflects reality post-run
+    try{ tutorialStep(); updateHUD(); renderTech(); }catch(e){}
   }
-  return {log,end:Math.round(S.cash),won:S.won,strikes:S.strikes,over:S.over,days:log.length,seed:S.seed,stats:S.stats};
 };
 
 // boot
@@ -1688,9 +1729,10 @@ window.__cam=(y,p,d)=>{ camYaw=y; if(p!=null)camPitch=p; if(d!=null)camDist=d; }
 window.__char=()=>CH?[+CH.p.x.toFixed(2),+CH.p.z.toFixed(2)]:null;
 
 /* =============================================================================
-   GAME FEEL LAYER — pure presentation. Wraps sim events (seize/settleDay/
-   finishJob/act*) without touching their math; uses Math.random only, so the
-   seeded simulation stays byte-identical and __sim results are unchanged.
+   GAME FEEL LAYER — pure presentation. Subscribes to GameEvents emitted by the
+   sim (g1) — no monkey-patching. Uses Math.random only, so the seeded
+   simulation stays byte-identical; every listener is HEADLESS-gated so
+   window.__sim runs render nothing.
    ============================================================================= */
 
 /* ---------- floating world-space popups (money, events) ---------- */
@@ -1792,28 +1834,16 @@ function juiceStep(alt,p){
     spawnPuff(p.x+(MR()-0.5)*0.2,0.06,p.z+(MR()-0.5)*0.2,0x8a8f94,{scale:0.12,vy:0.25,ttl:0.5,op:0.2,grow:0.35});
 }
 
-/* ---------- event wrappers (presentation only — sim math untouched) ----------
-   MECHANISM (and why it works): the sim's functions are top-level `function`
-   declarations in this same concatenated classic script, so `seize`, `settleDay`
-   and `finishJob` are MUTABLE global bindings. Reassigning them here makes every
-   internal sim call (rollBreakdowns→seize, stepTick→settleDay, advanceTech→
-   finishJob) go through the wrapper; the same is true for the window.act* spend
-   wrappers used by both the UI (inline onclick) and __sim policies.
-   FRAGILITY: if a refactor turns these into `const`/class methods/module scope,
-   the reassignment below throws or silently stops intercepting. If you refactor
-   the sim, convert these wrappers to explicit event hooks first. */
-const _seize0=seize;
-seize=function(m){
-  _seize0(m);
+/* ---------- presentation listeners on the sim's GameEvents ---------- */
+function onFx(type,fn){ GameEvents.on(type, p=>{ if(HEADLESS) return; fn(p); }); }
+onFx('breakdown',({m,callout})=>{
   const dist=CH?Math.hypot(CH.p.x-m.pos[0],CH.p.z-m.pos[1]):10;
   addShake(clamp(0.85-dist*0.03,0.25,0.85));
   sBoom();
   popAtMach(m.id,'⛔ BREAKDOWN','#ff5a5a',1.0);
-  popAtMach(m.id,'−$'+(S._lastCallout||C.CASCADE_DAMAGE)+' emergency call-out','#ff8a7a',0.35);
-};
-const _finish0=finishJob;
-finishJob=function(j,m){
-  _finish0(j,m);
+  popAtMach(m.id,'−$'+callout+' emergency call-out','#ff8a7a',0.35);
+});
+onFx('jobFinished',({job:j,m})=>{
   if(j.type==='inspect'){ sDing(); popAtMach(m.id,'🔍 condition revealed','#bcd8f5',0.55); }
   else if(j.type==='emergency'||j.type==='repair'){
     sDing(); addShake(0.12);
@@ -1826,26 +1856,23 @@ finishJob=function(j,m){
   else if(j.type==='upgrade'){ sCash(); popAtMach(m.id,'⬆ capacity ×1.4','#e8c15a',0.55); }
   else if(j.type==='automate'){ sDing(); popAtMach(m.id,'🤖 monitored — wear cut','#38d6cf',0.55); }
   else if(j.type==='replace'){ sCash(); popAtMach(m.id,'🆕 like new','#3ad17a',0.55); }
-};
-const _settle0=settleDay;
-settleDay=function(){
-  const l=_settle0();
+});
+onFx('daySettled',l=>{
   if(l.struck){ sKlaxon(); addShake(0.4);
     if(CH) popup(CH.p.x,2.2,CH.p.z,'⚠ STRIKE '+S.strikes+'/3','#ff5a5a'); }
   else if(l.net>0){ sCash(); if(CH) popup(CH.p.x,2.2,CH.p.z,'day net +$'+Math.round(l.net),'#3ad17a'); }
   else { sErr(); if(CH) popup(CH.p.x,2.2,CH.p.z,'day net −$'+Math.abs(Math.round(l.net)),'#ffb23e'); }
-  return l;
-};
-// spend feedback on every player order
-for(const fn of ['actInspect','actRepair','actFix','actUpgrade','actAutomate','actReplace','actStock']){
-  const orig=window[fn];
-  window[fn]=function(...a){ const c0=S.cash; orig(...a);
-    const d=Math.round(c0-S.cash);
-    if(d>0){ sTick(); popAtMach(a[0],'−$'+d,'#ffb23e',0.15); LASTORDER={id:a[0],amt:d,at:performance.now()}; } };
-}
+});
+onFx('orderPlaced',({id,cost})=>{
+  if(cost>0){ sTick(); popAtMach(id,'−$'+cost,'#ffb23e',0.15);
+    LASTORDER={id:id,amt:cost,at:performance.now()}; }
+});
+onFx('bottleneckChanged',({to})=>{
+  if(S.T>1 && !S.over && worldBuilt) popAtMach(to,'◄ LIMIT moved here','#ffb23e',1.0);
+});
 
 /* ---------- per-frame juice: popups, voices, wrench clanks, vignette, HUD ---------- */
-let _clank=0, _dispCash=null, _lastCash=null, _prevBn=null;
+let _clank=0, _dispCash=null, _lastCash=null;
 function juiceFrame(dt,t){
   // popups rise & fade
   for(let i=POPS.length-1;i>=0;i--){ const p=POPS[i]; p.life+=dt;
@@ -1881,10 +1908,6 @@ function juiceFrame(dt,t){
     if(el){ const h=jobStripHTML(S.sel);
       if(el._h!==h){ el._h=h; el.innerHTML=h; el.classList.toggle('on',!!h); } }
   }
-  // bottleneck migration callout
-  if(_prevBn && S.bottleneck!==_prevBn && S.T>1 && !S.over && worldBuilt)
-    popAtMach(S.bottleneck,'◄ LIMIT moved here','#ffb23e',1.0);
-  _prevBn=S.bottleneck;
 }
 
 </script>

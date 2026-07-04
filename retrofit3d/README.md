@@ -45,7 +45,7 @@ Slicer → Packager**, all fed compressed air by an **Air Compressor**. You have
 a tight cash runway and one pair of hands. Each day you triage:
 
 - **🔍 Inspect** ($25–60) — reveal per-part wear. No downtime — and it unlocks…
-- **🔩 Targeted fix** — replace *one known-worn part*: $70 labor + the part, ~⅓ the
+- **🔩 Targeted fix** — replace *one known-worn part* to like-new: $60 labor + the part, ~⅓ the
   downtime of a full service. Only available once that part's condition is revealed —
   **information is the currency**.
 - **🔧 Repair (overhaul)** — service *all* parts to like-new. Thorough but slow;
@@ -71,19 +71,25 @@ days and the bakery pulls the contract.
 
 ## Emergent, not scripted — verified
 
-Five maintenance disciplines were swept headless across **10 random seeds**
-(v2 balance — supersedes GDD §24 for the prototype):
+Seven maintenance disciplines are swept headless across **10 seeds**
+(v3 balance — run `window.__matrix()` in the browser console to reproduce):
 
 | Strategy | Wins | Median | Range |
 |---|---|---|---|
-| **Run-to-failure** (ignore everything) | 0/10 | $8.6k — dies ~day 5-6 | $4.5k–10.5k |
-| **Over-service** (overhaul everything daily) | 0/10 | $13.6k | $0.3k–13.6k |
-| **Naive** (overhaul worst machine daily) | 1/10 | $18.9k | $4.5k–22.3k |
-| **Preventive** (blind calendar overhauls) | 6/10 | $20.9k | **$9.1k**–23.9k |
-| **Predictive** (reset once, then inspect → targeted fix) | 5/10 | **$21.6k** | **$14.1k**–22.6k |
+| **Run-to-failure** (ignore everything) | 0/10 | $8.6k — dies ~day 5-6 | $4.4k–10.5k |
+| **Inspect the bottleneck only** (look, barely act) | 0/10 | $11.5k | $4.4k–15.5k |
+| **Compressor-first inspections** (fixes only) | 0/10 | $10.9k | $4.1k–16.3k |
+| **Upgrade the bottleneck** (capacity chase) | 0/10 | $16.7k | $1.6k–19.3k |
+| **Early automation** + threshold overhauls | 3/10 | $18.5k | $2.8k–21.0k |
+| **Preventive** (blind calendar overhauls) | 4/10 | $19.3k | $3.2k–22.2k |
+| **Predictive** (reset once → inspect → 🔩 targeted fix) | **5/10** | **$20.6k** | **$16.8k**–22.7k |
 
 The lesson is the real one from reliability engineering: **condition-based
 maintenance has the best expected value and by far the best worst case** —
-calendar maintenance gambles on breakdown luck. Neglect and brute force both
-lose. Grades: ★ $20k · ★★ $22k · ★★★ $23.5k (strike-free). None of it is
-hand-scripted: it falls out of ordinary wear + throughput + economy math.
+calendar overhauls gamble on breakdown luck, capacity upgrades on a dying
+plant are a trap, and inspection without action is just watching it die.
+A 🔩 targeted fix restores the known part to like-new; a blanket overhaul is
+faster per part but leaves residual wear — precision beats brute force.
+Grades: ★ $20k · ★★ $21.5k · ★★★ $22.5k (strike-free, verified reachable).
+None of it is hand-scripted: it falls out of ordinary wear + throughput +
+economy math.

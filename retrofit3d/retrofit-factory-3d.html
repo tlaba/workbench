@@ -304,10 +304,10 @@ const C = {
   ENERGY_PRICE:0.18, TECH_WAGE_DAY:240, OVERHEAD_DAY:110,
   TRAVEL_MIN:15, INSPECT_MIN:30,
   EMERGENCY_PART_MULT:2.5, EMERGENCY_DELIVERY_MIN:180,
-  LABOR_REPAIR:150, LABOR_EMERGENCY_MULT:1.75, LABOR_FIX:70, FIX_TIME_FRAC:0.33, SERVICE_TIME_MULT:1.5,
+  LABOR_REPAIR:180, LABOR_EMERGENCY_MULT:1.75, LABOR_FIX:60, FIX_TIME_FRAC:0.30, SERVICE_TIME_MULT:1.5,
   CASCADE_DAMAGE:350, WIP_SCRAP_RATE:40,
   UPGRADE_COST:1500, UPGRADE_TIER:1.4, AUTOMATE_COST:1000,
-  REPAIR_FLOOR:0.08, SIGMA_INSPECT:0.05,
+  REPAIR_FLOOR:0.08, FIX_FLOOR:0.04, OVERHAUL_FLOOR:0.11, SIGMA_INSPECT:0.05,
   STRIKES_TO_LOSE:3, HEALTH_CONDEMN:0.15, WEAR_SCALE:0.85, HAZARD_SCALE:0.4,
 };
 
@@ -612,13 +612,13 @@ function finishJob(j,m){
     for(const c of m.ch){ c.reveal=c.w; }
     alert('✅ '+m.code+' back online (emergency repair).','good'); chirp('good');
   } else if(j.type==='repair'){
-    for(const c of m.ch) c.w=Math.min(c.w,C.REPAIR_FLOOR);
+    for(const c of m.ch) c.w=Math.min(c.w,C.OVERHAUL_FLOOR);   // blanket overhaul: good, not perfect
     for(const c of m.ch){ c.reveal=c.w; }
     m.broken=false;
     alert('✅ '+m.code+' serviced — health restored.','good'); chirp('good');
   } else if(j.type==='fix'){
     const c=m.ch.find(x=>x.id===j.chan);
-    if(c){ c.w=Math.min(c.w,C.REPAIR_FLOOR); c.reveal=c.w; }
+    if(c){ c.w=Math.min(c.w,C.FIX_FLOOR); c.reveal=c.w; }      // precision swap: like-new
     alert('🔩 '+m.code+' — '+(c?c.nm:'part')+' replaced (targeted fix).','good'); chirp('good');
   } else if(j.type==='upgrade'){
     m.up*=C.UPGRADE_TIER;
@@ -984,8 +984,8 @@ function endGame(l,lose){
       lose==='L3'?'Fleet average health fell below 15%. The plant is unsafe.':'Day 10 ended under the $20,000 target.';
   } else {
     const cash=S.cash; S.won=cash>=C.WIN_CASH;
-    if(cash>=23500&&S.strikes===0){grade='★★★';gc='var(--gold)';}
-    else if(cash>=22000&&S.strikes===0){grade='★★';gc='var(--green)';}
+    if(cash>=22500&&S.strikes===0){grade='★★★';gc='var(--gold)';}
+    else if(cash>=21500&&S.strikes===0){grade='★★';gc='var(--green)';}
     else if(cash>=C.WIN_CASH){grade='★';gc='var(--green)';}
     else {grade='✗';gc='var(--red)';}
     title=S.won?'CONTRACT KEPT':'OBJECTIVE FAILED';
@@ -2130,6 +2130,81 @@ window.__sim = function(policy,seed){
     // one presentation sync so the screen reflects reality post-run
     try{ tutorialStep(); updateHUD(); renderTech(); }catch(e){}
   }
+};
+
+
+/* =============================== DEV: POLICY MATRIX ===============================
+   Console helper: window.__matrix() runs the reference maintenance strategies
+   across a seed set headless and tables final cash / strikes / breakdowns /
+   emergency spend / downtime. Purely a dev tool — never called by the game. */
+window.__policies={
+  'run-to-failure': ()=>null,
+  'preventive-calendar': ()=>{
+    const sched={1:['oven'],2:['conveyor','packager'],3:['slicer','mixer','compressor'],4:['oven','conveyor'],
+      5:['packager','slicer'],6:['compressor','mixer'],7:['oven','conveyor'],8:['packager','slicer'],9:['compressor','mixer'],10:['oven']};
+    return (day,tick,S,MACH)=>{ if(tick!==5)return;
+      (sched[day]||[]).forEach(id=>{ if(!MACH[id].broken) actRepair(id); }); }; },
+  'inspect-bottleneck': ()=>{ const li={}; return (day,tick,S,MACH)=>{ if(tick!==5)return;
+    const bn=S.bottleneck;
+    if(!MACH[bn].broken && day-(li[bn]||0)>=2){ actInspect(bn); li[bn]=day; }
+    const cand=[]; for(const id of CHAIN.concat(['compressor'])){ const m=MACH[id]; if(m.broken)continue;
+      for(const c of m.ch) if(c.reveal!=null&&c.reveal>0.4) cand.push([c.reveal+(id===bn?0.3:0),id,c.id]); }
+    cand.sort((a,b)=>b[0]-a[0]); const used=new Set(); let n=0;
+    for(const [w,id,cid] of cand){ if(n>=2)break; if(used.has(id))continue; used.add(id); actFix(id,cid); n++; } }; },
+  'compressor-first': ()=>{ const li={}; return (day,tick,S,MACH)=>{ if(tick!==5)return;
+    if(day===1){ ['compressor','mixer','slicer'].forEach(id=>{actInspect(id);li[id]=1;}); return; }
+    if(day===2){ ['packager','conveyor','oven'].forEach(id=>{actInspect(id);li[id]=2;}); }
+    const cand=[]; for(const id of CHAIN.concat(['compressor'])){ const m=MACH[id]; if(m.broken)continue;
+      for(const c of m.ch) if(c.reveal!=null&&c.reveal>0.42)
+        cand.push([c.reveal+((id==='compressor'&&c.id==='moist')?0.35:0),id,c.id]); }
+    cand.sort((a,b)=>b[0]-a[0]); const used=new Set(); let n=0;
+    for(const [w,id,cid] of cand){ if(n>=3)break; if(used.has(id))continue; used.add(id); actFix(id,cid); n++; }
+    let re=0; for(const id of CHAIN.concat(['compressor'])){ const m=MACH[id];
+      if(m.broken||used.has(id))continue;
+      if(day-(li[id]||0)>=2&&re<2){ actInspect(id); li[id]=day; re++; } } }; },
+  'targeted-hybrid': ()=>{ const li={}; return (day,tick,S,MACH)=>{ if(tick!==5)return;
+    if(day===1){ actAutomate('compressor'); actRepair('conveyor'); actRepair('oven'); return; }
+    if(day===2){ actRepair('mixer'); actRepair('slicer'); return; }
+    if(day===3){ actRepair('packager'); }
+    const cand=[]; for(const id of CHAIN.concat(['compressor'])){ const m=MACH[id]; if(m.broken)continue;
+      for(const c of m.ch) if(c.reveal!=null&&c.reveal>0.3) cand.push([c.reveal,id,c.id]); }
+    cand.sort((a,b)=>b[0]-a[0]); const used=new Set(); let n=0;
+    for(const [w,id,cid] of cand){ if(n>=4)break; if(used.has(id))continue; used.add(id); actFix(id,cid); n++; }
+    let re=0; for(const id of CHAIN){ const m=MACH[id];
+      if(m.automated||m.broken||used.has(id))continue;
+      if(day-(li[id]||0)>=2&&re<2){ actInspect(id); li[id]=day; re++; } } }; },
+  'early-automation': ()=>{ return (day,tick,S,MACH)=>{ if(tick!==5)return;
+    if(day===1) actAutomate('compressor');
+    if(day===2) actAutomate('oven');
+    if(day===3) actAutomate('conveyor');
+    let worst=null,mx=0; for(const id in MACH){ const m=MACH[id]; if(m.broken)continue;
+      let w=0; for(const c of m.ch)w=Math.max(w,c.w); if(w>mx){mx=w;worst=id;} }
+    if(worst&&mx>0.5) actRepair(worst); }; },
+  'upgrade-bottleneck': ()=>{ let ups=0; return (day,tick,S,MACH)=>{ if(tick!==5)return;
+    if(ups<2 && S.cash>4000 && !MACH[S.bottleneck].broken){ actUpgrade(S.bottleneck); ups++; }
+    let worst=null,mx=0; for(const id in MACH){ const m=MACH[id]; if(m.broken)continue;
+      let w=0; for(const c of m.ch)w=Math.max(w,c.w); if(w>mx){mx=w;worst=id;} }
+    if(worst&&mx>0.5) actRepair(worst); }; },
+};
+window.__matrix=function(seeds){
+  seeds=seeds||[11,22,33,44,55,66,77,88,99,110];
+  const med=a=>{ const s=[...a].sort((x,y)=>x-y); return s[Math.floor(s.length/2)]; };
+  const out={};
+  for(const name in window.__policies){
+    const runs=seeds.map(sd=>{ const r=window.__sim(window.__policies[name](), sd);
+      return {seed:sd, end:r.end, won:r.won, strikes:r.strikes, brk:r.stats.nBrk,
+        emerg:Math.round(r.stats.emerg), planned:Math.round(r.stats.planned+r.stats.insp),
+        down:+r.stats.downH.toFixed(1)}; });
+    const ends=runs.map(r=>r.end);
+    out[name]={ wins:runs.filter(r=>r.won).length, med:med(ends),
+      min:Math.min(...ends), max:Math.max(...ends),
+      brk:med(runs.map(r=>r.brk)), emerg:med(runs.map(r=>r.emerg)),
+      planned:med(runs.map(r=>r.planned)), downH:med(runs.map(r=>r.down)), runs };
+  }
+  try{ console.table(Object.fromEntries(Object.entries(out).map(([k,v])=>
+    [k,{wins:v.wins+'/'+seeds.length, med:'$'+v.med, range:v.min+'..'+v.max,
+        brk:v.brk, emerg:'$'+v.emerg, planned:'$'+v.planned, downH:v.downH}]))); }catch(e){}
+  return out;
 };
 
 // boot

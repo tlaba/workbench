@@ -18,10 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Stage site (game is the index)
+      - name: Stage site (troubleshooter is the index; Retrofit Factory 3D alongside)
         run: |
           mkdir _site
           cp troubleshooter/hydraulic-press-troubleshooter.html _site/index.html
+          mkdir -p _site/retrofit3d
+          cp retrofit3d/retrofit-factory-3d.html _site/retrofit3d/
       - uses: actions/configure-pages@v5
         with:
           enablement: true

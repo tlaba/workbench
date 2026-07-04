@@ -15,14 +15,34 @@ https://tlaba.github.io/workbench/retrofit3d/retrofit-factory-3d.html
 
 | File | What it is |
 |---|---|
-| [`retrofit-factory-3d.html`](./retrofit-factory-3d.html) | **Playable browser prototype.** Single self-contained HTML — no build, no deps. Isometric SVG floor, six machines, the full tuned economy running a deterministic seeded simulation. |
+| [`retrofit-factory-3d.html`](./retrofit-factory-3d.html) | **Playable browser prototype.** Single self-contained HTML — no build, no deps (three.js inlined). A real-time 3D factory hall you walk around as the technician, six animated machines, the full tuned economy running a deterministic seeded simulation. |
 | [`GDD.md`](./GDD.md) | The 25-section developer-ready Game Design Document — vision, pillars, canonical machine stats, economy formulas, and the tuned constants the prototype uses verbatim. |
+
+## You are the technician — walk the floor
+
+The plant is a real-time 3D hall: brick-and-steel bakery, concrete floor with
+painted walkways, roof trusses, skylight shafts, hanging bay lights, and the
+compressed-air main running overhead from the compressor to every pneumatic
+machine (the cascade, made visible). Machines animate with the simulation —
+the mixer's agitator spins, loaves ride the conveyor, the oven mouth glows,
+the compressor's gauge tracks header pressure — and degradation shows: paint
+dulls to rust as health falls, breakdowns smoke and strobe red, condensate
+pools under a moisture-choked compressor.
+
+**Controls**
+- **Walk** — virtual joystick, `WASD`/arrows, or tap the floor
+- **Look** — drag to orbit · pinch / scroll to zoom
+- **Interact** — walk up to a machine and tap **⚙ Open panel** (or press `E`).
+  Panels can be *viewed* from anywhere, but you must physically be at a machine
+  to work on it — too far away, and the panel offers **🚶 Walk to machine**.
+- While you're mid-job you're committed (you're the one holding the wrench) —
+  plan your route or ⏩ speed up time. `Space` pauses.
 
 ## The loop (Level 1 — Old Bakery Plant)
 
 Six machines feed one bread contract: **Spiral Mixer → Conveyor → Oven →
 Slicer → Packager**, all fed compressed air by an **Air Compressor**. You have
-one technician and a tight cash runway. Each day you triage:
+a tight cash runway and one pair of hands. Each day you triage:
 
 - **🔍 Inspect** ($40) — reveal per-part wear. No downtime.
 - **🔧 Repair** — service the worst parts to like-new. Costs downtime.

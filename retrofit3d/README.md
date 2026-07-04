@@ -44,12 +44,24 @@ Six machines feed one bread contract: **Spiral Mixer → Conveyor → Oven →
 Slicer → Packager**, all fed compressed air by an **Air Compressor**. You have
 a tight cash runway and one pair of hands. Each day you triage:
 
-- **🔍 Inspect** ($40) — reveal per-part wear. No downtime.
-- **🔧 Repair** — service the worst parts to like-new. Costs downtime.
-- **📦 Stock spare** — pre-buy the part so a breakdown skips the emergency premium.
+- **🔍 Inspect** ($25–60) — reveal per-part wear. No downtime — and it unlocks…
+- **🔩 Targeted fix** — replace *one known-worn part*: $70 labor + the part, ~⅓ the
+  downtime of a full service. Only available once that part's condition is revealed —
+  **information is the currency**.
+- **🔧 Repair (overhaul)** — service *all* parts to like-new. Thorough but slow;
+  blind calendar overhauls burn uptime.
+- **📦 Stock spare** — pre-buy the part; a breakdown then skips the 2.5× emergency
+  parts premium and the 3-hour delivery.
 - **⬆ Upgrade** — +40% capacity, but a faster line wears *everything* faster.
-- **🤖 Automate** — condition-monitoring + auto-drain cuts that machine's wear ~60%.
+- **🤖 Automate** — condition-monitoring + auto-drain: cuts that machine's wear ~65%
+  and re-reveals its true condition every morning.
 - **🆕 Replace** — a brand-new unit. Capital-heavy.
+
+Breakdowns bill the real emergency premium — **2.5× parts + 1.75× labor + $350
+collateral** — so run-to-failure pays through the nose. Every run rolls a fresh
+**seed** (breakdown luck differs); the end screen offers *retry this shift* on the
+same seed, a **shift post-mortem** (breakdown count, emergency vs planned spend,
+moisture peak, a tailored tip), and saves your **personal best** on-device.
 
 Throughput is the **minimum of the chain**, so the bottleneck is wherever wear
 bites hardest — fix it and the limit *migrates* somewhere else. The compressor's
@@ -59,15 +71,19 @@ days and the bakery pulls the contract.
 
 ## Emergent, not scripted — verified
 
-Three disciplines were checked headless against the tuned economy on a fixed seed:
+Five maintenance disciplines were swept headless across **10 random seeds**
+(v2 balance — supersedes GDD §24 for the prototype):
 
-| Strategy | Outcome |
-|---|---|
-| **Run-to-failure** (do nothing) | Loses ~**day 6** — breakdowns and the moisture cascade compound |
-| **Preventive** (calendar servicing) | **Wins** — ~$24k against the $20k target |
-| **Predictive** (automate the roots, condition-based repair) | **Wins** by a thin margin |
+| Strategy | Wins | Median | Range |
+|---|---|---|---|
+| **Run-to-failure** (ignore everything) | 0/10 | $8.6k — dies ~day 5-6 | $4.5k–10.5k |
+| **Over-service** (overhaul everything daily) | 0/10 | $13.6k | $0.3k–13.6k |
+| **Naive** (overhaul worst machine daily) | 1/10 | $18.9k | $4.5k–22.3k |
+| **Preventive** (blind calendar overhauls) | 6/10 | $20.9k | **$9.1k**–23.9k |
+| **Predictive** (reset once, then inspect → targeted fix) | 5/10 | **$21.6k** | **$14.1k**–22.6k |
 
-Neglect always loses; disciplined maintenance always wins — and the two skilled
-strategies finish within a few percent of each other, exactly the balance the
-GDD targets. None of it is hand-scripted: it falls out of ordinary wear +
-throughput + economy math.
+The lesson is the real one from reliability engineering: **condition-based
+maintenance has the best expected value and by far the best worst case** —
+calendar maintenance gambles on breakdown luck. Neglect and brute force both
+lose. Grades: ★ $20k · ★★ $22k · ★★★ $23.5k (strike-free). None of it is
+hand-scripted: it falls out of ordinary wear + throughput + economy math.

@@ -179,10 +179,28 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 .help-body{font-size:12.5px;line-height:1.55;color:var(--ink)}
 .help-body b{color:var(--gold)} .help-body .k{color:var(--cyan)}
 .help-body ul{padding-left:18px;margin:8px 0}
-.tut{position:absolute;left:12px;right:12px;bottom:150px;background:rgba(18,35,58,.95);border:1px solid var(--blue);
-  border-radius:10px;padding:10px 12px;z-index:9;font-size:12.5px;line-height:1.45;box-shadow:0 6px 20px #0009;
+.tut{position:absolute;left:12px;right:12px;bottom:150px;background:rgba(18,35,58,.96);border:1px solid var(--blue);
+  border-radius:12px;padding:12px 14px 11px;z-index:9;font-size:12.5px;line-height:1.45;box-shadow:0 8px 24px #000a;
   width:min(calc(100% - 24px),520px);margin:0 auto}
-.tut b{color:var(--blue)} .tut .x{float:right;color:var(--dim);background:none;border:none;font-size:16px;margin:-2px -2px 0 0}
+.tut b{color:var(--blue)}
+.tut .k{font-family:var(--mono);font-size:11px;background:#0e1a2b;border:1px solid var(--edge);border-radius:4px;padding:0 4px}
+.tut-skip{position:absolute;top:8px;right:10px;color:var(--dim);background:none;border:none;font-size:11px;cursor:pointer;padding:2px 5px;border-radius:6px}
+.tut-skip:hover{color:var(--ink);background:#ffffff12}
+.tut-body{min-height:58px;padding-right:70px}
+/* transform-only: text stays fully visible even if the animation never
+   completes (throttled tab / slow device) — visibility must not depend on it */
+@keyframes tutslide{from{transform:translateY(6px)}to{transform:none}}
+.tut-body.anim{animation:tutslide .2s ease}
+.tut-nav{display:flex;align-items:center;justify-content:space-between;margin-top:11px;gap:10px}
+.tut-dots{display:flex;gap:6px}
+.tut-dot{width:7px;height:7px;border-radius:50%;background:var(--edge);transition:transform .2s,background .2s}
+.tut-dot.on{background:var(--blue);transform:scale(1.3)}
+.tut-btns{display:flex;gap:8px}
+.tut-back,.tut-next{font-size:12px;font-weight:700;border-radius:8px;padding:7px 14px;cursor:pointer;border:1px solid var(--blue);min-height:34px}
+.tut-back{background:transparent;color:var(--blue)}
+.tut-back:disabled{opacity:.32;cursor:default;border-color:var(--edge);color:var(--dim)}
+.tut-next{background:var(--blue);color:#06101d}
+.tut-next:active,.tut-back:not(:disabled):active{transform:translateY(1px)}
 
 #preshift{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:9;
   display:none;align-items:center;gap:10px;background:rgba(18,35,58,.96);border:1px solid var(--blue);
@@ -269,8 +287,15 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
     </div>
     <div id="toast"></div>
     <div class="tut" id="tut" style="display:none">
-      <button class="x" id="tutx">×</button>
-      <span id="tuttext"></span>
+      <button class="tut-skip" id="tutskip">Skip tour ✕</button>
+      <div class="tut-body" id="tuttext"></div>
+      <div class="tut-nav">
+        <div class="tut-dots" id="tutdots"></div>
+        <div class="tut-btns">
+          <button class="tut-back" id="tutback">‹ Back</button>
+          <button class="tut-next" id="tutnext">Next ›</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1114,13 +1139,30 @@ const TUT=[
  '<b>Wear is invisible until you look.</b> <span class="k">🔍 Inspect</span> ($25–60, no downtime) reveals which part is failing — then order a <span class="k">🔩 targeted fix</span> on just that part: cheaper and faster than a full service.',
  '<b>The compressor (front-left) is a trap.</b> Its moisture 💧 silently speeds up seal wear on the Mixer, Slicer AND Packager — one root cause, three symptoms. Visit it early.',
 ];
+// One docked carousel card for the whole tour: Back / Next step through the
+// slides, dots show position, Skip dismisses the lot. tutStep>=TUT.length means
+// "seen/skipped" (stays hidden for the rest of day 1).
 function tutorialStep(){
   if(HEADLESS) return;
-  const el=$('tut');
+  const el=$('tut'); if(!el) return;
   if(S.day!==1 || S.tutStep>=TUT.length){ el.style.display='none'; return; }
-  $('tuttext').innerHTML=TUT[S.tutStep]; el.style.display='block';
+  const body=$('tuttext'); body.innerHTML=TUT[S.tutStep];
+  let dots=''; for(let i=0;i<TUT.length;i++) dots+='<span class="tut-dot'+(i===S.tutStep?' on':'')+'"></span>';
+  $('tutdots').innerHTML=dots;
+  $('tutback').disabled = S.tutStep===0;
+  const last = S.tutStep===TUT.length-1;
+  $('tutnext').textContent = last ? 'Got it ✓' : 'Next ›';
+  el.style.display='block';
+  // gentle slide-in on change. OPTS lives in g5 (loaded later): the first
+  // tutorialStep runs during boot before it initialises, so read it TDZ-safely
+  // — a bare `typeof OPTS` would throw and halt the rest of the script.
+  let reduce=false; try{ reduce=OPTS.reduceFx; }catch(e){}
+  if(!reduce){ body.classList.remove('anim'); void body.offsetWidth; body.classList.add('anim'); }
 }
-$('tutx').onclick=()=>{ S.tutStep++; if(S.tutStep>=TUT.length){$('tut').style.display='none';} else tutorialStep(); };
+function tutDismiss(){ S.tutStep=TUT.length; const el=$('tut'); if(el) el.style.display='none'; }
+$('tutnext').onclick=()=>{ if(S.tutStep>=TUT.length-1) tutDismiss(); else { S.tutStep++; tutorialStep(); } };
+$('tutback').onclick=()=>{ if(S.tutStep>0){ S.tutStep--; tutorialStep(); } };
+$('tutskip').onclick=tutDismiss;
 
 $('helpbtn').onclick=()=>{ setSpeed(0); const rev=$('modalcard');
   rev.innerHTML='<h2>How to play</h2><div class="help-body">'+

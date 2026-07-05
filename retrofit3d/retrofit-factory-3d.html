@@ -127,7 +127,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 .pm{margin:10px 0 4px;padding:10px 12px;background:#121a24;border:1px solid var(--edge);border-radius:10px}
 .pm h4{margin:0 0 6px;font-size:10px;color:var(--dim);letter-spacing:.5px;text-transform:uppercase}
 .pm-row{font-size:11.5px;margin-bottom:4px;color:var(--ink)}
-.pm-row b{font-family:var(--mono)} .pm-row .neg{color:var(--red)}
+.pm-row b{font-family:var(--mono)} .pm-row .neg{color:var(--red)} .pm-up{color:var(--amber);font-weight:700}
 .pm-tip{margin-top:7px;padding-top:7px;border-top:1px solid #1a232e;font-size:11.5px;color:var(--gold);line-height:1.45}
 .pm-best{width:max-content;max-width:100%;text-align:center;color:var(--gold);font-weight:800;font-size:13px;letter-spacing:1px;margin:2px auto 4px;animation:spulse 1.2s infinite}
 /* live job-status strip inside the sheet */
@@ -237,13 +237,13 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 <div id="app">
   <div id="hud">
     <div class="stat"><b id="cashv">$8,000</b><span>Cash</span></div>
-    <div class="stat"><b id="dayv">1/10</b><span>Day</span></div>
-    <div class="stat"><b id="shipv">0</b><span>Shipped / 800</span></div>
+    <div class="stat"><b id="dayv">1/5</b><span id="daylbl">Week 1 / 4</span></div>
+    <div class="stat"><b id="shipv">0</b><span>Shipped / <span id="demandv">620</span></span></div>
     <div class="stat"><b id="relv">—</b><span>Fleet health</span></div>
     <div class="stat"><b id="strikev">0/3</b><span>Strikes</span></div>
   </div>
   <div id="daybar">
-    <div id="clock">Day 1 · 06:00</div>
+    <div id="clock">Wk 1 · Day 1 · 06:00</div>
     <div id="dayprog"><div id="dayfill"></div></div>
     <button class="spd" data-s="0" id="sp0">❚❚</button>
     <button class="spd on" data-s="1" id="sp1">1×</button>
@@ -312,11 +312,14 @@ let HEADLESS=false;
 
 // ---- tuned constants (GDD §24) ----
 const C = {
-  TICKS_PER_DAY:480, D_MAX:10, ALPHA:2.0, MU:3.0, KAPPA:6.0,
+  TICKS_PER_DAY:480, WEEK_LEN:5, N_WEEKS:4, D_MAX:20, ALPHA:2.0, MU:3.0, KAPPA:6.0,
   P_NOM:7.0, P_MIN:4.0, LAMBDA_LEAK:0.35, M0:0.05, M_SEAL:0.75,
   AIR_DRAW:32, COMP_CAP:40,
-  STARTING_CASH:8000, WIN_CASH:20000, PRICE:3.60, SALVAGE:1.20,
-  CONTRACT_DEMAND:800, CONTRACT_FLOOR:400, SHORT_SHIP_PENALTY:600,
+  STARTING_CASH:8000, WIN_CASH:30000, PRICE:3.60, SALVAGE:1.20,
+  // CONTRACT_DEMAND/FLOOR are the CURRENT week's terms — reassigned each week
+  // from WEEKS (below). A season is N_WEEKS back-to-back contracts, each WEEK_LEN
+  // days, with a rising quota against the same aging plant (state carries forward).
+  CONTRACT_DEMAND:620, CONTRACT_FLOOR:300, SHORT_SHIP_PENALTY:600,
   ENERGY_PRICE:0.18, TECH_WAGE_DAY:240, OVERHEAD_DAY:110,
   TRAVEL_MIN:15, INSPECT_MIN:30,
   EMERGENCY_PART_MULT:2.5, EMERGENCY_DELIVERY_MIN:180,
@@ -326,6 +329,23 @@ const C = {
   REPAIR_FLOOR:0.08, FIX_FLOOR:0.04, OVERHAUL_FLOOR:0.11, SIGMA_INSPECT:0.05,
   STRIKES_TO_LOSE:3, HEALTH_CONDEMN:0.15, WEAR_SCALE:0.85, HAZARD_SCALE:0.4,
 };
+// The season: each week is a fresh contract (strikes reset) with a higher daily
+// quota, run on the same plant you've been wearing down since Day 1. Early weeks
+// are gentle onboarding; the demand curve out-runs a healthy line's capacity by
+// week 4, forcing capacity investment (upgrades) on top of reliability upkeep.
+// Base line capacity is the oven at 140/hr ≈ 1120 loaves/day at full health.
+// The curve is set against that ceiling: gentle at first, brushing it by week 3,
+// and exceeding it in week 4 — so the finale can only be fully shipped by a line
+// that has ADDED capacity (an upgrade), not merely kept healthy. That is what
+// keeps blind calendar servicing from being enough on its own.
+C.WEEKS = [
+  { demand:620,  floor:300 },   // Week 1 — settling in (55% of capacity)
+  { demand:800,  floor:400 },   // Week 2 — the ask climbs (71%)
+  { demand:990,  floor:495 },   // Week 3 — needs a healthy line (88%)
+  { demand:1200, floor:560 },   // Week 4 — exceeds base capacity: upgrade or leave loaves on the table
+];
+function applyWeek(w){ const wk=C.WEEKS[Math.min(w,C.WEEKS.length)-1];
+  C.CONTRACT_DEMAND=wk.demand; C.CONTRACT_FLOOR=wk.floor; }
 
 // ---- seeded PRNG (deterministic; sim only — visuals use Math.random) ----
 let _seed = 1234567 >>> 0;
@@ -406,12 +426,13 @@ function newGame(seed){
   for(const id in MACH){ const m=MACH[id]; const H0=machHealth(m);
     m.lambda0 = -Math.log(1-m.risk)/C.TICKS_PER_DAY / Math.exp(C.KAPPA*(1-H0)); }
   tech={ busy:false, job:null, queue:[], atPrev:null, phase:'idle', timer:0, total:0, minsToday:0 };
-  S={ cash:C.STARTING_CASH, day:1, tick:0, strikes:0, contractLive:true, over:false, won:false,
+  S={ cash:C.STARTING_CASH, day:1, week:1, tick:0, strikes:0, contractLive:true, over:false, won:false,
     seed:sd, stats:{brk:{},nBrk:0,firstBrkDay:null,emerg:0,planned:0,insp:0,capex:0,peakMoist:0,downH:0},
     // daily accumulators
     produced:0, energyToday:0, downMinToday:0, scrapWipMin:0,
     airP:C.P_NOM, moisture:0, airFactor:1, T:0, bottleneck:'oven',
     speed:1, sel:null, tutStep:0, walk:null, msgs:[] };
+  applyWeek(1);
   buildFloor(); selectNone(); updateHUD(); renderTech(); tutorialStep();
 }
 
@@ -668,7 +689,14 @@ function stepTick(){
   if(S.tick>=C.TICKS_PER_DAY){ S.tick=0; const led=settleDay();
     if(checkLose()) return;
     if(S.day>=C.D_MAX){ endGame(led); return; }
-    S.day++; S.speed=0; setSpeed(0); showReview(led); tutorialStep(); }
+    S.day++; S.speed=0; setSpeed(0);
+    const wk=Math.ceil(S.day/C.WEEK_LEN);
+    if(wk!==S.week){            // crossed into a new week: fresh contract, harder quota
+      const prevWeek=S.week; S.week=wk; applyWeek(wk);
+      S.strikes=0; S.contractLive=true;
+      showWeek(led, prevWeek);
+    } else showReview(led);
+    tutorialStep(); }
   updateHUD();
 }
 function checkLose(){
@@ -741,7 +769,10 @@ function updateHUD(){
   if(HEADLESS) return;
   const cv=$('cashv'); cv.textContent='$'+Math.round(S.cash).toLocaleString();
   cv.className=S.cash<1500?'bad':S.cash<4000?'warn':'good';
-  $('dayv').textContent=S.day+'/10';
+  const dw=((S.day-1)%C.WEEK_LEN)+1;
+  $('dayv').textContent=dw+'/'+C.WEEK_LEN;
+  const dl=$('daylbl'); if(dl) dl.textContent='Week '+S.week+' / '+C.N_WEEKS;
+  const dm=$('demandv'); if(dm) dm.textContent=C.CONTRACT_DEMAND;
   const sv=$('shipv'); const shipped=Math.round(Math.min(C.CONTRACT_DEMAND,S.produced));
   sv.textContent=shipped; sv.className=S.produced<C.CONTRACT_FLOOR?'bad':S.produced>=C.CONTRACT_DEMAND?'good':'';
   let sum=0,n=0; for(const id in MACH){sum+=machHealth(MACH[id]);n++;}
@@ -749,7 +780,7 @@ function updateHUD(){
   rv.className=rel>0.5?'good':rel>0.3?'warn':'bad';
   const stk=$('strikev'); stk.textContent=S.strikes+'/3'; stk.style.color=S.strikes>0?'var(--red)':'var(--dim)';
   const hh=6+Math.floor(S.tick/60), mm=S.tick%60;
-  $('clock').textContent='Day '+S.day+' · '+String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
+  $('clock').textContent='Wk '+S.week+' · Day '+(((S.day-1)%C.WEEK_LEN)+1)+' · '+String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
   $('dayfill').style.width=(S.tick/C.TICKS_PER_DAY*100)+'%';
   renderFloor();
 }
@@ -963,22 +994,16 @@ function clamp(v,a,b){ return v<a?a:v>b?b:v; }
 
 /* =============================== REVIEW / END MODALS =============================== */
 function money(n){ const s=(n<0?'−$':'$')+Math.abs(Math.round(n)).toLocaleString(); return s; }
-function showReview(l){
-  if(HEADLESS) return;
-  const rev=$('modalcard');
-  rev.innerHTML='<h2>Day '+l.day+' — Shift report</h2>'+
-    '<div class="sub">Shipped '+l.shipped+' / 800 loaves'+(l.produced>l.shipped?(' (+'+(l.produced-l.shipped)+' salvage)'):'')+' · '+l.down.toFixed(1)+'h downtime</div>'+
-    '<table class="ledger">'+
+function shiftLedgerRows(l){
+  return '<table class="ledger">'+
     row('Revenue',l.revenue,1)+ row('Energy',-l.energy)+ row('Technician wage',-l.wages)+
     row('Overhead',-l.overhead)+ (l.wipScrap>0?row('Scrapped WIP',-l.wipScrap):'')+
     (l.penalty>0?row('⚠ Short-ship penalty (STRIKE)',-l.penalty):'')+
     '<tr class="tot"><td>Net day</td><td id="rv-net" class="'+(l.net>=0?'pos':'neg')+'">'+money(0)+'</td></tr>'+
     '<tr class="tot"><td>Cash on hand</td><td id="rv-cash">'+money(S.cash-l.net)+'</td></tr>'+
-    '</table>'+
-    (S.strikes>0?'<div class="sub" style="color:var(--red)">Strikes: '+S.strikes+'/3 — 3 short-ship days cancels the bread contract.</div>':'')+
-    '<button class="btn go" onclick="closeReview()">▶ Plan Day '+(l.day+1)+'</button>';
-  $('modal').classList.add('show');
-  // count-up: the day's money lands, rather than appearing
+    '</table>';
+}
+function countUpLedger(l){
   (function(){ const e1=$('rv-net'), e2=$('rv-cash'); if(!e1) return;
     const v1=l.net, c0=S.cash-l.net, c1=S.cash, t0=performance.now();
     const iv=setInterval(()=>{ const k=Math.min(1,(performance.now()-t0)/850);
@@ -986,6 +1011,38 @@ function showReview(l){
       e1.textContent=money(v1*e); e2.textContent=money(c0+(c1-c0)*e);
       if(k>=1) clearInterval(iv); },33);
   })();
+}
+function showReview(l){
+  if(HEADLESS) return;
+  const dw=((l.day-1)%C.WEEK_LEN)+1;
+  const rev=$('modalcard');
+  rev.innerHTML='<h2>Week '+S.week+' · Day '+dw+' — Shift report</h2>'+
+    '<div class="sub">Shipped '+l.shipped+' / '+C.CONTRACT_DEMAND+' loaves'+(l.produced>l.shipped?(' (+'+(l.produced-l.shipped)+' salvage)'):'')+' · '+l.down.toFixed(1)+'h downtime</div>'+
+    shiftLedgerRows(l)+
+    (S.strikes>0?'<div class="sub" style="color:var(--red)">Strikes: '+S.strikes+'/3 — 3 short-ship days this week cancels the contract.</div>':'')+
+    '<button class="btn go" onclick="closeReview()">▶ Plan Day '+(dw+1)+' of Week '+S.week+'</button>';
+  $('modal').classList.add('show');
+  countUpLedger(l);
+}
+// crossing into a new week: the contract renews with a higher quota, run on the
+// same worn plant — the escalation the whole season is built around.
+function showWeek(l, prevWeek){
+  if(HEADLESS) return;
+  const wk=S.week, terms=C.WEEKS[wk-1]||{demand:C.CONTRACT_DEMAND,floor:C.CONTRACT_FLOOR};
+  const prevT=C.WEEKS[prevWeek-1]||terms;
+  const dDem=terms.demand-prevT.demand;
+  const rev=$('modalcard');
+  rev.innerHTML='<h2>Week '+prevWeek+' cleared — contract renewed</h2>'+
+    '<div class="sub">You kept the line alive through Week '+prevWeek+'. The bakery wants more.</div>'+
+    shiftLedgerRows(l)+
+    '<div class="pm"><h4>Week '+wk+' of '+C.N_WEEKS+' — new order</h4>'+
+      '<div class="pm-row">📈 Daily demand <b>'+terms.demand+'</b> loaves'+(dDem>0?(' <span class="pm-up">▲ +'+dDem+'</span>'):'')+' <span class="pl-dim">(was '+prevT.demand+')</span></div>'+
+      '<div class="pm-row">⚠ Short-ship floor <b>'+terms.floor+'</b>/day · strikes reset to <b>0/3</b></div>'+
+      '<div class="pm-row">🔧 Same plant — every part you let wear carries into this week. Health now <b>'+Math.round(avgHealth()*100)+'%</b>.</div>'+
+      '<div class="pm-tip">💡 The quota now out-runs a tired line. Fix the ◄ LIMIT machine and consider an ⬆ upgrade before it bottlenecks the whole order.</div></div>'+
+    '<button class="btn go" onclick="closeReview()">▶ Start Week '+wk+'</button>';
+  $('modal').classList.add('show');
+  countUpLedger(l);
 }
 function row(label,val,pos){ return '<tr><td>'+label+'</td><td class="'+(val>=0?'pos':'neg')+'">'+money(val)+'</td></tr>'; }
 function closeReview(){ $('modal').classList.remove('show'); updateHUD(); }
@@ -996,22 +1053,24 @@ function endGame(l,lose){
   const rev=$('modalcard'); let grade,gc,title,sub,body='';
   if(lose){ grade='✗'; gc='var(--red)';
     title = lose==='L1'?'BANKRUPT':lose==='L2'?'CONTRACT CANCELLED':lose==='L3'?'PLANT CONDEMNED':'OBJECTIVE FAILED';
-    sub = lose==='L1'?'Cash went below zero.':lose==='L2'?'Three short-ship days — the bakery pulled the contract.':
-      lose==='L3'?'Fleet average health fell below 15%. The plant is unsafe.':'Day 10 ended under the $20,000 target.';
+    sub = lose==='L1'?'Cash went below zero on Week '+S.week+'.':
+      lose==='L2'?'Three short-ship days in Week '+S.week+' — the bakery pulled the contract.':
+      lose==='L3'?'Fleet average health fell below 15%. The plant is unsafe.':
+      'The season ended below the '+money(C.WIN_CASH)+' target.';
   } else {
     const cash=S.cash; S.won=cash>=C.WIN_CASH;
-    if(cash>=22500&&S.strikes===0){grade='★★★';gc='var(--gold)';}
-    else if(cash>=21500&&S.strikes===0){grade='★★';gc='var(--green)';}
+    if(cash>=C.WIN_CASH+6000){grade='★★★';gc='var(--gold)';}
+    else if(cash>=C.WIN_CASH+3000){grade='★★';gc='var(--green)';}
     else if(cash>=C.WIN_CASH){grade='★';gc='var(--green)';}
     else {grade='✗';gc='var(--red)';}
-    title=S.won?'CONTRACT KEPT':'OBJECTIVE FAILED';
-    sub='Finished Day 10 with '+money(cash)+' (target $20,000).';
+    title=S.won?'SEASON COMPLETE':'OBJECTIVE FAILED';
+    sub='Cleared all '+C.N_WEEKS+' weekly contracts with '+money(cash)+' (target '+money(C.WIN_CASH)+').';
   }
   // ---- post-mortem: what actually happened this run ----
   const st=S.stats||{brk:{},nBrk:0,emerg:0,planned:0,insp:0,peakMoist:0,downH:0};
   let worstId=null,wn=0; for(const k in st.brk) if(st.brk[k]>wn){wn=st.brk[k];worstId=k;}
   let tip='';
-  if(lose==='L2'||S.strikes>=2) tip='Keep output above 400/day: the ◄ LIMIT machine sets the whole line — service it first.';
+  if(lose==='L2'||S.strikes>=2) tip='Keep output above the '+C.CONTRACT_FLOOR+'/day floor: the ◄ LIMIT machine sets the whole line — service it first.';
   else if(st.emerg>st.planned+st.insp) tip='Emergencies bill 2.5× parts + double labor. Inspect early and 🔩 fix the worn part before it lets go.';
   else if(st.peakMoist>0.55) tip='Automate the compressor: the auto-drain kills the moisture that eats seals on Mixer, Slicer and Packager.';
   else if(!S.won) tip='Thin margin? 🔩 targeted fixes ($'+C.LABOR_FIX+' + one part) beat full services once you know which part is worn.';
@@ -1036,7 +1095,7 @@ function endGame(l,lose){
     '<table class="ledger">'+
     '<tr><td>Final cash</td><td>'+money(S.cash)+'</td></tr>'+
     '<tr><td>Started with</td><td>$8,000</td></tr>'+
-    '<tr class="tot"><td>Net over 10 days</td><td class="'+(S.cash-8000>=0?'pos':'neg')+'">'+money(S.cash-8000)+'</td></tr>'+
+    '<tr class="tot"><td>Net over the season</td><td class="'+(S.cash-8000>=0?'pos':'neg')+'">'+money(S.cash-8000)+'</td></tr>'+
     '<tr><td>Short-ship strikes</td><td>'+S.strikes+'/3</td></tr>'+
     '<tr><td>Fleet health</td><td>'+Math.round(avgHealth()*100)+'%</td></tr>'+
     '</table>'+ pm + body +
@@ -1050,7 +1109,7 @@ function retrySeed(){ restart(S.seed); }
 
 /* =============================== TUTORIAL =============================== */
 const TUT=[
- '<b>Welcome to the Old Bakery Plant.</b> You are the maintenance technician. Ship <b>800 loaves/day</b> and finish Day 10 with <b>$20,000</b>. <b>Walk</b> with the joystick or <span class="k">WASD</span>, drag to look around, tap the floor to walk there. <b>Time is paused</b> until you press <span class="k">▶</span> — look around first.',
+ '<b>Welcome to the Old Bakery Plant.</b> You are the maintenance technician. Survive <b>'+C.N_WEEKS+' weekly contracts</b> — the quota rises each week, but it is always the same aging plant. <b>Walk</b> with the joystick or <span class="k">WASD</span>, drag to look around, tap the floor to walk there. <b>Time is paused</b> until you press <span class="k">▶</span> — look around first.',
  '<b>The oven is your bottleneck</b> — the amber <b>◄ LIMIT</b> tag floats over it. Throughput = the slowest machine. Walk up to a machine and tap the <span class="k">⚙ Open panel</span> prompt (or press <span class="k">E</span>).',
  '<b>Wear is invisible until you look.</b> <span class="k">🔍 Inspect</span> ($25–60, no downtime) reveals which part is failing — then order a <span class="k">🔩 targeted fix</span> on just that part: cheaper and faster than a full service.',
  '<b>The compressor (front-left) is a trap.</b> Its moisture 💧 silently speeds up seal wear on the Mixer, Slicer AND Packager — one root cause, three symptoms. Visit it early.',
@@ -1065,7 +1124,7 @@ $('tutx').onclick=()=>{ S.tutStep++; if(S.tutStep>=TUT.length){$('tut').style.di
 
 $('helpbtn').onclick=()=>{ setSpeed(0); const rev=$('modalcard');
   rev.innerHTML='<h2>How to play</h2><div class="help-body">'+
-   '<b>Goal:</b> finish <span class="k">Day 10</span> with <b>$20,000</b> cash. Ship 800 loaves/day; three days under 400 cancels the contract.'+
+   '<b>Goal:</b> survive <span class="k">'+C.N_WEEKS+' weekly contracts</span> ('+C.WEEK_LEN+' days each) and finish with <b>'+money(C.WIN_CASH)+'</b> cash. Each week the daily quota climbs — but you keep the same plant, so its wear carries forward. Three short-ship days <i>in a week</i> cancels that contract.'+
    '<ul>'+
    '<li><b>You are the technician.</b> Walk: joystick / <span class="k">WASD</span> / tap the floor. Look: drag. Zoom: pinch or scroll. Interact: walk up to a machine and tap <span class="k">⚙ Open panel</span> (or <span class="k">E</span>).</li>'+
    '<li><b>Wear is hidden.</b> <span class="k">Inspect</span> to reveal per-part condition (no downtime).</li>'+
@@ -2171,10 +2230,12 @@ window.__sim = function(policy,seed){
 window.__policies={
   'run-to-failure': ()=>null,
   'preventive-calendar': ()=>{
-    const sched={1:['oven'],2:['conveyor','packager'],3:['slicer','mixer','compressor'],4:['oven','conveyor'],
-      5:['packager','slicer'],6:['compressor','mixer'],7:['oven','conveyor'],8:['packager','slicer'],9:['compressor','mixer'],10:['oven']};
+    // a blind calendar rotation that runs the whole season — services each
+    // machine on a fixed cadence, but never inspects, never adapts to the
+    // rising quota, and never adds capacity.
+    const rot=[['oven'],['conveyor','packager'],['slicer','mixer','compressor'],['oven','conveyor'],['packager','slicer'],['compressor','mixer']];
     return (day,tick,S,MACH)=>{ if(tick!==5)return;
-      (sched[day]||[]).forEach(id=>{ if(!MACH[id].broken) actRepair(id); }); }; },
+      (rot[(day-1)%rot.length]||[]).forEach(id=>{ if(!MACH[id].broken) actRepair(id); }); }; },
   'inspect-bottleneck': ()=>{ const li={}; return (day,tick,S,MACH)=>{ if(tick!==5)return;
     const bn=S.bottleneck;
     if(!MACH[bn].broken && day-(li[bn]||0)>=2){ actInspect(bn); li[bn]=day; }
@@ -2197,6 +2258,10 @@ window.__policies={
     if(day===1){ actAutomate('compressor'); actRepair('conveyor'); actRepair('oven'); return; }
     if(day===2){ actRepair('mixer'); actRepair('slicer'); return; }
     if(day===3){ actRepair('packager'); }
+    // capacity planning: add headroom on the bottleneck before the week-4 demand
+    // peak outruns the base line, and automate a second cascade root mid-season
+    if(day===6 && !MACH.oven.automated && S.cash>C.AUTOMATE_COST+2000) actAutomate('oven');
+    if(day===11 && MACH[S.bottleneck].up<2 && S.cash>C.UPGRADE_COST+2500) actUpgrade(S.bottleneck);
     const cand=[]; for(const id of CHAIN.concat(['compressor'])){ const m=MACH[id]; if(m.broken)continue;
       for(const c of m.ch) if(c.reveal!=null&&c.reveal>0.3) cand.push([c.reveal,id,c.id]); }
     cand.sort((a,b)=>b[0]-a[0]); const used=new Set(); let n=0;

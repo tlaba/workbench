@@ -39,9 +39,29 @@ pools under a moisture-choked compressor.
 - While you're mid-job you're committed (you're the one holding the wrench) —
   plan your route or ⏩ speed up time. `Space` pauses.
 
-## The loop (Level 1 — Old Bakery Plant)
+## The season — four escalating contracts
 
-Six machines feed one bread contract: **Spiral Mixer → Conveyor → Oven →
+You play a **season of four weekly contracts** (five days each — a 20-day run) on
+**one plant you never replace**. Cash, upgrades, automation, stocked spares and —
+above all — the plant's accumulated **wear** all carry from week to week; only the
+strike count resets with each new contract. The catch is the quota:
+
+| Week | Daily demand | vs base line capacity (~1,120/day) |
+|---|---|---|
+| 1 | 620 | 55% — settling in |
+| 2 | 800 | 71% — the ask climbs |
+| 3 | 990 | 88% — needs a healthy line |
+| 4 | **1,200** | **107% — exceeds a base line; you must add capacity** |
+
+Because the plant only ages, each week is a *harder version of the same problem*:
+the loaves you owe keep rising while the line you're nursing keeps wearing. Week 4
+demands more than a healthy un-upgraded line can physically ship, so the finale
+turns on a well-timed **⬆ upgrade** on top of the reliability upkeep — not just
+more of the same triage.
+
+## The loop (Old Bakery Plant)
+
+Six machines feed the bread contract: **Spiral Mixer → Conveyor → Oven →
 Slicer → Packager**, all fed compressed air by an **Air Compressor**. You have
 a tight cash runway and one pair of hands. Each day you triage:
 
@@ -59,38 +79,41 @@ a tight cash runway and one pair of hands. Each day you triage:
 - **🆕 Replace** — a brand-new unit. Capital-heavy.
 
 Breakdowns bill the real emergency premium — **2.5× parts + 1.75× labor + $350
-collateral** — so run-to-failure pays through the nose. Every run rolls a fresh
-**seed** (breakdown luck differs); the end screen offers *retry this shift* on the
-same seed, a **shift post-mortem** (breakdown count, emergency vs planned spend,
-moisture peak, a tailored tip), and saves your **personal best** on-device.
+collateral** — so run-to-failure pays through the nose, and over a 20-day season
+that debt compounds.
 
 Throughput is the **minimum of the chain**, so the bottleneck is wherever wear
 bites hardest — fix it and the limit *migrates* somewhere else. The compressor's
 moisture couples into every pneumatic machine through a shared air bus: neglect
 it and a slow cascade drags the whole floor down. Miss the contract floor three
-days and the bakery pulls the contract.
+days **in a single week** and the bakery pulls that contract — season over. Every
+run rolls a fresh **seed**; the end screen offers *retry this season* on the same
+seed, a **post-mortem**, and saves your **personal best**.
 
 ## Emergent, not scripted — verified
 
-Seven maintenance disciplines are swept headless across **10 seeds**
-(v3 balance — run `window.__matrix()` in the browser console to reproduce):
+Seven maintenance disciplines are swept headless across the full 4-week season on
+**10 seeds** (run `window.__matrix()` in the browser console to reproduce):
 
-| Strategy | Wins | Median | Range |
-|---|---|---|---|
-| **Run-to-failure** (ignore everything) | 0/10 | $8.6k — dies ~day 5-6 | $4.4k–10.5k |
-| **Inspect the bottleneck only** (look, barely act) | 0/10 | $11.5k | $4.4k–15.5k |
-| **Compressor-first inspections** (fixes only) | 0/10 | $10.9k | $4.1k–16.3k |
-| **Upgrade the bottleneck** (capacity chase) | 0/10 | $16.7k | $1.6k–19.3k |
-| **Early automation** + threshold overhauls | 3/10 | $18.5k | $2.8k–21.0k |
-| **Preventive** (blind calendar overhauls) | 4/10 | $19.3k | $3.2k–22.2k |
-| **Predictive** (reset once → inspect → 🔩 targeted fix) | **5/10** | **$20.6k** | **$16.8k**–22.7k |
+| Strategy | Wins (≥$30k) | Seasons finished | Median | Worst case |
+|---|---|---|---|---|
+| **Run-to-failure** (ignore everything) | 0/10 | 0/10 — dies in week 2 | $6.7k | $5.0k |
+| **Inspect the bottleneck only** (look, barely act) | 0/10 | 0/10 — dies wk 2–3 | $11.6k | $5.0k |
+| **Compressor-first inspections** (fixes only) | 0/10 | 0/10 — dies wk 2 | $10.4k | $3.9k |
+| **Upgrade the bottleneck** (capacity chase, thin upkeep) | 1/10 | 8/10 | $25.5k | $17.4k |
+| **Early automation** + threshold overhauls | 5/10 | 9/10 | $30.6k | $2.8k |
+| **Preventive** (blind full-season calendar overhauls) | 6/10 | 9/10 | $33.3k | $18.1k |
+| **Predictive** (inspect → 🔩 targeted fix + a timed ⬆ upgrade) | **6/10** | **10/10** | **$32.8k** | **$22.9k** |
 
 The lesson is the real one from reliability engineering: **condition-based
-maintenance has the best expected value and by far the best worst case** —
-calendar overhauls gamble on breakdown luck, capacity upgrades on a dying
-plant are a trap, and inspection without action is just watching it die.
-A 🔩 targeted fix restores the known part to like-new; a blanket overhaul is
-faster per part but leaves residual wear — precision beats brute force.
-Grades: ★ $20k · ★★ $21.5k · ★★★ $22.5k (strike-free, verified reachable).
-None of it is hand-scripted: it falls out of ordinary wear + throughput +
+maintenance is the most *reliable* strategy** — it is the only discipline that
+finishes **every** season (10/10), with the best worst case (≈$4.8k above blind
+preventive's floor) and the highest ceiling ($38.7k). Blind calendar overhauls
+match it on a typical run but *gamble*: they fail 1 season in 10 and crater on a
+bad-luck one. Capacity-chasing a worn plant survives but barely profits;
+inspection without action is just watching it die. A 🔩 targeted fix restores the
+known part to like-new at ~⅓ the downtime of a blanket overhaul — precision that
+pays off most when week 4's quota leaves no uptime to waste. Grades: ★ $30k ·
+★★ $33k · ★★★ $36k (verified reachable). None of it is hand-scripted: it falls
+out of ordinary wear + throughput +
 economy math.

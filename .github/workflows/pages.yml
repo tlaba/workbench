@@ -3,18 +3,26 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+
 permissions:
   contents: read
   pages: write
   id-token: write
+
+# One production deploy at a time. cancel-in-progress:false lets an in-flight
+# release finish rather than being interrupted mid-deploy by the next merge
+# (the official Pages recommendation).
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
+
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  # Build and deploy are separate on purpose. The artifact is uploaded exactly
+  # once, here — so a transient deploy failure can be retried (in the deploy job
+  # below, or via a manual "re-run failed jobs") WITHOUT re-running the upload.
+  # Re-uploading is what previously created a second "github-pages" artifact and
+  # wedged the run with "Multiple artifacts ... Artifact count is 2".
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,10 +33,40 @@ jobs:
           mkdir -p _site/retrofit3d
           cp retrofit3d/retrofit-factory-3d.html _site/retrofit3d/
       - uses: actions/configure-pages@v5
-        with:
-          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
-      - id: deployment
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url || steps.deploy2.outputs.page_url || steps.deploy3.outputs.page_url }}
+    steps:
+      # actions/deploy-pages does NOT retry the transient "Fetching artifact
+      # metadata failed" error — it is a hard fail in the un-retried create phase
+      # (its timeout/error_count inputs only tune the later status-polling loop).
+      # So we retry the deploy STEP in place. Because the artifact lives in the
+      # build job, these retries never re-upload and can never duplicate it.
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+      - name: Pause before retry
+        if: steps.deploy.outcome == 'failure'
+        run: sleep 15
+      - name: Deploy to GitHub Pages (retry 1)
+        id: deploy2
+        if: steps.deploy.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+      - name: Pause before final retry
+        if: steps.deploy2.outcome == 'failure'
+        run: sleep 45
+      # Final attempt is NOT continue-on-error: a persistent failure must surface
+      # as a real job failure (recoverable safely by re-running THIS job only).
+      - name: Deploy to GitHub Pages (retry 2)
+        id: deploy3
+        if: steps.deploy2.outcome == 'failure'
         uses: actions/deploy-pages@v4

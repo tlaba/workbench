@@ -3,7 +3,19 @@
 **Lead Game Director's cut. Single source of truth. Level 1: Old Bakery Plant.**
 Target platform: Unity 2022 LTS+ / URP, mobile-first Android, portrait. One Unity developer. One shippable level proving six pillars.
 
-**▶ Play the prototype (no install):** https://tlaba.github.io/workbench/retrofit3d/retrofit-factory-3d.html — a single self-contained HTML file ([`retrofit-factory-3d.html`](./retrofit-factory-3d.html)): a real-time 3D plant you walk around as the technician, running this design's tuned economy live — per-channel wear, emergent breakdowns, the compressor→pneumatics moisture cascade, and bottleneck migration, all read through the `effParam()` chokepoint. Neglect loses by ~day 6; disciplined maintenance keeps the contract.
+**▶ Play the prototype (no install):** https://tlaba.github.io/workbench/retrofit3d/retrofit-factory-3d.html — a single self-contained HTML file ([`retrofit-factory-3d.html`](./retrofit-factory-3d.html)): a real-time 3D plant you walk around as the technician, running this design's tuned economy live — per-channel wear, emergent breakdowns, the compressor→pneumatics moisture cascade, and bottleneck migration, all read through the `effParam()` chokepoint. Neglect loses inside a week or two; disciplined maintenance clears all four escalating weekly contracts.
+
+> **Shipped campaign structure (supersedes the single-contract framing below).** The
+> prototype now runs a **season of four weekly contracts** — `WEEK_LEN = 5` days each,
+> `N_WEEKS = 4`, so `D_MAX = 20`. Cash, upgrades, automation, spares and the plant's
+> accumulated wear carry from week to week; only the strike count resets per contract.
+> The daily quota escalates **620 → 800 → 990 → 1,200** loaves against a ~1,120/day base
+> line, so week 4 exceeds an un-upgraded plant's capacity and forces a capacity upgrade
+> on top of reliability upkeep. `WIN_CASH = $30,000`; grades ★ $30k · ★★ $33k · ★★★ $36k.
+> The per-machine physics, wear model, and economy verbs in §5/§8/§24 are unchanged —
+> the season is a wrapper around the same daily loop, with per-week `CONTRACT_DEMAND`/
+> `CONTRACT_FLOOR`. The single-contract numbers and worked playthroughs below describe
+> the original 10-day spec and remain the design baseline for the daily economy.
 
 **The one rule that governs everything below:** *a fault is data, not code.* A machine is a small component model; every symptom, breakdown and cascade emerges from `params + runtime + load` read through two chokepoints — `effParam()` (physics) and `effCost()` (economy). No code path anywhere is allowed to *know* that "compressor moisture stops the slicer." It falls out of ordinary throughput math on a shared air bus. Where this document lists a canonical number, that number is identical in §5, §18 and §24 — no drift.
 
@@ -38,7 +50,7 @@ Target platform: Unity 2022 LTS+ / URP, mobile-first Android, portrait. One Unit
 
 ## 3. Core Gameplay Loop
 
-**Time.** Continuous minute-ticks. `TICKS_PER_DAY = 480` (an 8-hour shift). Campaign `D_MAX = 10` days. Player controls a time throttle (Pause / 1× / 2× / 4×). The day boundary is a planning beat, not a rules change.
+**Time.** Continuous minute-ticks. `TICKS_PER_DAY = 480` (an 8-hour shift). Campaign is a **season of `N_WEEKS = 4` contracts × `WEEK_LEN = 5` days = `D_MAX = 20` days** (see the shipped-structure note in §0). Player controls a time throttle (Pause / 1× / 2× / 4×). The day boundary is a planning beat; the week boundary renews the contract at a higher quota (a stakes change, not a rules change).
 
 **The loop, per day:**
 

@@ -75,12 +75,16 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
   border:1px solid var(--edge);color:var(--dim);border-radius:50%;width:30px;height:30px;font-weight:700}
 #planbtn{position:absolute;right:10px;top:46px;z-index:6;background:rgba(30,40,54,.85);
   border:1px solid var(--edge);color:var(--ink);border-radius:8px;width:30px;height:30px;font-size:14px}
-#mutebtn,#fxbtn,#notifybtn{position:absolute;right:10px;z-index:6;background:rgba(30,40,54,.85);
+#mutebtn,#fxbtn,#notifybtn,#acctbtn{position:absolute;right:10px;z-index:6;background:rgba(30,40,54,.85);
   border:1px solid var(--edge);color:var(--dim);border-radius:8px;width:30px;height:30px;font-size:13px}
-#mutebtn{top:82px} #fxbtn{top:118px} #notifybtn{top:154px}
+#mutebtn{top:82px} #fxbtn{top:118px} #notifybtn{top:154px} #acctbtn{top:190px}
 #mutebtn.off{color:var(--red);border-color:#7a2c2c}
 #fxbtn.on{color:var(--amber);border-color:#7a5a2c}
 #notifybtn.on{color:var(--blue);border-color:#2c5a7a}
+#acctbtn.on{color:var(--green);border-color:#2c7a48}
+.acct-in{width:100%;box-sizing:border-box;margin:8px 0;padding:10px 12px;font-size:15px;
+  background:var(--panel2);border:1px solid var(--edge);border-radius:8px;color:var(--ink)}
+.acct-in:focus{outline:none;border-color:var(--blue)}
 @keyframes pl1{0%{box-shadow:0 0 0 0 rgba(255,178,62,.7)}100%{box-shadow:0 0 0 12px rgba(255,178,62,0)}}
 #planbtn.pulse1{animation:pl1 .9s ease-out 2}
 #planner{position:absolute;right:46px;top:46px;width:min(324px,88%);background:rgba(14,21,30,.96);
@@ -219,8 +223,8 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
   #daybar{gap:5px;padding:5px 6px}
   #clock{min-width:62px;font-size:10.5px}
   .stat b{font-size:13.5px} .stat span{font-size:8px}
-  #helpbtn,#planbtn,#mutebtn,#fxbtn,#notifybtn{width:40px;height:40px;font-size:15px}
-  #planbtn{top:56px} #mutebtn{top:102px} #fxbtn{top:148px} #notifybtn{top:194px}
+  #helpbtn,#planbtn,#mutebtn,#fxbtn,#notifybtn,#acctbtn{width:40px;height:40px;font-size:15px}
+  #planbtn{top:56px} #mutebtn{top:102px} #fxbtn{top:148px} #notifybtn{top:194px} #acctbtn{top:240px}
   #planner{right:54px;top:56px}
   .sheet-close{font-size:26px;padding:6px 12px;margin:-6px -6px 0 0}
   .fixbtn{padding:7px 10px;font-size:10.5px}
@@ -279,6 +283,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
     <button id="mutebtn" title="Sound on/off">🔊</button>
     <button id="fxbtn" title="Reduced effects">✦</button>
     <button id="notifybtn" title="Notify me when the tab is in the background">🔔</button>
+    <button id="acctbtn" title="Sign in to save progress to the cloud">👤</button>
     <div id="planner"><div class="pl-head">📋 SHIFT PLANNER<button class="x" id="planx">×</button></div><div class="pl-body"></div></div>
     <div id="techchip">🔧 <b id="techstate">Idle</b><div id="techqueue"></div><div id="techbar"><div id="techfill"></div></div></div>
     <div id="joy"><div id="jnub"></div></div>
@@ -2756,6 +2761,167 @@ function enterResume(){ if(HEADLESS) return;
   }
   if(typeof requestAnimationFrame!=='undefined') requestAnimationFrame(frame);
 })();
+
+/* =============================================================================
+   CLOUD SAVES (g7) — sign in with email to save your run to the cloud and pick
+   it up on any device. Talks to Supabase's Auth + REST APIs directly with fetch
+   (no SDK to bundle — keeps the single self-contained file). Dormant until the
+   project URL + anon key are configured; until then the game is local-only (g6).
+
+   SETUP: see retrofit3d/CLOUD-SAVES.md. Paste the two values below (or set the
+   localStorage key 'rf3d_sb' to {"url":"...","key":"..."} for dev/testing).
+   ============================================================================= */
+
+const _SB_BAKED_URL='';   /* ← your Supabase project URL, e.g. https://abcd.supabase.co */
+const _SB_BAKED_KEY='';   /* ← your Supabase anon (publishable) key */
+const _SBO=(()=>{ try{ return JSON.parse(localStorage.getItem('rf3d_sb')||'null'); }catch(e){ return null; } })();
+const SB_URL=(_SB_BAKED_URL||(_SBO&&_SBO.url)||'').replace(/\/+$/,'');
+const SB_KEY=_SB_BAKED_KEY||(_SBO&&_SBO.key)||'';
+const CLOUD_ON=!!(SB_URL&&SB_KEY);
+
+/* ---------- session (JWT) ---------- */
+let _sess=null;
+try{ _sess=JSON.parse(localStorage.getItem('rf3d_session')||'null'); }catch(e){ _sess=null; }
+function _saveSess(s){ _sess=s;
+  try{ if(s) localStorage.setItem('rf3d_session',JSON.stringify(s)); else localStorage.removeItem('rf3d_session'); }catch(e){} }
+function _normSess(j){ return { access_token:j.access_token, refresh_token:j.refresh_token,
+  expires_at:j.expires_at||(Math.floor(Date.now()/1000)+(j.expires_in||3600)),
+  user:j.user?{id:j.user.id,email:j.user.email}:(_sess&&_sess.user) }; }
+function cloudSignedIn(){ return !!(_sess&&_sess.access_token&&_sess.user); }
+function cloudEmail(){ return _sess&&_sess.user?_sess.user.email:null; }
+function cloudSignOut(){ _saveSess(null); applyAcctBtn(); }
+function _hdr(useUser){ return { apikey:SB_KEY, 'Content-Type':'application/json',
+  Authorization:'Bearer '+((useUser&&_sess&&_sess.access_token)||SB_KEY) }; }
+async function _ensureToken(){
+  if(!cloudSignedIn()) return false;
+  if(_sess.expires_at && _sess.expires_at-30>Math.floor(Date.now()/1000)) return true;
+  try{
+    const r=await fetch(SB_URL+'/auth/v1/token?grant_type=refresh_token',
+      {method:'POST',headers:{apikey:SB_KEY,'Content-Type':'application/json'},
+       body:JSON.stringify({refresh_token:_sess.refresh_token})});
+    if(!r.ok){ _saveSess(null); return false; }
+    _saveSess(_normSess(await r.json())); return true;
+  }catch(e){ return false; }
+}
+
+/* ---------- auth: passwordless email code ---------- */
+async function cloudSendCode(email){
+  if(!CLOUD_ON) return false;
+  try{ const r=await fetch(SB_URL+'/auth/v1/otp',{method:'POST',
+    headers:{apikey:SB_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({email:email, create_user:true})}); return r.ok; }catch(e){ return false; }
+}
+async function cloudVerifyCode(email, code){
+  if(!CLOUD_ON) return false;
+  try{ const r=await fetch(SB_URL+'/auth/v1/verify',{method:'POST',
+    headers:{apikey:SB_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({email:email, token:String(code).trim(), type:'email'})});
+    if(!r.ok) return false; const j=await r.json();
+    if(!j.access_token) return false; _saveSess(_normSess(j)); return true;
+  }catch(e){ return false; }
+}
+
+/* ---------- cloud saves (one row per user, protected by RLS) ---------- */
+async function cloudPull(){
+  if(!CLOUD_ON||!await _ensureToken()) return null;
+  try{ const r=await fetch(SB_URL+'/rest/v1/saves?select=data,updated_at',{headers:_hdr(true)});
+    if(!r.ok) return null; const rows=await r.json();
+    return (rows&&rows[0])?rows[0]:null; }catch(e){ return null; }
+}
+async function cloudPush(snap){
+  if(!CLOUD_ON||!snap||!await _ensureToken()) return false;
+  try{ const r=await fetch(SB_URL+'/rest/v1/saves',{method:'POST',
+    headers:Object.assign(_hdr(true),{Prefer:'resolution=merge-duplicates,return=minimal'}),
+    body:JSON.stringify([{user_id:_sess.user.id, data:snap, updated_at:new Date().toISOString()}])});
+    return r.ok; }catch(e){ return false; }
+}
+async function cloudDelete(){
+  if(!CLOUD_ON||!await _ensureToken()) return false;
+  try{ const r=await fetch(SB_URL+'/rest/v1/saves?user_id=eq.'+encodeURIComponent(_sess.user.id),
+    {method:'DELETE',headers:_hdr(true)}); return r.ok; }catch(e){ return false; }
+}
+
+/* ---------- hooks g6 calls from saveGame()/clearSave() ---------- */
+let _cloudLast=0;
+function cloudSyncSave(snap){                 // debounced background push
+  if(!CLOUD_ON||!cloudSignedIn()) return;
+  const now=Date.now(); if(now-_cloudLast<12000) return; _cloudLast=now;
+  cloudPush(snap);
+}
+function cloudSyncClear(){ if(CLOUD_ON&&cloudSignedIn()) cloudDelete(); }
+
+/* ---------- reconcile local <-> cloud on sign-in (latest updated wins) ---------- */
+async function cloudReconcile(){
+  const cloud=await cloudPull();
+  const local=readSave();
+  const localTs=local?local.ts:0;
+  const cloudTs=(cloud&&cloud.updated_at)?Date.parse(cloud.updated_at):0;
+  if(cloud&&cloud.data&&!cloud.data.s.over&&cloudTs>localTs){
+    try{ localStorage.setItem(SAVE_KEY, JSON.stringify(cloud.data)); }catch(e){}
+    if(!HEADLESS && applySave(cloud.data)){ enterResume(); toast('☁ Loaded your cloud save'); }
+    return 'cloud';
+  }
+  if(local && localTs>=cloudTs){ cloudPush(local); return 'local'; }
+  if(local){ cloudPush(local); }
+  return 'none';
+}
+
+/* ---------- account button + sign-in panel ---------- */
+function applyAcctBtn(){ const b=$('acctbtn'); if(!b) return;
+  b.classList.toggle('on', cloudSignedIn());
+  b.textContent = cloudSignedIn()?'✅':'👤'; }
+function acctModal(html){ const rev=$('modalcard'); if(!rev) return;
+  rev.innerHTML='<h2>☁ Cloud saves</h2>'+html; $('modal').classList.add('show'); }
+let _acctEmail='';
+function openAccount(){
+  if(HEADLESS) return; setSpeed(0);
+  if(!CLOUD_ON){
+    acctModal('<div class="sub">Cloud sign-in isn\'t configured for this build, so saves stay on this device only. '
+      +'(Setup lives in <span class="k">retrofit3d/CLOUD-SAVES.md</span>.)</div>'
+      +'<button class="btn go" onclick="closeReview()">OK</button>');
+    return;
+  }
+  if(cloudSignedIn()){
+    acctModal('<div class="sub">Signed in as <b>'+cloudEmail()+'</b>. Your run syncs to the cloud and follows you across devices.</div>'
+      +'<button class="btn go" id="acct-sync">☁ Sync now</button>'
+      +'<button class="btn" id="acct-out">Sign out</button>');
+    $('acct-sync').onclick=async()=>{ $('acct-sync').textContent='Syncing…'; const ok=await cloudPush(serializeState());
+      $('acct-sync').textContent = ok?'✓ Synced':'Sync failed — retry'; };
+    $('acct-out').onclick=()=>{ cloudSignOut(); toast('Signed out'); openAccount(); };
+    return;
+  }
+  // signed-out: request a code
+  acctModal('<div class="sub">Sign in with your email to save progress to the cloud and continue on any device. We\'ll send a one-time code.</div>'
+    +'<input id="acct-email" class="acct-in" type="email" inputmode="email" placeholder="you@example.com" value="'+(_acctEmail||'')+'">'
+    +'<button class="btn go" id="acct-send">Send code</button>'
+    +'<div id="acct-msg" class="sub"></div>'
+    +'<button class="btn" onclick="closeReview()">Cancel</button>');
+  $('acct-send').onclick=async()=>{
+    const em=($('acct-email').value||'').trim(); if(!/.+@.+\..+/.test(em)){ $('acct-msg').textContent='Enter a valid email.'; return; }
+    _acctEmail=em; $('acct-send').textContent='Sending…';
+    const ok=await cloudSendCode(em);
+    if(ok) acctCodeStep(em); else { $('acct-send').textContent='Send code'; $('acct-msg').textContent='Could not send a code — try again.'; }
+  };
+}
+function acctCodeStep(email){
+  acctModal('<div class="sub">Enter the 6-digit code we emailed to <b>'+email+'</b>.</div>'
+    +'<input id="acct-code" class="acct-in" inputmode="numeric" autocomplete="one-time-code" placeholder="123456" maxlength="8">'
+    +'<button class="btn go" id="acct-verify">Verify & sign in</button>'
+    +'<div id="acct-msg" class="sub"></div>'
+    +'<button class="btn" id="acct-back">Use a different email</button>');
+  $('acct-verify').onclick=async()=>{
+    const code=($('acct-code').value||'').trim(); if(!code){ $('acct-msg').textContent='Enter the code.'; return; }
+    $('acct-verify').textContent='Verifying…';
+    const ok=await cloudVerifyCode(email, code);
+    if(!ok){ $('acct-verify').textContent='Verify & sign in'; $('acct-msg').textContent='That code didn\'t work — check it or resend.'; return; }
+    applyAcctBtn();
+    await cloudReconcile();
+    if($('modal')) closeReview();
+    toast('☁ Signed in as '+email);
+  };
+  $('acct-back').onclick=()=>openAccount();
+}
+(function wireAcct(){ const b=$('acctbtn'); if(b){ b.onclick=openAccount; applyAcctBtn(); } })();
 
 </script>
 </body>

@@ -18,6 +18,22 @@ https://tlaba.github.io/workbench/retrofit3d/retrofit-factory-3d.html
 | [`retrofit-factory-3d.html`](./retrofit-factory-3d.html) | **Playable browser prototype.** Single self-contained HTML — no build, no deps (three.js inlined). A real-time 3D factory hall you walk around as the technician, six animated machines, the full tuned economy running a deterministic seeded simulation. |
 | [`GDD.md`](./GDD.md) | The 25-section developer-ready Game Design Document — vision, pillars, canonical machine stats, economy formulas, and the tuned constants the prototype uses verbatim. |
 | [`MONETIZATION.md`](./MONETIZATION.md) | A staged, product-fit monetization plan — free web build as the funnel, premium plant packs, a paid Complete Edition, and an education/B2B licensing channel built on the game's reliability-engineering core. |
+| [`CLOUD-SAVES.md`](./CLOUD-SAVES.md) · [`supabase-setup.sql`](./supabase-setup.sql) | Optional cloud sign-in: how to point the game at a Supabase project so players can save their run to the cloud and continue on any device (the schema + row-level-security policies, and the ~5-minute setup). |
+
+## Save, continue, and notifications
+
+The game **saves your run on-device automatically** — close the tab and reopen to
+a "Welcome back" screen that resumes exactly where you stopped (the technician's
+in-progress job, every machine's wear, even the random-breakdown seed, so a
+resumed run is byte-identical to one that never paused). The 🔔 button opts into
+**OS notifications while the tab is backgrounded** — a machine breakdown, a day or
+week completing — so you can tab away and get pinged; the sim keeps ticking in the
+background (bounded to one day per absence, no offline decay).
+
+The 👤 button adds **optional cloud saves**: sign in with an email code and your run
+follows you across devices, reconciling local vs. cloud by whichever is newer. It
+stays dormant (local-only) until a Supabase project is configured — see
+[`CLOUD-SAVES.md`](./CLOUD-SAVES.md).
 
 ## You are the technician — walk the floor
 

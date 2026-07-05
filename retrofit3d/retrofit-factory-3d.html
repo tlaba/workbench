@@ -75,11 +75,12 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
   border:1px solid var(--edge);color:var(--dim);border-radius:50%;width:30px;height:30px;font-weight:700}
 #planbtn{position:absolute;right:10px;top:46px;z-index:6;background:rgba(30,40,54,.85);
   border:1px solid var(--edge);color:var(--ink);border-radius:8px;width:30px;height:30px;font-size:14px}
-#mutebtn,#fxbtn{position:absolute;right:10px;z-index:6;background:rgba(30,40,54,.85);
+#mutebtn,#fxbtn,#notifybtn{position:absolute;right:10px;z-index:6;background:rgba(30,40,54,.85);
   border:1px solid var(--edge);color:var(--dim);border-radius:8px;width:30px;height:30px;font-size:13px}
-#mutebtn{top:82px} #fxbtn{top:118px}
+#mutebtn{top:82px} #fxbtn{top:118px} #notifybtn{top:154px}
 #mutebtn.off{color:var(--red);border-color:#7a2c2c}
 #fxbtn.on{color:var(--amber);border-color:#7a5a2c}
+#notifybtn.on{color:var(--blue);border-color:#2c5a7a}
 @keyframes pl1{0%{box-shadow:0 0 0 0 rgba(255,178,62,.7)}100%{box-shadow:0 0 0 12px rgba(255,178,62,0)}}
 #planbtn.pulse1{animation:pl1 .9s ease-out 2}
 #planner{position:absolute;right:46px;top:46px;width:min(324px,88%);background:rgba(14,21,30,.96);
@@ -218,8 +219,8 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
   #daybar{gap:5px;padding:5px 6px}
   #clock{min-width:62px;font-size:10.5px}
   .stat b{font-size:13.5px} .stat span{font-size:8px}
-  #helpbtn,#planbtn,#mutebtn,#fxbtn{width:40px;height:40px;font-size:15px}
-  #planbtn{top:56px} #mutebtn{top:102px} #fxbtn{top:148px}
+  #helpbtn,#planbtn,#mutebtn,#fxbtn,#notifybtn{width:40px;height:40px;font-size:15px}
+  #planbtn{top:56px} #mutebtn{top:102px} #fxbtn{top:148px} #notifybtn{top:194px}
   #planner{right:54px;top:56px}
   .sheet-close{font-size:26px;padding:6px 12px;margin:-6px -6px 0 0}
   .fixbtn{padding:7px 10px;font-size:10.5px}
@@ -277,12 +278,13 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
     <button id="planbtn" title="Shift planner">📋</button>
     <button id="mutebtn" title="Sound on/off">🔊</button>
     <button id="fxbtn" title="Reduced effects">✦</button>
+    <button id="notifybtn" title="Notify me when the tab is in the background">🔔</button>
     <div id="planner"><div class="pl-head">📋 SHIFT PLANNER<button class="x" id="planx">×</button></div><div class="pl-body"></div></div>
     <div id="techchip">🔧 <b id="techstate">Idle</b><div id="techqueue"></div><div id="techbar"><div id="techfill"></div></div></div>
     <div id="joy"><div id="jnub"></div></div>
     <div id="ichip"></div>
     <div id="preshift">
-      <span>🕕 <b>Pre-shift</b> — time is paused. Walk the floor, open panels, check the 📋 planner.</span>
+      <span id="preshifttext">🕕 <b>Pre-shift</b> — time is paused. Walk the floor, open panels, check the 📋 planner.</span>
       <button id="startshift">▶ Start Day 1</button>
     </div>
     <div id="toast"></div>
@@ -1048,6 +1050,7 @@ function showReview(l){
     '<button class="btn go" onclick="closeReview()">▶ Plan Day '+(dw+1)+' of Week '+S.week+'</button>';
   $('modal').classList.add('show');
   countUpLedger(l);
+  notify('☀ Day complete', 'Week '+S.week+' · Day '+dw+' — shipped '+l.shipped+'/'+C.CONTRACT_DEMAND+'. Come back to plan the next day.', 'day');
 }
 // crossing into a new week: the contract renews with a higher quota, run on the
 // same worn plant — the escalation the whole season is built around.
@@ -1068,6 +1071,7 @@ function showWeek(l, prevWeek){
     '<button class="btn go" onclick="closeReview()">▶ Start Week '+wk+'</button>';
   $('modal').classList.add('show');
   countUpLedger(l);
+  notify('📈 Week '+prevWeek+' cleared — contract renewed', 'Week '+wk+' wants '+terms.demand+'/day. Back to the plant.', 'week');
 }
 function row(label,val,pos){ return '<tr><td>'+label+'</td><td class="'+(val>=0?'pos':'neg')+'">'+money(val)+'</td></tr>'; }
 function closeReview(){ $('modal').classList.remove('show'); updateHUD(); }
@@ -1075,6 +1079,7 @@ function endGame(l,lose){
   S.over=true; setSpeed(0);
   if(!lose) S.won=S.cash>=C.WIN_CASH;
   if(HEADLESS) return;   // headless runs keep the outcome but render nothing (and never touch the personal best)
+  clearSave();   // the run is finished — don't resume it next time (g6)
   const rev=$('modalcard'); let grade,gc,title,sub,body='';
   if(lose){ grade='✗'; gc='var(--red)';
     title = lose==='L1'?'BANKRUPT':lose==='L2'?'CONTRACT CANCELLED':lose==='L3'?'PLANT CONDEMNED':'OBJECTIVE FAILED';
@@ -1091,6 +1096,7 @@ function endGame(l,lose){
     title=S.won?'SEASON COMPLETE':'OBJECTIVE FAILED';
     sub='Cleared all '+C.N_WEEKS+' weekly contracts with '+money(cash)+' (target '+money(C.WIN_CASH)+').';
   }
+  notify(title, sub, 'over');   // OS alert if the tab is backgrounded (g6)
   // ---- post-mortem: what actually happened this run ----
   const st=S.stats||{brk:{},nBrk:0,emerg:0,planned:0,insp:0,peakMoist:0,downH:0};
   let worstId=null,wn=0; for(const k in st.brk) if(st.brk[k]>wn){wn=st.brk[k];worstId=k;}
@@ -1129,7 +1135,7 @@ function endGame(l,lose){
   $('modal').classList.add('show');
 }
 function avgHealth(){ let s=0,n=0; for(const id in MACH){s+=machHealth(MACH[id]);n++;} return s/n; }
-function restart(seed){ $('modal').classList.remove('show'); newGame(seed); enterPreshift(); }
+function restart(seed){ clearSave(); $('modal').classList.remove('show'); newGame(seed); enterPreshift(); }
 function retrySeed(){ restart(S.seed); }
 
 /* =============================== TUTORIAL =============================== */
@@ -2231,7 +2237,10 @@ function setSpeed(s){ if(s>0) S._lastSpd=s; S.speed=s;
   if(s>0){ const ps=$('preshift'); if(ps) ps.style.display='none'; }   // any play input ends pre-shift
 }
 function enterPreshift(){ if(HEADLESS) return;
-  setSpeed(0); const ps=$('preshift'); if(ps) ps.style.display='flex'; }
+  setSpeed(0);
+  const txt=$('preshifttext'); if(txt) txt.innerHTML='🕕 <b>Pre-shift</b> — time is paused. Walk the floor, open panels, check the 📋 planner.';
+  const btn=$('startshift'); if(btn) btn.textContent='▶ Start Day 1';
+  const ps=$('preshift'); if(ps) ps.style.display='flex'; }
 $('startshift').onclick=()=>{ initAudio(); setSpeed(S._lastSpd||1); };
 document.querySelectorAll('.spd').forEach(b=>b.onclick=()=>{ initAudio();
   const v=+b.dataset.s;
@@ -2345,8 +2354,8 @@ window.__matrix=function(seeds){
   return out;
 };
 
-// boot: the shift doesn't start until the player says so — walk around first
-newGame(); enterPreshift(); requestAnimationFrame(frame);
+// boot lives in g6 (sessions): it resumes a saved run or starts fresh, then
+// begins the render loop. Kept there so all of g1–g6 is defined before boot.
 window.S=()=>S; window.MACH=()=>MACH;
 window.__tp=(x,z)=>{ if(CH){CH.p.set(x,0,z);} };
 window.__cam=(y,p,d)=>{ camYaw=y; if(p!=null)camPitch=p; if(d!=null)camDist=d; };
@@ -2585,6 +2594,168 @@ function juiceFrame(dt,t){
       if(el._h!==h){ el._h=h; el.innerHTML=h; el.classList.toggle('on',!!h); } }
   }
 }
+
+/* =============================================================================
+   SESSIONS (g6) — exit the game and continue where you stopped, plus OS
+   notifications while the tab is backgrounded. On-device (localStorage) here;
+   cloud sign-in + sync (Supabase) layers on top of the same serializeState()/
+   applySave() via the cloudSync* hooks below. Everything is HEADLESS-gated so
+   window.__sim never touches the player's real save.
+   ============================================================================= */
+
+const SAVE_KEY='rf3d_save', SAVE_VER=2;
+
+/* ---------- serialize the whole run to a plain, JSON-safe object ---------- */
+function serMachine(m){ return {
+  up:m.up, u:m.u, automated:!!m.automated, broken:!!m.broken, brokenChan:m.brokenChan||null,
+  downMins:m.downMins||0, awaitDelivery:m.awaitDelivery||0, stocked:!!m.stocked,
+  rushed:!!m.rushed, nursed:!!m.nursed, replaced:!!m.replaced,
+  ch:m.ch.map(c=>({w:c.w, reveal:c.reveal, revealHazard:c.revealHazard})) }; }
+
+function serializeState(){
+  if(!S||!MACH||!tech) return null;
+  const mach={}; for(const id in MACH) mach[id]=serMachine(MACH[id]);
+  const s={};
+  for(const k of ['cash','day','week','tick','strikes','contractLive','over','won','seed','stats',
+    'produced','energyToday','downMinToday','scrapWipMin','airP','moisture','airFactor','T',
+    'bottleneck','tutStep']) s[k]=S[k];
+  const t={busy:tech.busy, phase:tech.phase, timer:tech.timer, total:tech.total,
+    minsToday:tech.minsToday, atPrev:tech.atPrev, job:tech.job, queue:tech.queue};
+  const ch=(typeof CH!=='undefined'&&CH)?{x:CH.p.x, z:CH.p.z, yaw:CH.yaw}:null;
+  return {v:SAVE_VER, ts:Date.now(), prng:_seed>>>0, s, mach, tech:t, char:ch};
+}
+
+/* ---------- rebuild a run: fresh statics from DEFS, overlay saved dynamics ---------- */
+function applySave(save){
+  if(!save || save.v!==SAVE_VER || !save.s) return false;
+  try{
+    newGame(save.s.seed);            // fresh world/machines/PRNG, then overlay the run:
+    _seed = (save.prng>>>0) || _seed;
+    for(const k in save.s) S[k]=save.s[k];
+    S.speed=0; S.sel=null; S.walk=null; S.msgs=[];   // resume paused; drop transients
+    for(const id in MACH){ const m=MACH[id], sm=save.mach&&save.mach[id]; if(!sm) continue;
+      m.up=sm.up; m.u=sm.u; m.automated=sm.automated; m.broken=sm.broken; m.brokenChan=sm.brokenChan;
+      m.downMins=sm.downMins; m.awaitDelivery=sm.awaitDelivery; m.stocked=sm.stocked;
+      m.rushed=sm.rushed; m.nursed=sm.nursed; m.replaced=sm.replaced;
+      m.ch.forEach((c,i)=>{ const sc=sm.ch[i]; if(sc){ c.w=sc.w; c.reveal=sc.reveal; c.revealHazard=sc.revealHazard; } });
+    }
+    const t=save.tech||{};
+    tech.busy=!!t.busy; tech.phase=t.phase||'idle'; tech.timer=t.timer||0; tech.total=t.total||0;
+    tech.minsToday=t.minsToday||0; tech.atPrev=t.atPrev||null; tech.job=t.job||null;
+    tech.queue=Array.isArray(t.queue)?t.queue:[];
+    applyWeek(S.week);
+    if(!HEADLESS && typeof CH!=='undefined' && CH && save.char){
+      CH.p.set(save.char.x,0,save.char.z); CH.yaw=(save.char.yaw!=null?save.char.yaw:CH.yaw);
+      if(CH.vel) CH.vel.set(0,0); CH.jobKey=null; CH.jobPath=null; }
+    if(!HEADLESS){ selectNone(); updateHUD(); renderTech(); tutorialStep(); }
+    return true;
+  }catch(e){ return false; }
+}
+
+/* ---------- storage ---------- */
+function readSave(){ try{ return JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); }catch(e){ return null; } }
+function hasResumableSave(){ const s=readSave(); return !!(s && s.v===SAVE_VER && s.s && !s.s.over); }
+let _lastSave=0;
+function saveGame(force){
+  if(HEADLESS || !S || S.over) return;
+  const now=Date.now(); if(!force && now-_lastSave<2500) return; _lastSave=now;
+  let snap=null;
+  try{ snap=serializeState(); if(snap) localStorage.setItem(SAVE_KEY, JSON.stringify(snap)); }catch(e){}
+  if(snap && typeof cloudSyncSave==='function') cloudSyncSave(snap);   // PR B hook
+}
+function clearSave(){
+  if(HEADLESS) return;
+  try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
+  if(typeof cloudSyncClear==='function') cloudSyncClear();            // PR B hook
+}
+// autosave: on each day settle and every meaningful action, plus a forced save
+// whenever the player leaves the tab (the point of "continue where you stopped").
+if(typeof GameEvents!=='undefined'){
+  ['daySettled','jobFinished','orderPlaced','breakdown','nursed','jobsNormalized']
+    .forEach(ev=>GameEvents.on(ev, ()=>saveGame()));
+}
+document.addEventListener('visibilitychange', ()=>{ if(document.hidden) saveGame(true); });
+window.addEventListener('pagehide', ()=>saveGame(true));
+
+/* ---------- notifications while the tab is backgrounded ---------- */
+if(typeof OPTS!=='undefined' && OPTS.notify==null) OPTS.notify=false;
+function notifySupported(){ return typeof Notification!=='undefined'; }
+let _notifs=[];
+function notify(title, body, tag){
+  if(HEADLESS || !OPTS.notify || !notifySupported()) return;
+  if(Notification.permission!=='granted') return;
+  if(!document.hidden) return;                    // only when they can't see the floor
+  try{
+    const n=new Notification(title, {body:body||'', tag:tag||'rf3d', renotify:true});
+    n.onclick=()=>{ try{ window.focus(); n.close(); }catch(e){} };
+    _notifs.push(n); while(_notifs.length>6){ try{ _notifs.shift().close(); }catch(e){} }
+  }catch(e){}
+}
+function applyNotifyBtn(){ const b=$('notifybtn'); if(b) b.classList.toggle('on', !!(OPTS&&OPTS.notify)); }
+(function wireNotifyBtn(){ const b=$('notifybtn'); if(!b) return;
+  b.onclick=()=>{
+    if(!notifySupported()){ toast('🔔 Notifications not supported here'); return; }
+    if(OPTS.notify){ OPTS.notify=false; saveOpts(); applyNotifyBtn(); toast('🔔 Alerts off'); return; }
+    if(Notification.permission==='denied'){ toast('🔔 Blocked — enable notifications in your browser settings'); return; }
+    if(Notification.permission==='granted'){ OPTS.notify=true; saveOpts(); applyNotifyBtn(); toast('🔔 Alerts on while tabbed away'); return; }
+    // permission not yet decided — ask (must be from this user gesture)
+    try{ Notification.requestPermission().then(p=>{
+      if(p==='granted'){ OPTS.notify=true; saveOpts(); applyNotifyBtn(); toast('🔔 Alerts on while tabbed away'); }
+      else toast('🔔 Permission needed for alerts'); }); }
+    catch(e){ toast('🔔 Could not enable alerts'); }
+  };
+  applyNotifyBtn();
+})();
+// breakdowns are the one event worth interrupting for; day/week/over notify from g2.
+if(typeof GameEvents!=='undefined')
+  GameEvents.on('breakdown', p=>{ if(!HEADLESS && p&&p.m) notify('⛔ '+p.m.code+' broke down',
+    'Emergency call-out under way — come back to the floor.', 'brk-'+p.m.id); });
+
+/* ---------- keep the sim alive while the tab is hidden ---------- */
+// requestAnimationFrame is paused in a backgrounded tab, so drive the sim from a
+// timer while hidden — otherwise nothing happens and no notification could fire.
+// dt is capped so a long browser freeze can't fast-forward the plant (no offline
+// decay); the day-boundary auto-pause also bounds each tab-away to one day.
+let _bgLast=0, _bgAcc=0;
+function bgAdvance(dt){                 // advance the sim by dt seconds (capped)
+  if(dt>2) dt=2;                        // a long freeze can't fast-forward the plant
+  _bgAcc += dt*TPS[S.speed];
+  let guard=0;
+  while(_bgAcc>=1 && guard++<200){ stepTick(); _bgAcc-=1; if(S.over||S.speed<=0) break; }
+}
+function bgTick(){
+  if(HEADLESS) return;
+  if(!document.hidden || S.over || S.speed<=0){ _bgLast=0; return; }
+  const now=performance.now();
+  if(!_bgLast){ _bgLast=now; return; }
+  const dt=(now-_bgLast)/1000; _bgLast=now;
+  bgAdvance(dt);
+}
+setInterval(bgTick, 1000);
+// on return to the tab, reset the render loop's clock so it doesn't jump-advance.
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ last=performance.now(); _bgLast=0; } });
+
+/* ---------- resume banner ---------- */
+function enterResume(){ if(HEADLESS) return;
+  setSpeed(0);
+  const txt=$('preshifttext');
+  if(txt) txt.innerHTML='🔁 <b>Welcome back</b> — resumed at Week '+S.week+' · Day '+(((S.day-1)%C.WEEK_LEN)+1)
+    +' with '+money(S.cash)+'. Time is paused — press ▶ to continue.';
+  const btn=$('startshift'); if(btn) btn.textContent='▶ Continue';
+  const ps=$('preshift'); if(ps) ps.style.display='flex';
+}
+
+/* ---------- BOOT: resume the saved run, or start fresh ---------- */
+(function boot(){
+  const save=readSave();
+  if(save && save.v===SAVE_VER && save.s && !save.s.over && applySave(save)){
+    enterResume();
+  } else {
+    if(save) clearSave();            // finished/incompatible save → discard
+    newGame(); enterPreshift();
+  }
+  if(typeof requestAnimationFrame!=='undefined') requestAnimationFrame(frame);
+})();
 
 </script>
 </body>

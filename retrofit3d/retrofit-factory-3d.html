@@ -518,18 +518,27 @@ function effRate(m){
     const g=m.automated?0.85:1;                 // automate slightly softens rate impact too
     if(c.type==='DRAG')  r*=(1-g*c.w);
     if(c.type==='SEIZE') r*=(1-0.5*g*c.w);
+    if(c.type==='FOUL')  r*=(1-g*c.w);           // fouling/scale chokes flow like drag (brewery)
   }
   return Math.max(0,r);
 }
 function effPower(m){
   let p=m.energy;
-  for(const c of m.ch){ if(c.type==='DRIFT'||c.type==='LEAK') p*=(1+c.w); }
+  for(const c of m.ch){ if(c.type==='DRIFT'||c.type==='LEAK') p*=(1+c.w);
+    if(c.type==='FOUL') p*=(1+0.6*c.w); }        // scale forces the burner/pump harder (brewery)
   return p;
+}
+// how a utility bus gates a machine's rate. Bakery: the single air bus on
+// pneumatic machines (unchanged). Brewery: the product of the machine's required
+// buses (steam/glycol/air), solved by g8's brewBusFactor.
+function busFactor(m){
+  if(CURPLANT==='brewery' && typeof brewBusFactor==='function') return brewBusFactor(m);
+  return m.pneumatic? S.airFactor : 1;
 }
 // F7/F8 throughput
 function solveThroughput(){
   for(const id in MACH){ const m=MACH[id]; m.effRate=effRate(m);
-    m.rate = m.effRate*(m.pneumatic?S.airFactor:1)*(m.broken?0:1)*(m.nursed?0.55:1); }
+    m.rate = m.effRate*busFactor(m)*(m.broken?0:1)*(m.nursed?0.55:1); }
   let T=Infinity, bn='oven';
   for(const id of CHAIN){ const m=MACH[id]; if(m.rate<T){T=m.rate;bn=id;} }
   if(T===Infinity)T=0;
@@ -548,7 +557,8 @@ function advanceWear(){
     for(const c of m.ch){
       const S_ = c.moist? (1+C.MU*S.moisture):1;
       const k = (m.automated? c.k*0.35 : c.k)*C.WEAR_SCALE;  // predictive/automate cuts wear rate
-      c.w=clamp(c.w + k*Math.pow(u,C.ALPHA)*S_, 0, 1);
+      const accel = (c.type==='FOUL')? (1+(C.FOUL_ACCEL||0)*c.w) : 1;   // scale builds on scale (brewery)
+      c.w=clamp(c.w + k*Math.pow(u,C.ALPHA)*S_*accel, 0, 1);
     }
   }
 }
@@ -589,7 +599,7 @@ function normalizeJobs(m){
 function seize(m){
   const c=worstChan(m); c.w=1;
   m.broken=true; m.brokenChan=c;
-  const fail=FAILMTTR[m.id];
+  const fail=failMttr(m);
   const wasStocked=m.stocked;
   m.awaitDelivery = wasStocked?0:C.EMERGENCY_DELIVERY_MIN;
   m.downMins = fail*60;
@@ -637,6 +647,11 @@ function settleDay(){
 // ---- MTTR tables (GDD §5) ----
 const SERVICE_MTTR={mixer:2,conveyor:2,oven:2,slicer:1,packager:1.5,compressor:2};
 const FAILMTTR   ={mixer:4,conveyor:3.5,oven:3,slicer:2.5,packager:2,compressor:5};
+// bakery machines use the tuned tables above (unchanged); other plants fall back
+// to the machine's own mttr/failmttr, then a sane default. (Without this, brewery
+// job timers were NaN and jobs never finished.)
+function svcMttr(m){ const v=SERVICE_MTTR[m.id]; return (v!=null)?v : (m.mttr||2); }
+function failMttr(m){ const v=FAILMTTR[m.id]; return (v!=null)?v : (m.failmttr||svcMttr(m)*2); }
 
 /* =============================== TECHNICIAN =============================== */
 // Travel scales with where you actually stand. At the panel: 0-4 min of setup.
@@ -685,12 +700,12 @@ function advanceTech(){
 function beginWork(j,m){
   tech.phase='work';
   if(j.type==='inspect') tech.timer=C.INSPECT_MIN;
-  else if(j.type==='emergency') tech.timer=FAILMTTR[m.id]*60;
-  else if(j.type==='repair') tech.timer=Math.round(SERVICE_MTTR[m.id]*60*C.SERVICE_TIME_MULT); // full overhaul: slower than a targeted swap
-  else if(j.type==='fix') tech.timer=Math.max(30,Math.round(SERVICE_MTTR[m.id]*60*C.FIX_TIME_FRAC));
+  else if(j.type==='emergency') tech.timer=failMttr(m)*60;
+  else if(j.type==='repair') tech.timer=Math.round(svcMttr(m)*60*C.SERVICE_TIME_MULT); // full overhaul: slower than a targeted swap
+  else if(j.type==='fix') tech.timer=Math.max(30,Math.round(svcMttr(m)*60*C.FIX_TIME_FRAC));
   else if(j.type==='upgrade') tech.timer=180;
   else if(j.type==='automate') tech.timer=150;
-  else if(j.type==='replace') tech.timer=SERVICE_MTTR[m.id]*60+120;
+  else if(j.type==='replace') tech.timer=svcMttr(m)*60+120;
   tech.total=tech.timer;
   if(j.type==='repair'||j.type==='replace') m.broken=false; // planned service takes it down cleanly
   renderTech();
@@ -735,11 +750,17 @@ function finishJob(j,m){
 
 /* =============================== TICK LOOP =============================== */
 function stepTick(){
-  solveAir(); solveThroughput(); advanceWear(); rollBreakdowns(); advanceTech();
+  if(CURPLANT==='brewery' && typeof solveBrewBuses==='function') solveBrewBuses(); else solveAir();
+  solveThroughput(); advanceWear(); rollBreakdowns(); advanceTech();
   // economy accrual (per tick)
   const perMin=S.T/60;                            // loaves this minute (T is loaves/hr)
-  // oven thermocouple silent under-bake: scrap a fraction of output
-  const th=MACH.oven.ch.find(c=>c.id==='thermo'); const scrapFrac=MACH.oven.broken?0:Math.min(0.35,th.w*0.4);
+  // silent quality loss scraps a fraction of output. Bakery: the oven
+  // thermocouple (unchanged). Brewery: any CAL (calibration-drift) channel.
+  let scrapFrac=0;
+  const ov=MACH.oven;
+  if(ov){ const th=ov.ch.find(c=>c.id==='thermo'); if(th) scrapFrac=ov.broken?0:Math.min(0.35,th.w*0.4); }
+  for(const _id in MACH){ const _m=MACH[_id]; if(_m.broken) continue;
+    for(const c of _m.ch) if(c.type==='CAL') scrapFrac=Math.min(0.5, scrapFrac + c.w*0.3); }
   S.produced += perMin*(1-scrapFrac);
   let kw=0; for(const id in MACH){ const m=MACH[id]; if(!m.broken && (m.utility||S.T>0.1)) kw+=effPower(m); }
   S.energyToday += kw*(1/60)*C.ENERGY_PRICE;
@@ -770,7 +791,10 @@ function checkLose(){
 function canPay(x){ return S.cash>=x; }
 const COSTS={ mixer:{inspect:40,repair:220}, conveyor:{inspect:35,repair:260}, oven:{inspect:60,repair:400},
   slicer:{inspect:25,repair:150}, packager:{inspect:30,repair:190}, compressor:{inspect:45,repair:300} };
-function inspectCost(id){ return COSTS[id].inspect; }
+// bakery machines use the tuned COSTS table (unchanged); other plants carry an
+// `insp` cost on the machine def.
+function inspectCost(id){ if(COSTS[id]) return COSTS[id].inspect;
+  const m=MACH[id]; return (m&&m.insp)||50; }
 function repairLabor(id){ return C.LABOR_REPAIR; }
 function repairPart(id){ return worstChan(MACH[id]).part; }
 function repairCost(id){ return repairLabor(id)+repairPart(id); }
@@ -2282,10 +2306,10 @@ document.querySelectorAll('.spd').forEach(b=>b.onclick=()=>{ initAudio();
 // ---- headless harness (for tuning/verification) ----
 // Runs the identical sim with HEADLESS set: no modals, popups, audio, HUD
 // writes, tutorial, or presentation events reach the screen.
-window.__sim = function(policy,seed){
+window.__sim = function(policy,seed,plantId){
   HEADLESS=true;
   try{
-    newGame(seed==null?1234567:seed); const log=[];
+    newGame(seed==null?1234567:seed, plantId||'bakery'); const log=[];
     const maxTicks=C.D_MAX*C.TICKS_PER_DAY+5;
     for(let i=0;i<maxTicks;i++){
       if(policy) policy(S.day, S.tick, S, MACH);
@@ -2949,6 +2973,137 @@ function acctCodeStep(email){
   $('acct-back').onclick=()=>openAccount();
 }
 (function wireAcct(){ const b=$('acctbtn'); if(b){ b.onclick=openAccount; applyAcctBtn(); } })();
+
+/* =============================================================================
+   PREMIUM PLANT — Ironline Brewery & Bottling Works (g8).
+   A bigger, deeper plant: 12 machines, two new failure types (FOUL fouling/scale,
+   CAL calibration drift — both implemented bakery-safely in g1), and three coupled
+   utility buses (steam, glycol, air). This slice lands the topology + failures +
+   buses; hygiene/CIP, batch fermentation, the buffer tank, the quality→price axis,
+   the second technician, and condition sensors arrive in following slices.
+   All data — nothing here runs for the bakery.
+   ============================================================================= */
+
+const BREW_C = {
+  TICKS_PER_DAY:480, WEEK_LEN:5, N_WEEKS:6, D_MAX:30, ALPHA:2.0, MU:3.0, KAPPA:6.0,
+  P_NOM:7.0, P_MIN:4.0, LAMBDA_LEAK:0.35, M0:0.05, M_SEAL:0.75, AIR_DRAW:32, COMP_CAP:40,
+  STARTING_CASH:15000, WIN_CASH:60000, PRICE:3.60, SALVAGE:1.10,
+  CONTRACT_DEMAND:700, CONTRACT_FLOOR:350, SHORT_SHIP_PENALTY:900,
+  ENERGY_PRICE:0.18, TECH_WAGE_DAY:300, OVERHEAD_DAY:180,
+  TRAVEL_MIN:15, INSPECT_MIN:30,
+  EMERGENCY_PART_MULT:2.5, EMERGENCY_DELIVERY_MIN:180,
+  LABOR_REPAIR:220, LABOR_EMERGENCY_MULT:1.75, LABOR_FIX:70, FIX_TIME_FRAC:0.30, SERVICE_TIME_MULT:1.5,
+  CASCADE_DAMAGE:450, WIP_SCRAP_RATE:55,
+  UPGRADE_COST:2000, UPGRADE_TIER:1.4, AUTOMATE_COST:1300,
+  REPAIR_FLOOR:0.08, FIX_FLOOR:0.04, OVERHAUL_FLOOR:0.11, SIGMA_INSPECT:0.05,
+  STRIKES_TO_LOSE:3, HEALTH_CONDEMN:0.15, WEAR_SCALE:0.85, HAZARD_SCALE:0.4,
+  FOUL_ACCEL:1.6,   // fouling/scale compounds: dirty surfaces foul faster
+};
+// Six weekly contracts on the same aging plant; base bottleneck ≈150/hr → ~1200
+// bottles/day at full health, so weeks 5–6 out-run a base line and force capacity.
+BREW_C.WEEKS = [
+  { demand:700,  floor:350 },   // Wk1 — settling in
+  { demand:850,  floor:425 },   // Wk2
+  { demand:1000, floor:500 },   // Wk3 — needs a healthy line
+  { demand:1150, floor:575 },   // Wk4
+  { demand:1300, floor:650 },   // Wk5 — exceeds base capacity
+  { demand:1500, floor:750 },   // Wk6 — needs real added capacity
+];
+
+// ch types: DRAG/SEIZE/DRIFT/LEAK (rate/energy/hazard), FOUL (accelerating scale,
+// CLEAN-cleared), CAL (silent calibration → quality/scrap). buses[]: which utility
+// bus gates this machine's rate. utility:true machines PRODUCE a bus.
+const BREW_DEFS = [
+  // ---- utilities (produce buses) ----
+  { id:'boiler', name:'Steam Boiler', code:'BLR-100', pos:[-16,-7], hw:1.5, hd:1.3, face:1, rot:0,
+    base:60, energy:16, risk:0.08, crit:5, insp:65, utility:true, deps:[], replaceCost:4200, color:'#8a4a3a',
+    ch:[ {id:'scale',    nm:'Firetube scale',       type:'FOUL', k:0.00022, w:0.30, part:120},
+         {id:'burner',   nm:'Burner / combustion',  type:'DRIFT',k:0.00013, w:0.18, part:180},
+         {id:'feedwater',nm:'Feedwater header',     type:'LEAK', k:0.00015, w:0.20, part:70} ]},
+  { id:'chiller', name:'Glycol Chiller', code:'GLY-200', pos:[-16,-3], hw:1.5, hd:1.3, face:1, rot:0,
+    base:55, energy:14, risk:0.07, crit:5, insp:60, utility:true, deps:[], replaceCost:4000, color:'#3a6a8a',
+    ch:[ {id:'condenser',nm:'Condenser fouling',    type:'FOUL', k:0.00020, w:0.26, part:110},
+         {id:'refcomp',  nm:'Refrigeration compressor',type:'SEIZE',k:0.00016,w:0.24, part:340},
+         {id:'charge',   nm:'Refrigerant charge',   type:'LEAK', k:0.00012, w:0.18, part:90} ]},
+  { id:'aircomp', name:'Air Compressor', code:'AIR-300', pos:[-16,1], hw:1.45, hd:1.0, face:1, rot:0,
+    base:45, energy:9, risk:0.08, crit:5, insp:55, utility:true, deps:[], replaceCost:3000, color:'#4a7a8a',
+    ch:[ {id:'filter',  nm:'Intake air filter',     type:'FOUL', k:0.00018, w:0.22, part:40},
+         {id:'valve',   nm:'Piston ring & valve',   type:'SEIZE',k:0.00014, w:0.24, part:320},
+         {id:'leak',    nm:'Header air leak',       type:'LEAK', k:0.00016, w:0.20, part:35} ]},
+  // ---- value chain ----
+  { id:'mill', name:'Grain Mill', code:'MIL-350', pos:[-10,-5], hw:1.2, hd:1.1, face:1, rot:0,
+    base:240, energy:3.0, risk:0.06, crit:4, insp:45, deps:[], replaceCost:2200, color:'#8a7a4a',
+    ch:[ {id:'rollers', nm:'Mill rollers',          type:'SEIZE',k:0.00014, w:0.22, part:160},
+         {id:'screen',  nm:'Sieve screen',          type:'DRAG', k:0.00011, w:0.18, part:60},
+         {id:'bearing', nm:'Shaft bearing',         type:'DRAG', k:0.00010, w:0.20, part:120} ]},
+  { id:'brewhouse', name:'Brewhouse Kettle', code:'BRH-400', pos:[-6,-5], hw:1.4, hd:1.35, face:1, rot:0,
+    base:210, energy:5.0, risk:0.07, crit:5, insp:60, buses:['steam'], deps:['mill','boiler'], replaceCost:3200, color:'#b0863a',
+    ch:[ {id:'kscale',  nm:'Kettle scale',          type:'FOUL', k:0.00019, w:0.24, part:150},
+         {id:'agitator',nm:'Mash agitator',         type:'SEIZE',k:0.00013, w:0.20, part:190},
+         {id:'mashcal', nm:'Mash-temp calibration', type:'CAL',  k:0.00016, w:0.18, part:80} ]},
+  { id:'ferma', name:'Fermenter A', code:'FRM-510', pos:[-2,-6], hw:1.1, hd:1.1, face:1, rot:0,
+    base:185, energy:2.2, risk:0.05, crit:4, insp:45, buses:['glycol'], deps:['brewhouse','chiller'], replaceCost:2600, color:'#c8c8cc',
+    ch:[ {id:'jacket',  nm:'Cooling jacket fouling',type:'FOUL', k:0.00015, w:0.20, part:120},
+         {id:'valve',   nm:'Racking valve',         type:'SEIZE',k:0.00013, w:0.22, part:70},
+         {id:'tempcal', nm:'Fermentation temp cal', type:'CAL',  k:0.00017, w:0.16, part:60} ]},
+  { id:'fermb', name:'Fermenter B', code:'FRM-520', pos:[-2,-2], hw:1.1, hd:1.1, face:1, rot:0,
+    base:185, energy:2.2, risk:0.05, crit:4, insp:45, buses:['glycol'], deps:['brewhouse','chiller'], replaceCost:2600, color:'#c8c8cc',
+    ch:[ {id:'jacket',  nm:'Cooling jacket fouling',type:'FOUL', k:0.00015, w:0.18, part:120},
+         {id:'valve',   nm:'Racking valve',         type:'SEIZE',k:0.00013, w:0.20, part:70},
+         {id:'tempcal', nm:'Fermentation temp cal', type:'CAL',  k:0.00017, w:0.14, part:60} ]},
+  { id:'bright', name:'Bright Tank', code:'BRT-600', pos:[2,-5], hw:1.15, hd:1.15, face:1, rot:0,
+    base:200, energy:2.4, risk:0.05, crit:4, insp:45, buses:['glycol'], deps:['ferma','chiller'], replaceCost:2500, color:'#b8bcc4',
+    ch:[ {id:'carb',    nm:'Carbonation stone',     type:'DRIFT',k:0.00012, w:0.18, part:70},
+         {id:'valve',   nm:'Outlet valve',          type:'SEIZE',k:0.00012, w:0.20, part:65},
+         {id:'prescal', nm:'Pressure calibration',  type:'CAL',  k:0.00014, w:0.15, part:55} ]},
+  { id:'filler', name:'Filler / Capper', code:'FIL-700', pos:[6,-5], hw:1.3, hd:1.2, face:1, rot:0,
+    base:160, energy:3.2, risk:0.10, crit:5, insp:65, buses:['air'], deps:['bright','aircomp'], replaceCost:3400, color:'#6a8a9a',
+    ch:[ {id:'fillvalve',nm:'Fill valves',          type:'SEIZE',k:0.00018, w:0.26, part:140},
+         {id:'o2',      nm:'O₂ pickup calibration', type:'CAL',  k:0.00019, w:0.20, part:75},
+         {id:'capper',  nm:'Capper head',           type:'DRAG', k:0.00013, w:0.20, part:90} ]},
+  { id:'pasteur', name:'Tunnel Pasteurizer', code:'PAS-800', pos:[10,-5], hw:1.8, hd:1.3, face:1, rot:0,
+    base:175, energy:6.5, risk:0.08, crit:5, insp:60, buses:['steam'], deps:['filler','boiler'], replaceCost:3600, color:'#9a7a5a',
+    ch:[ {id:'hexch',   nm:'Heat-exchanger fouling',type:'FOUL', k:0.00021, w:0.24, part:160},
+         {id:'pump',    nm:'Circulation pump',      type:'SEIZE',k:0.00014, w:0.20, part:150},
+         {id:'pucal',   nm:'Pasteurization-unit cal',type:'CAL', k:0.00018, w:0.18, part:85} ]},
+  { id:'labeler', name:'Labeler', code:'LBL-900', pos:[14,-5], hw:1.1, hd:1.0, face:1, rot:0,
+    base:220, energy:2.0, risk:0.07, crit:3, insp:40, buses:['air'], deps:['pasteur','aircomp'], replaceCost:2300, color:'#8a6f9a',
+    ch:[ {id:'glue',    nm:'Glue applicator',       type:'DRIFT',k:0.00011, w:0.20, part:55},
+         {id:'gripper', nm:'Pneumatic gripper',     type:'SEIZE',k:0.00015, w:0.24, part:60},
+         {id:'sensor',  nm:'Registration sensor',   type:'DRAG', k:0.00009, w:0.16, part:45} ]},
+  { id:'casepack', name:'Case Packer', code:'CSE-950', pos:[18,-5], hw:1.3, hd:1.2, face:1, rot:0,
+    base:205, energy:2.6, risk:0.06, crit:3, insp:45, buses:['air'], deps:['labeler','aircomp'], replaceCost:2400, color:'#6a6f7a',
+    ch:[ {id:'arm',     nm:'Pick-and-place arm',    type:'SEIZE',k:0.00014, w:0.22, part:130},
+         {id:'belt',    nm:'Accumulation belt',     type:'DRAG', k:0.00012, w:0.20, part:70},
+         {id:'sensor',  nm:'Case sensor',           type:'DRIFT',k:0.00009, w:0.15, part:40} ]},
+];
+const BREW_CHAIN = ['mill','brewhouse','ferma','fermb','bright','filler','pasteur','labeler','casepack'];
+const BREW_HALL  = {w:40, d:22, h:7.0};   // taller/wider than the bakery (world slice fills it out)
+
+/* ---------- three utility buses (steam, glycol, air) ---------- */
+// each utility's health → an output factor 0–1 (like the bakery's airFactor).
+function _busFrom(m, wts){ if(!m||m.broken) return 0; let f=1;
+  for(const c of m.ch){ const k=wts[c.type]; if(k) f*=(1-k*c.w); } return clamp(f,0,1); }
+function solveBrewBuses(){
+  S.steamF  = _busFrom(MACH.boiler,  {FOUL:0.7, LEAK:0.5, DRIFT:0.2});
+  S.glycolF = _busFrom(MACH.chiller, {FOUL:0.6, SEIZE:0.6, LEAK:0.5});
+  S.airF    = _busFrom(MACH.aircomp, {FOUL:0.5, SEIZE:0.5, LEAK:0.4});
+  // surface the tightest bus as a HUD-friendly "moisture-like" scalar (reused slot)
+  S.moisture = 0;
+}
+function brewBusFactor(m){
+  if(!m.buses) return 1; let f=1;
+  for(const b of m.buses) f *= (b==='steam'?(S.steamF==null?1:S.steamF)
+                              : b==='glycol'?(S.glycolF==null?1:S.glycolF)
+                              : b==='air'?(S.airF==null?1:S.airF) : 1);
+  return f;
+}
+
+/* ---------- register the plant (replaces the coming-soon stub from g1) ---------- */
+PLANTS.brewery = { id:'brewery', name:'Ironline Brewery & Bottling Works',
+  tagline:'12 machines · steam, glycol & air buses · fouling, calibration & (soon) hygiene.',
+  premium:true, machines:12,
+  C:BREW_C, DEFS:BREW_DEFS, CHAIN:BREW_CHAIN, HALL:BREW_HALL };
 
 </script>
 </body>

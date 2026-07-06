@@ -466,7 +466,7 @@ function selectPlant(id){ const p=PLANTS[id];
 }
 
 // ---- runtime state ----
-let S, MACH, tech;
+let S, MACH, tech, tech2;   // tech2 = hired apprentice (null unless hired; brewery)
 function machHealth(m){ let mn=1; for(const c of m.ch) mn=Math.min(mn,1-c.w); return mn; }
 function worstChan(m){ let w=null; for(const c of m.ch) if(!w||c.w>w.w) w=c; return w; }
 
@@ -484,7 +484,8 @@ function newGame(seed, plantId){
   // per-machine lambda0 so day-1 breakdown prob == risk (F4)
   for(const id in MACH){ const m=MACH[id]; const H0=machHealth(m);
     m.lambda0 = -Math.log(1-m.risk)/C.TICKS_PER_DAY / Math.exp(C.KAPPA*(1-H0)); }
-  tech={ busy:false, job:null, queue:[], atPrev:null, phase:'idle', timer:0, total:0, minsToday:0 };
+  tech={ busy:false, job:null, queue:[], atPrev:null, phase:'idle', timer:0, total:0, minsToday:0, appr:false };
+  tech2=null;   // no apprentice until hired
   S={ cash:C.STARTING_CASH, day:1, week:1, tick:0, strikes:0, contractLive:true, over:false, won:false,
     seed:sd, stats:{brk:{},nBrk:0,firstBrkDay:null,emerg:0,planned:0,insp:0,capex:0,peakMoist:0,downH:0},
     // daily accumulators
@@ -582,10 +583,12 @@ function normalizeJobs(m){
   for(let i=tech.queue.length-1;i>=0;i--){ const j=tech.queue[i];
     if(j.mid===m.id && (j.type==='repair'||j.type==='fix'||j.type==='inspect')){
       tech.queue.splice(i,1); canceled.push(j); } }
-  if(tech.busy && tech.job && tech.job.mid===m.id && tech.phase==='travel' &&
-     (tech.job.type==='repair'||tech.job.type==='fix'||tech.job.type==='inspect')){
-    canceled.push(tech.job); converted=true;
-    tech.busy=false; tech.job=null; tech.phase='idle'; tech.timer=0; tech.total=0;
+  for(const w of (tech2?[tech,tech2]:[tech])){
+    if(w.busy && w.job && w.job.mid===m.id && w.phase==='travel' &&
+       (w.job.type==='repair'||w.job.type==='fix'||w.job.type==='inspect')){
+      canceled.push(w.job); converted=true;
+      w.busy=false; w.job=null; w.phase='idle'; w.timer=0; w.total=0;
+    }
   }
   if(!canceled.length) return;
   let refund=0;
@@ -628,13 +631,14 @@ function settleDay(){
   const energy=S.energyToday;
   let penalty=0, struck=false;
   if(S.produced<C.CONTRACT_FLOOR && S.contractLive){ penalty=C.SHORT_SHIP_PENALTY; S.strikes++; struck=true; }
-  const net = revenue - energy - C.TECH_WAGE_DAY - C.OVERHEAD_DAY - wipScrap - penalty;
+  const apprWage = tech2 ? (C.APPRENTICE_WAGE_DAY||0) : 0;   // apprentice draws a daily wage
+  const net = revenue - energy - C.TECH_WAGE_DAY - apprWage - C.OVERHEAD_DAY - wipScrap - penalty;
   S.cash += net;
   const ledger={ day:S.day, produced:Math.round(S.produced), shipped:Math.round(shipped),
-    revenue, energy, wages:C.TECH_WAGE_DAY, overhead:C.OVERHEAD_DAY, wipScrap, penalty, struck, net,
+    revenue, energy, wages:C.TECH_WAGE_DAY+apprWage, overhead:C.OVERHEAD_DAY, wipScrap, penalty, struck, net,
     down:(S.downMinToday/60) };
   // reset daily accumulators
-  S.produced=0; S.energyToday=0; S.downMinToday=0; S.scrapWipMin=0; tech.minsToday=0;
+  S.produced=0; S.energyToday=0; S.downMinToday=0; S.scrapWipMin=0; tech.minsToday=0; if(tech2) tech2.minsToday=0;
   if(S.strikes>=C.STRIKES_TO_LOSE && S.contractLive){ S.contractLive=false; }
   S.stats.peakMoist=Math.max(S.stats.peakMoist,S.moisture);
   S.stats.downH+=ledger.down;
@@ -657,60 +661,72 @@ function failMttr(m){ const v=FAILMTTR[m.id]; return (v!=null)?v : (m.failmttr||
 // Travel scales with where you actually stand. At the panel: 0-4 min of setup.
 // Across the floor: 4..TRAVEL_MIN by distance. Headless runs have no meaningful
 // character position, so they keep the original fixed timing (tuned economy).
-function travelTime(mid){
-  if(!HEADLESS && typeof CH!=='undefined' && CH){
+// The shared job queue lives on tech.queue; one or two workers pull from it — the
+// player (tech) and an optional hired apprentice (tech2). With tech2 null (the
+// bakery, and the brewery until you hire) everything below is byte-identical to
+// the original single-technician code.
+function travelTime(mid, w){ w=w||tech;
+  if(!HEADLESS && typeof CH!=='undefined' && CH && w===tech){
     const p=panelPt(MACH[mid]);
     const d=Math.hypot(CH.p.x-p.x, CH.p.z-p.z);
     if(d<=2.2) return Math.round(clamp(d*2,0,4));
     return Math.round(clamp(3+d*0.45, 4, C.TRAVEL_MIN));
   }
-  return tech.atPrev===mid ? 4 : C.TRAVEL_MIN;
+  return w.atPrev===mid ? 4 : C.TRAVEL_MIN;
 }
 function enqueue(job){ // job: {mid,type,chan?}
   if(job.type==='emergency'){ tech.queue.unshift(job); } else tech.queue.push(job);
-  if(!tech.busy) startNext();
+  dispatch();
   renderTech();
 }
-function startNext(){
-  if(tech.queue.length===0){ tech.busy=false; tech.job=null; tech.phase='idle'; renderTech(); return; }
-  tech.busy=true; tech.job=tech.queue.shift();
-  tech.phase='travel'; tech.timer=travelTime(tech.job.mid); tech.total=tech.timer;
+// hand queued work to any idle worker. The player takes the front (incl.
+// emergencies); the apprentice only takes planned jobs (never an emergency alone).
+function dispatch(){
+  if(!tech.busy && tech.queue.length) startNext(tech);
+  if(tech2 && !tech2.busy && tech.queue.some(j=>j.type!=='emergency')) startNext(tech2);
+}
+function startNext(w){ w=w||tech;
+  let idx = w.appr ? tech.queue.findIndex(j=>j.type!=='emergency') : (tech.queue.length?0:-1);
+  if(idx<0){ w.busy=false; w.job=null; w.phase='idle'; renderTech(); return; }
+  w.busy=true; w.job=tech.queue.splice(idx,1)[0];
+  w.phase='travel'; w.timer=travelTime(w.job.mid, w); w.total=w.timer;
   renderTech();
 }
-function advanceTech(){
-  if(!tech.busy) return;
-  const j=tech.job, m=MACH[j.mid];
-  tech.timer--; tech.minsToday++;
-  if(tech.phase==='travel'){
-    if(tech.timer<=0){
-      tech.atPrev=j.mid;
-      if(j.type==='emergency' && m.awaitDelivery>0){ tech.phase='wait'; tech.timer=m.awaitDelivery; tech.total=tech.timer; }
-      else beginWork(j,m);
+function advanceTech(){ stepWorker(tech); if(tech2) stepWorker(tech2); }
+function stepWorker(w){
+  if(!w.busy) return;
+  const j=w.job, m=MACH[j.mid];
+  w.timer--; w.minsToday++;
+  if(w.phase==='travel'){
+    if(w.timer<=0){
+      w.atPrev=j.mid;
+      if(j.type==='emergency' && m.awaitDelivery>0){ w.phase='wait'; w.timer=m.awaitDelivery; w.total=w.timer; }
+      else beginWork(j,m,w);
     }
     return;
   }
-  if(tech.phase==='wait'){ if(tech.timer<=0) beginWork(j,m); return; }
-  // work
-  if(tech.phase==='work'){
+  if(w.phase==='wait'){ if(w.timer<=0) beginWork(j,m,w); return; }
+  if(w.phase==='work'){
     if(m.broken){ S.downMinToday++; S.scrapWipMin++; } // machine down during emergency teardown
     else if(j.type==='repair'||j.type==='fix'||j.type==='upgrade'||j.type==='replace'||j.type==='automate'){ S.downMinToday++; S.scrapWipMin++; }
-    if(tech.timer<=0) finishJob(j,m);
+    if(w.timer<=0) finishJob(j,m,w);
   }
 }
-function beginWork(j,m){
-  tech.phase='work';
-  if(j.type==='inspect') tech.timer=C.INSPECT_MIN;
-  else if(j.type==='emergency') tech.timer=failMttr(m)*60;
-  else if(j.type==='repair') tech.timer=Math.round(svcMttr(m)*60*C.SERVICE_TIME_MULT); // full overhaul: slower than a targeted swap
-  else if(j.type==='fix') tech.timer=Math.max(30,Math.round(svcMttr(m)*60*C.FIX_TIME_FRAC));
-  else if(j.type==='upgrade') tech.timer=180;
-  else if(j.type==='automate') tech.timer=150;
-  else if(j.type==='replace') tech.timer=svcMttr(m)*60+120;
-  tech.total=tech.timer;
+function beginWork(j,m,w){ w=w||tech;
+  w.phase='work';
+  if(j.type==='inspect') w.timer=C.INSPECT_MIN;
+  else if(j.type==='emergency') w.timer=failMttr(m)*60;
+  else if(j.type==='repair') w.timer=Math.round(svcMttr(m)*60*C.SERVICE_TIME_MULT); // full overhaul: slower than a targeted swap
+  else if(j.type==='fix') w.timer=Math.max(30,Math.round(svcMttr(m)*60*C.FIX_TIME_FRAC));
+  else if(j.type==='upgrade') w.timer=180;
+  else if(j.type==='automate') w.timer=150;
+  else if(j.type==='replace') w.timer=svcMttr(m)*60+120;
+  if(w.appr) w.timer=Math.round(w.timer*(C.APPRENTICE_SLOW||1.4));  // apprentice is slower
+  w.total=w.timer;
   if(j.type==='repair'||j.type==='replace') m.broken=false; // planned service takes it down cleanly
   renderTech();
 }
-function finishJob(j,m){
+function finishJob(j,m,w){ w=w||tech;
   if(j.type==='inspect'){
     for(const c of m.ch){ c.reveal=clamp(c.w+gauss()*C.SIGMA_INSPECT,0,1);
       const H=1-c.w; c.revealHazard=(m.lambda0*Math.exp(C.KAPPA*(1-machHealth(m)))*C.TICKS_PER_DAY); }
@@ -742,7 +758,7 @@ function finishJob(j,m){
     for(const c of m.ch){ c.w=0.0; c.reveal=0; } m.up=Math.max(m.up,1.1); m.replaced=true; m.broken=false;
     alert('🆕 '+m.code+' replaced — like new (+10% capacity).','good'); chirp('good');
   }
-  tech.atPrev=j.mid; startNext();
+  w.atPrev=j.mid; startNext(w);
   if(S.sel===j.mid) openSheet(j.mid);
   updateHUD();
   GameEvents.emit('jobFinished',{job:j, m:m});
@@ -752,6 +768,9 @@ function finishJob(j,m){
 function stepTick(){
   if(CURPLANT==='brewery' && typeof solveBrewBuses==='function') solveBrewBuses(); else solveAir();
   solveThroughput(); advanceWear(); rollBreakdowns(); advanceTech();
+  // condition sensors keep their channel continuously revealed (vs automation's
+  // once-a-morning refresh). No-op on the bakery (no channel carries a sensor).
+  for(const _id in MACH){ const _m=MACH[_id]; for(const c of _m.ch) if(c.sensor) c.reveal=c.w; }
   // economy accrual (per tick)
   const perMin=S.T/60;                            // loaves this minute (T is loaves/hr)
   // silent quality loss scraps a fraction of output. Bakery: the oven
@@ -815,6 +834,29 @@ function actAutomate(id){ if(MACH[id].automated){toast('Already automated');retu
 function actReplace(id){ const m=MACH[id]; if(!canPay(m.replaceCost)){toast('Need $'+m.replaceCost);return;}
   S.cash-=m.replaceCost; S.stats.capex+=m.replaceCost; enqueue({mid:id,type:'replace'}); toast('🆕 Replacement queued '+m.code); updateHUD(); openSheet(id);
   GameEvents.emit('orderPlaced',{id:id,type:'replace',cost:m.replaceCost}); }
+// hire the apprentice: a second pair of hands (planned jobs only, slower), for a
+// one-off fee + a daily wage. A bigger plant than one tech can keep alive.
+function actHire(){
+  if(tech2){ toast('Apprentice already on the crew'); return; }
+  const fee=C.HIRE_FEE||1500;
+  if(!canPay(fee)){ toast('Need $'+fee+' to hire'); return; }
+  S.cash-=fee; S.stats.capex+=fee;
+  tech2={ busy:false, job:null, atPrev:null, phase:'idle', timer:0, total:0, minsToday:0, appr:true };
+  dispatch();
+  toast('🧑‍🔧 Apprentice hired — planned jobs run in parallel'); updateHUD(); renderTech();
+  GameEvents.emit('orderPlaced',{id:'crew',type:'hire',cost:fee});
+}
+// install a condition sensor on one channel: it stays continuously revealed
+// (predictive maintenance you can buy per part).
+function actSensor(id,chanId){
+  const m=MACH[id]; const c=m&&m.ch.find(x=>x.id===chanId); if(!c){return;}
+  if(c.sensor){ toast('Sensor already installed'); return; }
+  const cost=C.SENSOR_COST||150;
+  if(!canPay(cost)){ toast('Need $'+cost); return; }
+  S.cash-=cost; S.stats.capex+=cost; c.sensor=true; c.reveal=c.w;
+  toast('📡 Sensor on '+m.code+' · '+c.nm); updateHUD(); openSheet(id);
+  GameEvents.emit('orderPlaced',{id:id,type:'sensor',cost:cost});
+}
 function fixCost(id,chanId){ const c=MACH[id].ch.find(x=>x.id===chanId); return C.LABOR_FIX+(c?c.part:0); }
 function actFix(id,chanId){ const m=MACH[id]; if(m.broken){toast('Emergency crew already on it');return;}
   const c=m.ch.find(x=>x.id===chanId); if(!c) return;
@@ -2666,7 +2708,9 @@ function serMachine(m){ return {
   up:m.up, u:m.u, automated:!!m.automated, broken:!!m.broken, brokenChan:m.brokenChan||null,
   downMins:m.downMins||0, awaitDelivery:m.awaitDelivery||0, stocked:!!m.stocked,
   rushed:!!m.rushed, nursed:!!m.nursed, replaced:!!m.replaced,
-  ch:m.ch.map(c=>({w:c.w, reveal:c.reveal, revealHazard:c.revealHazard})) }; }
+  ch:m.ch.map(c=>({w:c.w, reveal:c.reveal, revealHazard:c.revealHazard, sensor:!!c.sensor})) }; }
+function serWorker(w){ return w?{busy:w.busy, phase:w.phase, timer:w.timer, total:w.total,
+  minsToday:w.minsToday, atPrev:w.atPrev, job:w.job, appr:!!w.appr}:null; }
 
 function serializeState(){
   if(!S||!MACH||!tech) return null;
@@ -2678,14 +2722,15 @@ function serializeState(){
   const t={busy:tech.busy, phase:tech.phase, timer:tech.timer, total:tech.total,
     minsToday:tech.minsToday, atPrev:tech.atPrev, job:tech.job, queue:tech.queue};
   const ch=(typeof CH!=='undefined'&&CH)?{x:CH.p.x, z:CH.p.z, yaw:CH.yaw}:null;
-  return {v:SAVE_VER, ts:Date.now(), prng:_seed>>>0, s, mach, tech:t, char:ch};
+  return {v:SAVE_VER, ts:Date.now(), prng:_seed>>>0, plant:(typeof CURPLANT!=='undefined'?CURPLANT:'bakery'),
+    s, mach, tech:t, tech2:serWorker(typeof tech2!=='undefined'?tech2:null), char:ch};
 }
 
 /* ---------- rebuild a run: fresh statics from DEFS, overlay saved dynamics ---------- */
 function applySave(save){
   if(!save || save.v!==SAVE_VER || !save.s) return false;
   try{
-    newGame(save.s.seed);            // fresh world/machines/PRNG, then overlay the run:
+    newGame(save.s.seed, save.plant);   // fresh world/machines/PRNG for the saved plant, then overlay:
     _seed = (save.prng>>>0) || _seed;
     for(const k in save.s) S[k]=save.s[k];
     S.speed=0; S.sel=null; S.walk=null; S.msgs=[];   // resume paused; drop transients
@@ -2693,12 +2738,15 @@ function applySave(save){
       m.up=sm.up; m.u=sm.u; m.automated=sm.automated; m.broken=sm.broken; m.brokenChan=sm.brokenChan;
       m.downMins=sm.downMins; m.awaitDelivery=sm.awaitDelivery; m.stocked=sm.stocked;
       m.rushed=sm.rushed; m.nursed=sm.nursed; m.replaced=sm.replaced;
-      m.ch.forEach((c,i)=>{ const sc=sm.ch[i]; if(sc){ c.w=sc.w; c.reveal=sc.reveal; c.revealHazard=sc.revealHazard; } });
+      m.ch.forEach((c,i)=>{ const sc=sm.ch[i]; if(sc){ c.w=sc.w; c.reveal=sc.reveal; c.revealHazard=sc.revealHazard; c.sensor=!!sc.sensor; } });
     }
     const t=save.tech||{};
     tech.busy=!!t.busy; tech.phase=t.phase||'idle'; tech.timer=t.timer||0; tech.total=t.total||0;
     tech.minsToday=t.minsToday||0; tech.atPrev=t.atPrev||null; tech.job=t.job||null;
     tech.queue=Array.isArray(t.queue)?t.queue:[];
+    const t2=save.tech2;
+    tech2 = t2 ? {busy:!!t2.busy, phase:t2.phase||'idle', timer:t2.timer||0, total:t2.total||0,
+      minsToday:t2.minsToday||0, atPrev:t2.atPrev||null, job:t2.job||null, appr:true} : null;
     applyWeek(S.week);
     if(!HEADLESS && typeof CH!=='undefined' && CH && save.char){
       CH.p.set(save.char.x,0,save.char.z); CH.yaw=(save.char.yaw!=null?save.char.yaw:CH.yaw);
@@ -2998,6 +3046,8 @@ const BREW_C = {
   REPAIR_FLOOR:0.08, FIX_FLOOR:0.04, OVERHAUL_FLOOR:0.11, SIGMA_INSPECT:0.05,
   STRIKES_TO_LOSE:3, HEALTH_CONDEMN:0.15, WEAR_SCALE:0.85, HAZARD_SCALE:0.4,
   FOUL_ACCEL:1.6,   // fouling/scale compounds: dirty surfaces foul faster
+  HIRE_FEE:1800, APPRENTICE_WAGE_DAY:170, APPRENTICE_SLOW:1.4,   // second technician
+  SENSOR_COST:180,  // per-channel condition sensor (stays revealed)
 };
 // Six weekly contracts on the same aging plant; base bottleneck ≈150/hr → ~1200
 // bottles/day at full health, so weeks 5–6 out-run a base line and force capacity.

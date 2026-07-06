@@ -343,7 +343,11 @@ const GameEvents={ handlers:{},
 let HEADLESS=false;
 
 // ---- tuned constants (GDD §24) ----
-const C = {
+// C / DEFS / CHAIN are the ACTIVE plant's tables. They start as the bakery's and
+// are re-pointed by selectPlant() (see PLANTS registry below) — that's how one
+// engine runs multiple plants without forking the sim. The bakery values are
+// untouched, so its economy stays byte-identical.
+let C = {
   TICKS_PER_DAY:480, WEEK_LEN:5, N_WEEKS:4, D_MAX:20, ALPHA:2.0, MU:3.0, KAPPA:6.0,
   P_NOM:7.0, P_MIN:4.0, LAMBDA_LEAK:0.35, M0:0.05, M_SEAL:0.75,
   AIR_DRAW:32, COMP_CAP:40,
@@ -387,7 +391,7 @@ function gauss(){ let u=0,v=0; while(u===0)u=rnd(); while(v===0)v=rnd(); return 
 // channel types: DRAG (full rate loss), SEIZE (half rate, drives hazard), DRIFT/LEAK (energy), MOIST (air bus)
 // canonical machines (GDD §5). w0 = preseed wear so max(w)=1-startH.
 // pos:[x,z] world metres · hw/hd = half footprint · face: which z side the panel is on
-const DEFS = [
+let DEFS = [
   { id:'mixer', name:'Spiral Mixer', code:'MIX-100', pos:[-11.0,-5.2], hw:1.25, hd:1.25, face:1, rot:0,
     base:210, energy:2.5, risk:0.06, crit:4,
     pneumatic:true, deps:['compressor'], replaceCost:2600, color:'#5b7fa8',
@@ -437,14 +441,37 @@ const DEFS = [
       {id:'valve',   nm:'Piston ring & valve',  type:'SEIZE',k:0.00014, w:0.25, part:320},
     ]},
 ];
-const CHAIN = ['mixer','conveyor','oven','slicer','packager']; // serial value chain (compressor = utility)
+let CHAIN = ['mixer','conveyor','oven','slicer','packager']; // serial value chain (compressor = utility)
+
+/* =============================== PLANTS REGISTRY ===============================
+   A plant is data: its tuned constants (C), machine defs (DEFS), value chain
+   (CHAIN), hall size, and presentation. selectPlant() re-points the active tables
+   so the shared sim/world/HUD code runs any plant. The free bakery is the only
+   playable plant today; premium plants (the brewery pack) slot in here. */
+const PLANTS = {
+  bakery: { id:'bakery', name:'Old Bakery Plant', tagline:'Six aging machines, one bread contract.',
+    free:true, machines:6, C:C, DEFS:DEFS, CHAIN:CHAIN, HALL:{w:30,d:18,h:6.2} },
+  // Premium — the sim/world land in the Ironline Brewery pack. Shown as a locked
+  // "coming soon" card until then; selectPlant() refuses it while it has no C/DEFS.
+  brewery: { id:'brewery', name:'Ironline Brewery & Bottling Works',
+    tagline:'12 machines · steam, glycol & air buses · live hygiene.',
+    premium:true, machines:12, comingSoon:true },
+};
+let CURPLANT='bakery';
+function selectPlant(id){ const p=PLANTS[id];
+  if(!p||!p.C||!p.DEFS) return false;            // stub/coming-soon plants can't be entered
+  CURPLANT=p.id; C=p.C; DEFS=p.DEFS; CHAIN=p.CHAIN;
+  if(typeof setPlantHall==='function') setPlantHall(p.HALL);   // world hook (g3), if present
+  return true;
+}
 
 // ---- runtime state ----
 let S, MACH, tech;
 function machHealth(m){ let mn=1; for(const c of m.ch) mn=Math.min(mn,1-c.w); return mn; }
 function worstChan(m){ let w=null; for(const c of m.ch) if(!w||c.w>w.w) w=c; return w; }
 
-function newGame(seed){
+function newGame(seed, plantId){
+  if(plantId) selectPlant(plantId);              // else keep the active plant (default bakery)
   const sd=(seed==null? Math.floor(Math.random()*4294967295)+1 : seed)>>>0;
   _seed=sd||1;
   MACH={};

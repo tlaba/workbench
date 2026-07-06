@@ -150,6 +150,13 @@ Ship Plant #2 as the first premium pack and stand up the paid **Complete
 Edition** on itch.io (lowest-friction store). Validate that people will pay for
 "more plants." *Gate:* pack conversion clears a set threshold.
 
+> **Build status:** Plant #2 — the **Ironline Brewery** premium pack — is built
+> and playable (12 machines, utility buses, hygiene/quality economy, colour-coded
+> 3D world), and the **entitlement plumbing is in place**: premium plants gate
+> behind redeem keys once Supabase is configured, with an offline-cached unlock
+> and a dev bypass (see `CLOUD-SAVES.md` → *Premium packs*). What's left before a
+> paid launch is a store/checkout to mint and sell keys.
+
 **Phase 2 — Storefront + platform.**
 Steam page (wishlist engine) and a mobile release of the Complete Edition. Add
 cosmetics. Formalize the Season Pass around the plant roadmap. *Gate:* wishlist

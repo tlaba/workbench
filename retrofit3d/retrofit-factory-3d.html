@@ -514,6 +514,7 @@ function newGame(seed, plantId){
     const m={ ...d, ch:d.ch.map(c=>({...c, w0:c.w, reveal:null, revealHazard:null})),
       up:1, automated:false, broken:false, brokenChan:null, downMins:0,
       awaitDelivery:0, stocked:false, effRate:d.base, rate:0, u:0, replaced:false };
+    if(d.hygiene){ m.soil=0; m.contam=false; }   // product-contact vessels track hygiene (brewery)
     MACH[d.id]=m;
   }
   // per-machine lambda0 so day-1 breakdown prob == risk (F4)
@@ -525,6 +526,7 @@ function newGame(seed, plantId){
     seed:sd, stats:{brk:{},nBrk:0,firstBrkDay:null,emerg:0,planned:0,insp:0,capex:0,peakMoist:0,downH:0},
     // daily accumulators
     produced:0, energyToday:0, downMinToday:0, scrapWipMin:0,
+    qWeighted:0, qBase:0, contamToday:0, dayQuality:1,   // hygiene→quality→price (brewery; inert on bakery)
     airP:C.P_NOM, moisture:0, airFactor:1, T:0, bottleneck:'oven',
     speed:1, sel:null, tutStep:0, walk:null, msgs:[] };
   applyWeek(1);
@@ -661,7 +663,11 @@ function seize(m){
 function settleDay(){
   const shipped=Math.min(C.CONTRACT_DEMAND,S.produced);
   const over=Math.max(0,S.produced-C.CONTRACT_DEMAND);
-  let revenue = S.contractLive ? (shipped*C.PRICE + over*C.SALVAGE) : (S.produced*C.SALVAGE);
+  // quality (from hygiene + contamination) sets price per unit on the contract lot.
+  // qFactor is 1 on the bakery (no HYGIENE), so its revenue is unchanged.
+  const qFactor = C.HYGIENE ? clamp(S.qBase>0 ? S.qWeighted/S.qBase : 1, 0, 1) : 1;
+  S.dayQuality = qFactor;
+  let revenue = S.contractLive ? (shipped*C.PRICE*qFactor + over*C.SALVAGE) : (S.produced*C.SALVAGE);
   const wipScrap=(S.scrapWipMin/60)*C.WIP_SCRAP_RATE;
   const energy=S.energyToday;
   let penalty=0, struck=false;
@@ -671,9 +677,10 @@ function settleDay(){
   S.cash += net;
   const ledger={ day:S.day, produced:Math.round(S.produced), shipped:Math.round(shipped),
     revenue, energy, wages:C.TECH_WAGE_DAY+apprWage, overhead:C.OVERHEAD_DAY, wipScrap, penalty, struck, net,
-    down:(S.downMinToday/60) };
+    quality:qFactor, contam:S.contamToday, down:(S.downMinToday/60) };
   // reset daily accumulators
   S.produced=0; S.energyToday=0; S.downMinToday=0; S.scrapWipMin=0; tech.minsToday=0; if(tech2) tech2.minsToday=0;
+  S.qWeighted=0; S.qBase=0; S.contamToday=0;   // soil + contam flags persist across days (that's the point)
   if(S.strikes>=C.STRIKES_TO_LOSE && S.contractLive){ S.contractLive=false; }
   S.stats.peakMoist=Math.max(S.stats.peakMoist,S.moisture);
   S.stats.downH+=ledger.down;
@@ -743,7 +750,7 @@ function stepWorker(w){
   if(w.phase==='wait'){ if(w.timer<=0) beginWork(j,m,w); return; }
   if(w.phase==='work'){
     if(m.broken){ S.downMinToday++; S.scrapWipMin++; } // machine down during emergency teardown
-    else if(j.type==='repair'||j.type==='fix'||j.type==='upgrade'||j.type==='replace'||j.type==='automate'){ S.downMinToday++; S.scrapWipMin++; }
+    else if(j.type==='repair'||j.type==='fix'||j.type==='upgrade'||j.type==='replace'||j.type==='automate'||j.type==='cip'){ S.downMinToday++; S.scrapWipMin++; }
     if(w.timer<=0) finishJob(j,m,w);
   }
 }
@@ -756,6 +763,7 @@ function beginWork(j,m,w){ w=w||tech;
   else if(j.type==='upgrade') w.timer=180;
   else if(j.type==='automate') w.timer=150;
   else if(j.type==='replace') w.timer=svcMttr(m)*60+120;
+  else if(j.type==='cip') w.timer=Math.round(C.CIP_MINS||45);       // clean-in-place: fixed downtime, resets hygiene
   if(w.appr) w.timer=Math.round(w.timer*(C.APPRENTICE_SLOW||1.4));  // apprentice is slower
   w.total=w.timer;
   if(j.type==='repair'||j.type==='replace') m.broken=false; // planned service takes it down cleanly
@@ -792,6 +800,9 @@ function finishJob(j,m,w){ w=w||tech;
   } else if(j.type==='replace'){
     for(const c of m.ch){ c.w=0.0; c.reveal=0; } m.up=Math.max(m.up,1.1); m.replaced=true; m.broken=false;
     alert('🆕 '+m.code+' replaced — like new (+10% capacity).','good'); chirp('good');
+  } else if(j.type==='cip'){
+    m.soil=0; m.contam=false;
+    alert('🧼 '+m.code+' cleaned (CIP) — hygiene reset, contamination cleared.','good'); chirp('good');
   }
   w.atPrev=j.mid; startNext(w);
   if(S.sel===j.mid) openSheet(j.mid);
@@ -815,7 +826,33 @@ function stepTick(){
   if(ov){ const th=ov.ch.find(c=>c.id==='thermo'); if(th) scrapFrac=ov.broken?0:Math.min(0.35,th.w*0.4); }
   for(const _id in MACH){ const _m=MACH[_id]; if(_m.broken) continue;
     for(const c of _m.ch) if(c.type==='CAL') scrapFrac=Math.min(0.5, scrapFrac + c.w*0.3); }
-  S.produced += perMin*(1-scrapFrac);
+  const made = perMin*(1-scrapFrac);
+  S.produced += made;
+  // ---- hygiene → contamination → quality (brewery only; skipped entirely on the
+  // bakery so its PRNG stream and economy stay byte-identical) ----
+  if(C.HYGIENE){
+    let soilSum=0, soilN=0, contamAny=false;
+    for(const id in MACH){ const m=MACH[id]; if(m.soil==null) continue;
+      const running=!m.broken && m.rate>1;
+      m.soil=clamp(m.soil + (C.SOIL_RATE||0.0006)*(running?1:0.2), 0, 1);
+      // contamination roulette: probability climbs with the cube of soil — rare on a
+      // clean vessel, likely on a filthy one. A hit dumps the batch in progress and
+      // forces sanitation until you run a CIP.
+      if(running && !m.contam && rnd() < (C.CONTAM_K||0.02)*m.soil*m.soil*m.soil){
+        m.contam=true; S.contamToday++; S.stats.contam=(S.stats.contam||0)+1;
+        S.produced=Math.max(0, S.produced-(C.CONTAM_DUMP||120));
+        S.cash -= (C.CONTAM_CLEAN||300);
+        alert('☣ '+m.code+' — contamination detected. Batch dumped; CIP required.','bad');
+        GameEvents.emit('contamination',{m:m});
+      }
+      soilSum+=m.soil; soilN++; if(m.contam) contamAny=true;
+    }
+    const avgSoil = soilN? soilSum/soilN : 0;
+    // instantaneous quality erodes PRICE (not volume): dirty/contaminated → cheaper beer
+    let q = 1 - (C.Q_SOIL||0.5)*avgSoil - (contamAny?(C.Q_CONTAM||0.35):0);
+    q = clamp(q, 0.3, 1);
+    S.qWeighted += q*made; S.qBase += made;
+  }
   let kw=0; for(const id in MACH){ const m=MACH[id]; if(!m.broken && (m.utility||S.T>0.1)) kw+=effPower(m); }
   S.energyToday += kw*(1/60)*C.ENERGY_PRICE;
   // day boundary
@@ -892,6 +929,17 @@ function actSensor(id,chanId){
   toast('📡 Sensor on '+m.code+' · '+c.nm); updateHUD(); openSheet(id);
   GameEvents.emit('orderPlaced',{id:id,type:'sensor',cost:cost});
 }
+// clean-in-place: take a product-contact vessel down for a wash cycle, resetting
+// its soil (and clearing any contamination). Costs steam/water/labor + downtime.
+function actCIP(id){ const m=MACH[id];
+  if(m.soil==null){ toast(m.code+' does not need CIP'); return; }
+  if(m.broken){ toast(m.code+' is down'); return; }
+  if(tech.queue.some(j=>j.mid===id&&j.type==='cip')){ toast('CIP already queued'); return; }
+  const cost=C.CIP_COST||140;
+  if(!canPay(cost)){ toast('Need $'+cost+' for CIP'); return; }
+  S.cash-=cost; S.stats.planned+=cost; enqueue({mid:id,type:'cip',cost:cost});
+  toast('🧼 CIP queued: '+m.code+' (−$'+cost+')'); updateHUD(); openSheet(id);
+  GameEvents.emit('orderPlaced',{id:id,type:'cip',cost:cost}); }
 function fixCost(id,chanId){ const c=MACH[id].ch.find(x=>x.id===chanId); return C.LABOR_FIX+(c?c.part:0); }
 function actFix(id,chanId){ const m=MACH[id]; if(m.broken){toast('Emergency crew already on it');return;}
   const c=m.ch.find(x=>x.id===chanId); if(!c) return;
@@ -1029,6 +1077,21 @@ function openSheet(id){
   }
   if(!rev) cond+='<div class="hidden-note">You are guessing. A $'+inspectCost(id)+' inspection reveals per-part wear — and unlocks 🔩 targeted fixes (cheaper + faster than a full service).</div>';
   cond+='</div>';
+  // hygiene (product-contact vessels only): soil is always visible — you know when
+  // you last cleaned — and drives product quality (price) plus contamination risk.
+  let hyg='';
+  if(m.soil!=null){
+    const sp=Math.round(m.soil*100);
+    const col=m.contam?'var(--red)':m.soil>0.6?'var(--amber)':'var(--green)';
+    hyg='<div class="cond"><h4>Hygiene'+(m.contam?' — ☣ CONTAMINATED':'')+'</h4>'+
+      '<div class="chan"><span class="nm">Soil since last CIP</span>'+
+      '<span class="bar"><i style="width:'+sp+'%;background:'+col+'"></i></span>'+
+      '<span class="pf">'+sp+'%</span></div>'+
+      (m.contam
+        ? '<div class="hidden-note" style="color:var(--red)">Contaminated — every batch is being spoiled and beer quality is tanking. Run a 🧼 CIP to recover.</div>'
+        : (m.soil>0.5?'<div class="hidden-note">Soil is dulling product quality (price). CIP resets it before contamination sets in.</div>':''))+
+      '</div>';
+  }
   const disB = m.broken;
   // honest previews from observable numbers only (rate/cap shown in chips, revealed wear)
   const isBn=(id===S.bottleneck);
@@ -1062,6 +1125,12 @@ function openSheet(id){
   const A=(label,cost,desc,fn,type,cls)=> pend.has(type)
     ? offAct(label,Q,desc,'Already queued — you\'re on it. Check the job strip above.')
     : act(label,cost,desc,fn,id,cls);
+  const cipHrs=((C.CIP_MINS||50)/60).toFixed(1);
+  const cipBtn = (m.soil!=null && !m.broken)
+    ? A('🧼 Clean (CIP)','$'+(C.CIP_COST||150),
+        'Wash cycle — resets soil'+(m.contam?' and clears contamination':'')+'.'+
+        PV('⏱ ~'+cipHrs+'h down · '+(m.contam?'stops spoiling every batch':(m.soil>0.6?'restores product quality':'keeps quality high')), m.contam?'good':(m.soil>0.6?'warn':'dim')),'actCIP','cip','')
+    :'';
   let actsHtml;
   if(near){
     actsHtml=
@@ -1077,6 +1146,7 @@ function openSheet(id){
       (m.automated
         ? offAct('🤖 Automate','<span style="color:var(--green)">✓ active</span>','Condition monitoring is running.','Already automated — wear is cut and condition re-reveals every morning')
         : A('🤖 Automate','$'+C.AUTOMATE_COST,'Condition-monitor + auto-drain, re-reveals daily.'+pvAuto,'actAutomate','automate',''))+
+      cipBtn+
       nurseBtn+
       A('🆕 Replace','$'+m.replaceCost,'Brand-new unit.'+pvRepl,'actReplace','replace','danger');
   } else {
@@ -1103,7 +1173,7 @@ function openSheet(id){
       (near?'':'<span class="chip warn">too far <b>🚶</b></span>')+
     '</div>'+
     '<div id="jobstrip"></div>'+
-    '</div>'+ cond +
+    '</div>'+ cond + hyg +
     '<div class="acts">'+actsHtml+'</div>';
   sh.innerHTML=html; sh.classList.add('open');
 }
@@ -1154,6 +1224,7 @@ function clamp(v,a,b){ return v<a?a:v>b?b:v; }
 
 /* =============================== REVIEW / END MODALS =============================== */
 function money(n){ const s=(n<0?'−$':'$')+Math.abs(Math.round(n)).toLocaleString(); return s; }
+function unit(){ return (typeof CURPLANT!=='undefined'&&CURPLANT==='brewery')?'cases':'loaves'; }
 function shiftLedgerRows(l){
   return '<table class="ledger">'+
     row('Revenue',l.revenue,1)+ row('Energy',-l.energy)+ row('Technician wage',-l.wages)+
@@ -1177,7 +1248,8 @@ function showReview(l){
   const dw=((l.day-1)%C.WEEK_LEN)+1;
   const rev=$('modalcard');
   rev.innerHTML='<h2>Week '+S.week+' · Day '+dw+' — Shift report</h2>'+
-    '<div class="sub">Shipped '+l.shipped+' / '+C.CONTRACT_DEMAND+' loaves'+(l.produced>l.shipped?(' (+'+(l.produced-l.shipped)+' salvage)'):'')+' · '+l.down.toFixed(1)+'h downtime</div>'+
+    '<div class="sub">Shipped '+l.shipped+' / '+C.CONTRACT_DEMAND+' '+unit()+(l.produced>l.shipped?(' (+'+(l.produced-l.shipped)+' salvage)'):'')+' · '+l.down.toFixed(1)+'h downtime'+
+      (C.HYGIENE?(' · quality <b>'+Math.round((l.quality!=null?l.quality:1)*100)+'%</b> of price'+(l.contam?(' · <span style="color:var(--red)">☣ '+l.contam+' contamination'+(l.contam>1?'s':'')+'</span>'):'')):'')+'</div>'+
     shiftLedgerRows(l)+
     (S.strikes>0?'<div class="sub" style="color:var(--red)">Strikes: '+S.strikes+'/3 — 3 short-ship days this week cancels the contract.</div>':'')+
     '<button class="btn go" onclick="closeReview()">▶ Plan Day '+(dw+1)+' of Week '+S.week+'</button>';
@@ -1197,7 +1269,7 @@ function showWeek(l, prevWeek){
     '<div class="sub">You kept the line alive through Week '+prevWeek+'. The bakery wants more.</div>'+
     shiftLedgerRows(l)+
     '<div class="pm"><h4>Week '+wk+' of '+C.N_WEEKS+' — new order</h4>'+
-      '<div class="pm-row">📈 Daily demand <b>'+terms.demand+'</b> loaves'+(dDem>0?(' <span class="pm-up">▲ +'+dDem+'</span>'):'')+' <span class="pl-dim">(was '+prevT.demand+')</span></div>'+
+      '<div class="pm-row">📈 Daily demand <b>'+terms.demand+'</b> '+unit()+(dDem>0?(' <span class="pm-up">▲ +'+dDem+'</span>'):'')+' <span class="pl-dim">(was '+prevT.demand+')</span></div>'+
       '<div class="pm-row">⚠ Short-ship floor <b>'+terms.floor+'</b>/day · strikes reset to <b>0/3</b></div>'+
       '<div class="pm-row">🔧 Same plant — every part you let wear carries into this week. Health now <b>'+Math.round(avgHealth()*100)+'%</b>.</div>'+
       '<div class="pm-tip">💡 The quota now out-runs a tired line. Fix the ◄ LIMIT machine and consider an ⬆ upgrade before it bottlenecks the whole order.</div></div>'+
@@ -1284,6 +1356,7 @@ const TUT_BREW=[
  '<b>Welcome to Ironline Brewery & Bottling Works.</b> A bigger plant: <b>12 machines</b> across a <b>6-week season</b>. Same core loop — <span class="k">🔍 Inspect</span> to reveal wear, then order a <span class="k">🔩 targeted fix</span>. <b>Time is paused</b> until you press <span class="k">▶</span>.',
  '<b>Three utility buses feed the line.</b> The <b>steam boiler</b>, <b>glycol chiller</b> and <b>air compressor</b> (front-left column) power the brewing and packaging machines. Let a utility foul or fail and <i>every machine it feeds</i> slows at once.',
  '<b>Two failure modes are new.</b> <b>Fouling / scale</b> accelerates its own wear the dirtier it gets — clean it early or it runs away. <b>Calibration drift</b> shows no downtime symptom: it silently scraps product until you inspect and re-calibrate.',
+ '<b>Hygiene is the brewer\'s discipline.</b> Product-contact vessels build up <b>soil</b> as they run — it dulls quality (your price) and, left alone, risks a <b>contamination</b> that dumps the batch. Run a <span class="k">🧼 CIP</span> wash to reset it. Skip hygiene and it\'s contamination roulette.',
  '<b>Scale your crew.</b> On the bigger plant you can <b>hire a second technician</b> to run planned jobs in parallel, and fit <b>condition sensors</b> that keep a part\'s wear visible without repeat inspections.',
 ];
 function curTut(){ return (typeof CURPLANT!=='undefined'&&CURPLANT==='brewery')?TUT_BREW:TUT; }
@@ -2386,7 +2459,7 @@ function sync3D(dt,t){
     BNLIGHT.intensity=(bm.broken||S.T<0.5)?0:(0.32+0.1*Math.sin(t*2));
   }
   if(LIMITSPR){
-    const show=bm && !bm.broken && CHAIN.includes(bn) && S.T>0.5;
+    const show=bm && !bm.broken && M3D[bn] && CHAIN.includes(bn) && S.T>0.5;
     LIMITSPR.visible=show;
     if(show) LIMITSPR.position.set(bm.pos[0], M3D[bn].topY+1.4+Math.sin(t*2)*0.09, bm.pos[1]);
   }
@@ -2539,6 +2612,11 @@ window.__brewPolicies={
         for(const c of m.ch){ const rv=c.reveal!=null?c.reveal:c.w; if(rv>0.4) cand.push([rv,id,c.id]); } }
       cand.sort((a,b)=>b[0]-a[0]); const used=new Set(); let n=0;
       for(const[w,id,cid]of cand){ if(n>=6)break; if(used.has(id))continue; used.add(id); actFix(id,cid); n++; }
+      // hygiene: CIP the dirtiest product-contact vessels before they contaminate
+      const hyg=[]; for(const id of _BCHAIN){ const m=MACH[id];
+        if(m.soil!=null && !m.broken && (m.contam||m.soil>0.4)) hyg.push([m.contam?2:m.soil,id]); }
+      hyg.sort((a,b)=>b[0]-a[0]);
+      for(let k=0;k<Math.min(3,hyg.length);k++) actCIP(hyg[k][1]);
       if(day>=18 && MACH[S.bottleneck] && MACH[S.bottleneck].up<1.5 && S.cash>C.UPGRADE_COST+3000) actUpgrade(S.bottleneck); }; },
 };
 window.__matrix=function(seeds, plant){
@@ -2551,7 +2629,7 @@ window.__matrix=function(seeds, plant){
     const runs=seeds.map(sd=>{ const r=window.__sim(pols[name](), sd, plant);
       return {seed:sd, end:r.end, won:r.won, strikes:r.strikes, brk:r.stats.nBrk, days:r.days,
         emerg:Math.round(r.stats.emerg), planned:Math.round(r.stats.planned+r.stats.insp),
-        down:+r.stats.downH.toFixed(1)}; });
+        contam:(r.stats.contam||0), down:+r.stats.downH.toFixed(1)}; });
     const ends=runs.map(r=>r.end);
     const seasonDays = plant==='brewery'?30:20;
     out[name]={ wins:runs.filter(r=>r.won).length, finished:runs.filter(r=>r.days>=seasonDays).length,
@@ -2834,7 +2912,7 @@ function migrateSaves(){
 function serMachine(m){ return {
   up:m.up, u:m.u, automated:!!m.automated, broken:!!m.broken, brokenChan:m.brokenChan||null,
   downMins:m.downMins||0, awaitDelivery:m.awaitDelivery||0, stocked:!!m.stocked,
-  rushed:!!m.rushed, nursed:!!m.nursed, replaced:!!m.replaced,
+  rushed:!!m.rushed, nursed:!!m.nursed, replaced:!!m.replaced, soil:m.soil, contam:m.contam,
   ch:m.ch.map(c=>({w:c.w, reveal:c.reveal, revealHazard:c.revealHazard, sensor:!!c.sensor})) }; }
 function serWorker(w){ return w?{busy:w.busy, phase:w.phase, timer:w.timer, total:w.total,
   minsToday:w.minsToday, atPrev:w.atPrev, job:w.job, appr:!!w.appr}:null; }
@@ -2844,8 +2922,8 @@ function serializeState(){
   const mach={}; for(const id in MACH) mach[id]=serMachine(MACH[id]);
   const s={};
   for(const k of ['cash','day','week','tick','strikes','contractLive','over','won','seed','stats',
-    'produced','energyToday','downMinToday','scrapWipMin','airP','moisture','airFactor','T',
-    'bottleneck','tutStep']) s[k]=S[k];
+    'produced','energyToday','downMinToday','scrapWipMin','qWeighted','qBase','contamToday','dayQuality',
+    'airP','moisture','airFactor','T','bottleneck','tutStep']) s[k]=S[k];
   const t={busy:tech.busy, phase:tech.phase, timer:tech.timer, total:tech.total,
     minsToday:tech.minsToday, atPrev:tech.atPrev, job:tech.job, queue:tech.queue};
   const ch=(typeof CH!=='undefined'&&CH)?{x:CH.p.x, z:CH.p.z, yaw:CH.yaw}:null;
@@ -2866,6 +2944,7 @@ function applySave(save){
       m.up=sm.up; m.u=sm.u; m.automated=sm.automated; m.broken=sm.broken; m.brokenChan=sm.brokenChan;
       m.downMins=sm.downMins; m.awaitDelivery=sm.awaitDelivery; m.stocked=sm.stocked;
       m.rushed=sm.rushed; m.nursed=sm.nursed; m.replaced=sm.replaced;
+      if(sm.soil!=null){ m.soil=sm.soil; m.contam=!!sm.contam; }
       m.ch.forEach((c,i)=>{ const sc=sm.ch[i]; if(sc){ c.w=sc.w; c.reveal=sc.reveal; c.revealHazard=sc.revealHazard; c.sensor=!!sc.sensor; } });
     }
     const t=save.tech||{};
@@ -3228,17 +3307,17 @@ function acctCodeStep(email){
 /* =============================================================================
    PREMIUM PLANT — Ironline Brewery & Bottling Works (g8).
    A bigger, deeper plant: 12 machines, two new failure types (FOUL fouling/scale,
-   CAL calibration drift — both implemented bakery-safely in g1), and three coupled
-   utility buses (steam, glycol, air). This slice lands the topology + failures +
-   buses; hygiene/CIP, batch fermentation, the buffer tank, the quality→price axis,
-   the second technician, and condition sensors arrive in following slices.
-   All data — nothing here runs for the bakery.
+   CAL calibration drift), three coupled utility buses (steam, glycol, air), a second
+   technician + per-part condition sensors, and a hygiene→contamination→quality→price
+   axis (product-contact vessels accrue soil; CIP resets it; skip it and contamination
+   dumps batches and drops your price). Batch fermentation + the buffer tank are still
+   to come. All bakery-safe: nothing here runs for the free bakery.
    ============================================================================= */
 
 const BREW_C = {
   TICKS_PER_DAY:480, WEEK_LEN:5, N_WEEKS:6, D_MAX:30, ALPHA:2.0, MU:3.0, KAPPA:6.0,
   P_NOM:7.0, P_MIN:4.0, LAMBDA_LEAK:0.35, M0:0.05, M_SEAL:0.75, AIR_DRAW:32, COMP_CAP:40,
-  STARTING_CASH:16000, WIN_CASH:25000, PRICE:4.50, SALVAGE:1.10,
+  STARTING_CASH:16000, WIN_CASH:25000, PRICE:5.50, SALVAGE:1.10,
   CONTRACT_DEMAND:450, CONTRACT_FLOOR:225, SHORT_SHIP_PENALTY:900,
   ENERGY_PRICE:0.18, TECH_WAGE_DAY:300, OVERHEAD_DAY:180,
   TRAVEL_MIN:15, INSPECT_MIN:30,
@@ -3251,6 +3330,15 @@ const BREW_C = {
   FOUL_ACCEL:1.6,   // fouling/scale compounds: dirty surfaces foul faster
   HIRE_FEE:1800, APPRENTICE_WAGE_DAY:170, APPRENTICE_SLOW:1.4,   // second technician
   SENSOR_COST:180,  // per-channel condition sensor (stays revealed)
+  // hygiene → contamination → quality→price. Product-contact vessels accrue soil;
+  // a CIP cycle resets it. Skip hygiene and contamination roulette dumps batches
+  // and drops the price your beer fetches.
+  HYGIENE:true,
+  SOIL_RATE:0.0003,      // soil per tick on a running vessel (~0.14/day → CIP every ~4 days)
+  CONTAM_K:0.0008,       // contamination hazard scale (× soil³) per running vessel per tick
+  CONTAM_DUMP:200, CONTAM_CLEAN:320,   // spoiled batch dumped + emergency sanitation cost
+  Q_SOIL:0.22, Q_CONTAM:0.30,          // price erosion from average soil / active contamination
+  CIP_COST:130, CIP_MINS:50,           // clean-in-place: steam/water/labor + downtime
 };
 // Six weekly contracts on the same aging plant; base bottleneck ≈150/hr → ~1200
 // bottles/day at full health, so weeks 5–6 out-run a base line and force capacity.
@@ -3341,6 +3429,10 @@ for(const _d of BREW_DEFS) for(const _c of _d.ch){ _c.k*=0.55; _c.w*=0.45; }
 const _BREW_TANKS={boiler:2.7, chiller:2.4, brewhouse:2.8, ferma:3.5, fermb:3.5, bright:2.9};
 for(const _d of BREW_DEFS){ if(_BREW_TANKS[_d.id]){ _d.shape='tank'; _d.h=_BREW_TANKS[_d.id]; }
   else { _d.shape='box'; _d.h=(_d.id==='pasteur'?1.5:(_d.id==='mill'?2.0:1.8)); } }
+// product-contact vessels that must be cleaned (CIP) — brewhouse through the filler
+// and the pasteurizer touch wort/beer; utilities, mill, labeler & case packer don't.
+const _BREW_HYGIENE=new Set(['brewhouse','ferma','fermb','bright','filler','pasteur']);
+for(const _d of BREW_DEFS) if(_BREW_HYGIENE.has(_d.id)) _d.hygiene=true;
 const BREW_CHAIN = ['mill','brewhouse','ferma','fermb','bright','filler','pasteur','labeler','casepack'];
 const BREW_HALL  = {w:40, d:22, h:7.0};   // taller/wider than the bakery (world slice fills it out)
 
@@ -3365,7 +3457,7 @@ function brewBusFactor(m){
 
 /* ---------- register the plant (replaces the coming-soon stub from g1) ---------- */
 PLANTS.brewery = { id:'brewery', name:'Ironline Brewery & Bottling Works',
-  tagline:'12 machines · steam, glycol & air buses · fouling, calibration & (soon) hygiene.',
+  tagline:'12 machines · steam, glycol & air buses · fouling, calibration & live hygiene.',
   premium:true, machines:12, sign:'IRONLINE BREWING CO.',
   C:BREW_C, DEFS:BREW_DEFS, CHAIN:BREW_CHAIN, HALL:BREW_HALL };
 

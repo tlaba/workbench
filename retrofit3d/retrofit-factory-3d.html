@@ -75,9 +75,9 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
   border:1px solid var(--edge);color:var(--dim);border-radius:50%;width:30px;height:30px;font-weight:700}
 #planbtn{position:absolute;right:10px;top:46px;z-index:6;background:rgba(30,40,54,.85);
   border:1px solid var(--edge);color:var(--ink);border-radius:8px;width:30px;height:30px;font-size:14px}
-#mutebtn,#fxbtn,#notifybtn,#acctbtn{position:absolute;right:10px;z-index:6;background:rgba(30,40,54,.85);
+#mutebtn,#fxbtn,#notifybtn,#acctbtn,#homebtn{position:absolute;right:10px;z-index:6;background:rgba(30,40,54,.85);
   border:1px solid var(--edge);color:var(--dim);border-radius:8px;width:30px;height:30px;font-size:13px}
-#mutebtn{top:82px} #fxbtn{top:118px} #notifybtn{top:154px} #acctbtn{top:190px}
+#mutebtn{top:82px} #fxbtn{top:118px} #notifybtn{top:154px} #acctbtn{top:190px} #homebtn{top:226px}
 #mutebtn.off{color:var(--red);border-color:#7a2c2c}
 #fxbtn.on{color:var(--amber);border-color:#7a5a2c}
 #notifybtn.on{color:var(--blue);border-color:#2c5a7a}
@@ -207,6 +207,33 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 .tut-next{background:var(--blue);color:#06101d}
 .tut-next:active,.tut-back:not(:disabled):active{transform:translateY(1px)}
 
+/* ---- plant select (title screen / plant switcher) ---- */
+#plantpick{position:absolute;inset:0;background:linear-gradient(160deg,#0b0f14,#131b26);display:none;
+  flex-direction:column;align-items:center;justify-content:center;z-index:40;padding:22px 16px;overflow-y:auto}
+#plantpick.show{display:flex}
+.pp-title{font-size:22px;font-weight:800;letter-spacing:.3px;margin-bottom:3px;text-align:center}
+.pp-title .b{color:var(--blue)}
+.pp-sub{color:var(--dim);font-size:12.5px;margin-bottom:18px;text-align:center;max-width:520px}
+.pp-cards{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;width:100%;max-width:760px}
+.pp-card{flex:1 1 300px;max-width:346px;background:var(--panel);border:1px solid var(--edge);border-radius:14px;
+  padding:15px 16px;box-shadow:0 10px 30px #0008;display:flex;flex-direction:column}
+.pp-card.locked{opacity:.62}
+.pp-badge{align-self:flex-start;font-size:9px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;
+  border-radius:5px;padding:3px 7px;margin-bottom:9px}
+.pp-badge.free{color:var(--green);background:#12351f;border:1px solid #2c7a48}
+.pp-badge.premium{color:var(--amber);background:#3a2c12;border:1px solid #7a5a2c}
+.pp-name{font-size:16px;font-weight:800;margin-bottom:3px}
+.pp-tag{font-size:12px;color:var(--dim);line-height:1.4;margin-bottom:8px}
+.pp-meta{font-size:10.5px;color:var(--dim);font-family:var(--mono);margin-bottom:12px}
+.pp-resume{font-size:11.5px;color:var(--green);margin-bottom:10px;line-height:1.35}
+.pp-actions{margin-top:auto;display:flex;flex-direction:column;gap:8px}
+.pp-btn{width:100%;background:var(--panel2);border:1px solid var(--edge);color:var(--ink);
+  border-radius:9px;padding:11px;font-size:13px;font-weight:700;cursor:pointer}
+.pp-btn.go{background:#12351f;border-color:#2c7a48;color:var(--green)}
+.pp-btn:disabled{opacity:.5;cursor:default}
+.pp-close{margin-top:18px;background:none;border:none;color:var(--dim);font-size:12px;cursor:pointer;
+  text-decoration:underline;padding:6px 10px}
+
 #preshift{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:9;
   display:none;align-items:center;gap:10px;background:rgba(18,35,58,.96);border:1px solid var(--blue);
   border-radius:12px;padding:9px 12px;font-size:12px;line-height:1.4;max-width:min(92%,520px);
@@ -284,6 +311,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
     <button id="fxbtn" title="Reduced effects">✦</button>
     <button id="notifybtn" title="Notify me when the tab is in the background">🔔</button>
     <button id="acctbtn" title="Sign in to save progress to the cloud">👤</button>
+    <button id="homebtn" title="Choose plant">🏭</button>
     <div id="planner"><div class="pl-head">📋 SHIFT PLANNER<button class="x" id="planx">×</button></div><div class="pl-body"></div></div>
     <div id="techchip">🔧 <b id="techstate">Idle</b><div id="techqueue"></div><div id="techbar"><div id="techfill"></div></div></div>
     <div id="joy"><div id="jnub"></div></div>
@@ -307,6 +335,13 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
   </div>
 
   <div id="sheet"></div>
+
+  <div id="plantpick">
+    <div class="pp-title">🏭 <span class="b">Retrofit Factory</span></div>
+    <div class="pp-sub">Choose a plant to run. Each plant keeps its own saved shift.</div>
+    <div class="pp-cards" id="ppcards"></div>
+    <button class="pp-close" id="ppclose" style="display:none">✕ Back to the floor</button>
+  </div>
 
   <div id="modal"><div class="card" id="modalcard"></div></div>
 </div>
@@ -450,7 +485,7 @@ let CHAIN = ['mixer','conveyor','oven','slicer','packager']; // serial value cha
    playable plant today; premium plants (the brewery pack) slot in here. */
 const PLANTS = {
   bakery: { id:'bakery', name:'Old Bakery Plant', tagline:'Six aging machines, one bread contract.',
-    free:true, machines:6, C:C, DEFS:DEFS, CHAIN:CHAIN, HALL:{w:30,d:18,h:6.2} },
+    free:true, machines:6, sign:'LINE 1 — BAKERY', C:C, DEFS:DEFS, CHAIN:CHAIN, HALL:{w:30,d:18,h:6.2} },
   // Premium — the sim/world land in the Ironline Brewery pack. Shown as a locked
   // "coming soon" card until then; selectPlant() refuses it while it has no C/DEFS.
   brewery: { id:'brewery', name:'Ironline Brewery & Bottling Works',
@@ -1243,18 +1278,28 @@ const TUT=[
  '<b>Wear is invisible until you look.</b> <span class="k">🔍 Inspect</span> ($25–60, no downtime) reveals which part is failing — then order a <span class="k">🔩 targeted fix</span> on just that part: cheaper and faster than a full service.',
  '<b>The compressor (front-left) is a trap.</b> Its moisture 💧 silently speeds up seal wear on the Mixer, Slicer AND Packager — one root cause, three symptoms. Visit it early.',
 ];
+// Premium pack gets its own tour (bigger plant, new failure modes). Numbers are
+// literals here because BREW_C isn't defined yet when this module loads.
+const TUT_BREW=[
+ '<b>Welcome to Ironline Brewery & Bottling Works.</b> A bigger plant: <b>12 machines</b> across a <b>6-week season</b>. Same core loop — <span class="k">🔍 Inspect</span> to reveal wear, then order a <span class="k">🔩 targeted fix</span>. <b>Time is paused</b> until you press <span class="k">▶</span>.',
+ '<b>Three utility buses feed the line.</b> The <b>steam boiler</b>, <b>glycol chiller</b> and <b>air compressor</b> (front-left column) power the brewing and packaging machines. Let a utility foul or fail and <i>every machine it feeds</i> slows at once.',
+ '<b>Two failure modes are new.</b> <b>Fouling / scale</b> accelerates its own wear the dirtier it gets — clean it early or it runs away. <b>Calibration drift</b> shows no downtime symptom: it silently scraps product until you inspect and re-calibrate.',
+ '<b>Scale your crew.</b> On the bigger plant you can <b>hire a second technician</b> to run planned jobs in parallel, and fit <b>condition sensors</b> that keep a part\'s wear visible without repeat inspections.',
+];
+function curTut(){ return (typeof CURPLANT!=='undefined'&&CURPLANT==='brewery')?TUT_BREW:TUT; }
 // One docked carousel card for the whole tour: Back / Next step through the
-// slides, dots show position, Skip dismisses the lot. tutStep>=TUT.length means
+// slides, dots show position, Skip dismisses the lot. tutStep>=len means
 // "seen/skipped" (stays hidden for the rest of day 1).
 function tutorialStep(){
   if(HEADLESS) return;
   const el=$('tut'); if(!el) return;
-  if(S.day!==1 || S.tutStep>=TUT.length){ el.style.display='none'; return; }
-  const body=$('tuttext'); body.innerHTML=TUT[S.tutStep];
-  let dots=''; for(let i=0;i<TUT.length;i++) dots+='<span class="tut-dot'+(i===S.tutStep?' on':'')+'"></span>';
+  const T=curTut();
+  if(S.day!==1 || S.tutStep>=T.length){ el.style.display='none'; return; }
+  const body=$('tuttext'); body.innerHTML=T[S.tutStep];
+  let dots=''; for(let i=0;i<T.length;i++) dots+='<span class="tut-dot'+(i===S.tutStep?' on':'')+'"></span>';
   $('tutdots').innerHTML=dots;
   $('tutback').disabled = S.tutStep===0;
-  const last = S.tutStep===TUT.length-1;
+  const last = S.tutStep===T.length-1;
   $('tutnext').textContent = last ? 'Got it ✓' : 'Next ›';
   el.style.display='block';
   // gentle slide-in on change. OPTS lives in g5 (loaded later): the first
@@ -1263,8 +1308,8 @@ function tutorialStep(){
   let reduce=false; try{ reduce=OPTS.reduceFx; }catch(e){}
   if(!reduce){ body.classList.remove('anim'); void body.offsetWidth; body.classList.add('anim'); }
 }
-function tutDismiss(){ S.tutStep=TUT.length; const el=$('tut'); if(el) el.style.display='none'; }
-$('tutnext').onclick=()=>{ if(S.tutStep>=TUT.length-1) tutDismiss(); else { S.tutStep++; tutorialStep(); } };
+function tutDismiss(){ S.tutStep=curTut().length; const el=$('tut'); if(el) el.style.display='none'; }
+$('tutnext').onclick=()=>{ if(S.tutStep>=curTut().length-1) tutDismiss(); else { S.tutStep++; tutorialStep(); } };
 $('tutback').onclick=()=>{ if(S.tutStep>0){ S.tutStep--; tutorialStep(); } };
 $('tutskip').onclick=tutDismiss;
 
@@ -1432,14 +1477,34 @@ function dotSprite(color,scale,additive){
 
 /* =============================== THE HALL =============================== */
 const HALL={w:30,d:18,h:6.2};
+function setPlantHall(h){ if(!h) return; HALL.w=h.w; HALL.d=h.d; HALL.h=h.h; }  // selectPlant() hook (g1)
 const OBST=[]; // {x,z,hw,hd} push-out AABBs
 function addObst(x,z,hw,hd){ OBST.push({x,z,hw,hd}); }
-let worldBuilt=false;
+let worldBuilt=false, _worldPlant=null;
+let WORLD_OBJS=[];   // everything ensureWorld() adds to the scene, so a plant switch can tear it all down
 const M3D={};   // id → {grp, paint[], lamp, smokeAt, anim refs...}
 let LIMITSPR=null, SUN=null, HEMI=null, CH=null, PLLIGHT=null, BNLIGHT=null;
 const PUFFS=[]; // live particles
+function _disposeObj(o){ o.traverse&&o.traverse(n=>{
+  if(n.geometry) try{ n.geometry.dispose(); }catch(e){}
+  if(n.material){ const ms=Array.isArray(n.material)?n.material:[n.material];
+    for(const m of ms){ try{ m.dispose(); }catch(e){} } } }); }
+// Rebuild the hall + machines for a different plant (the free bakery and the brewery
+// pack have different halls, machine sets and positions). Lights/character/particles
+// are torn down and rebuilt by ensureWorld() from the now-current DEFS/HALL.
+function rebuildWorld(){
+  if(!renderer) return;
+  for(const o of WORLD_OBJS){ scene.remove(o); _disposeObj(o); }
+  WORLD_OBJS=[];
+  for(const k in M3D) delete M3D[k];
+  OBST.length=0;
+  for(const p of PUFFS){ try{ scene.remove(p.spr); }catch(e){} } PUFFS.length=0;
+  LIMITSPR=SUN=HEMI=CH=PLLIGHT=BNLIGHT=null;
+  worldBuilt=false; ensureWorld();
+}
 function ensureWorld(){
-  if(worldBuilt||!renderer) return; worldBuilt=true;
+  if(worldBuilt||!renderer) return; worldBuilt=true; _worldPlant=(typeof CURPLANT!=='undefined'?CURPLANT:'bakery');
+  const _n0=scene.children.length;   // capture range so rebuildWorld() can remove exactly what we add
   // floor
   const floor=new THREE.Mesh(new THREE.PlaneGeometry(HALL.w,HALL.d),
     new THREE.MeshStandardMaterial({map:floorTex,roughness:0.92,metalness:0.04}));
@@ -1452,7 +1517,8 @@ function ensureWorld(){
     g.fillStyle='rgba(255,244,214,.85)';
     for(let i=0;i<7;i++){ g.fillRect(w*0.06+i*w*0.13, h*0.12, w*0.07, h*0.2); }
     g.fillStyle='rgba(230,235,240,.8)'; g.font='700 46px sans-serif';
-    g.fillText('LINE 1 — BAKERY', w*0.36, h-bh-24);
+    const sign=(typeof PLANTS!=='undefined'&&PLANTS[_worldPlant]&&PLANTS[_worldPlant].sign)||'LINE 1 — BAKERY';
+    g.textAlign='center'; g.fillText(sign, w*0.5, h-bh-24); g.textAlign='left';
   });
   const texS=wallTex(HALL.w,HALL.h,(g,w,h,bh)=>{ // front wall: roller door + EXIT
     const dx=fu(-3)* w, dw=fu(1)*w-dx, dy=h-bh- h*0.16, dh=h-dy;
@@ -1670,6 +1736,7 @@ function ensureWorld(){
   LIMITSPR.visible=false; scene.add(LIMITSPR);
   // the technician (you)
   CH=buildCharacter(); scene.add(CH.grp);
+  WORLD_OBJS=scene.children.slice(_n0);
 }
 
 /* =============================== MACHINES (3D) =============================== */
@@ -1795,6 +1862,26 @@ function buildMachine(d){
     R.anim.leakAt=new THREE.Vector3(-1.0,2.45,0);
     R.topY=2.5;
   }
+  if(g.children.length===0){   // no plant-specific builder (e.g. brewery pack) → generic vessel/skid from shape+size
+    const h=d.h||1.9;
+    if(d.shape==='tank'){
+      const r=Math.min(d.hw,d.hd)*0.9;
+      const tk=cyl(r,r,h,pM(),0,h*0.5+0.18,0,g,24); tk.castShadow=tk.receiveShadow=true;
+      const dome=new THREE.Mesh(new THREE.SphereGeometry(r,20,10,0,Math.PI*2,0,Math.PI*0.5),steelM);
+      dome.position.y=h+0.18; dome.castShadow=true; g.add(dome);
+      const cone=new THREE.Mesh(new THREE.ConeGeometry(r,0.55,24),pM()); cone.position.y=0.05; cone.rotation.x=Math.PI; g.add(cone);
+      const ring=new THREE.Mesh(new THREE.TorusGeometry(r,0.045,8,26),steelM); ring.position.y=h*0.62; ring.rotation.x=Math.PI/2; g.add(ring);
+      R.topY=h+r*0.5+0.2;
+    } else {
+      const body=box(d.hw*2,h,d.hd*2,pM(),0,h*0.5+0.1,0,g); body.castShadow=body.receiveShadow=true;
+      box(d.hw*2+0.12,0.12,d.hd*2+0.12,steelM,0,h+0.1,0,g);        // steel cap
+      const mot=cyl(0.2,0.2,0.4,darkM,d.hw*0.5,h+0.32,0,g,12); mot.rotation.z=Math.PI/2;
+      R.topY=h+0.35;
+    }
+    const scr=new THREE.Mesh(new THREE.PlaneGeometry(0.4,0.29),
+      new THREE.MeshStandardMaterial({map:screenTex,emissive:0xffffff,emissiveMap:screenTex,emissiveIntensity:0.55,roughness:0.4}));
+    scr.position.set(d.hw*0.45,1.12,d.hd+0.02); g.add(scr);
+  }
   const com=machineCommon(d,g);
   com.label.position.set(0,R.topY+0.55,0);
   com.lamp.position.set(0,R.topY+0.12,0);
@@ -1866,7 +1953,9 @@ function updatePuffs(dt,t){
 
 /* =============================== WALKING / INTERACTION =============================== */
 const WALK_SPEED=3.5;
-function buildFloor(){ if(HEADLESS) return; ensureWorld(); resetDynamics(); }   // called by newGame()
+function buildFloor(){ if(HEADLESS) return;   // called by newGame()
+  if(worldBuilt && _worldPlant!==CURPLANT) rebuildWorld(); else ensureWorld();
+  resetDynamics(); }
 function resetDynamics(){
   if(!CH) return;
   CH.p.set(7.5,0,1.2); CH.yaw=Math.PI; CH.phase=0; CH.lean=0; CH.prevYaw=CH.yaw;
@@ -2726,7 +2815,20 @@ function juiceFrame(dt,t){
    window.__sim never touches the player's real save.
    ============================================================================= */
 
-const SAVE_KEY='rf3d_save', SAVE_VER=2;
+const SAVE_PREFIX='rf3d_save_', SAVE_VER=3;
+const LEGACY_KEY='rf3d_save';                       // pre-v3: one shared save (bakery only)
+function saveKeyFor(plant){ return SAVE_PREFIX+(plant||'bakery'); }
+// v2→v3: the game grew a second plant, so one shared key became one key per plant.
+// Move any legacy single-plant save under its plant's key (defaulting to bakery).
+function migrateSaves(){
+  if(HEADLESS) return;
+  try{
+    const raw=localStorage.getItem(LEGACY_KEY); if(!raw) return;
+    const old=JSON.parse(raw); const plant=(old&&old.plant)||'bakery';
+    if(old&&old.s){ old.v=SAVE_VER; localStorage.setItem(saveKeyFor(plant), JSON.stringify(old)); }
+    localStorage.removeItem(LEGACY_KEY);
+  }catch(e){}
+}
 
 /* ---------- serialize the whole run to a plain, JSON-safe object ---------- */
 function serMachine(m){ return {
@@ -2752,8 +2854,9 @@ function serializeState(){
 }
 
 /* ---------- rebuild a run: fresh statics from DEFS, overlay saved dynamics ---------- */
+function saveOk(save){ return !!(save && (save.v===SAVE_VER||save.v===2) && save.s); }
 function applySave(save){
-  if(!save || save.v!==SAVE_VER || !save.s) return false;
+  if(!saveOk(save)) return false;
   try{
     newGame(save.s.seed, save.plant);   // fresh world/machines/PRNG for the saved plant, then overlay:
     _seed = (save.prng>>>0) || _seed;
@@ -2781,21 +2884,25 @@ function applySave(save){
   }catch(e){ return false; }
 }
 
-/* ---------- storage ---------- */
-function readSave(){ try{ return JSON.parse(localStorage.getItem(SAVE_KEY)||'null'); }catch(e){ return null; } }
-function hasResumableSave(){ const s=readSave(); return !!(s && s.v===SAVE_VER && s.s && !s.s.over); }
+/* ---------- storage (one key per plant: rf3d_save_<plantId>) ---------- */
+function curPlant(){ return (typeof CURPLANT!=='undefined'?CURPLANT:'bakery'); }
+function readSave(plant){ try{ return JSON.parse(localStorage.getItem(saveKeyFor(plant||curPlant()))||'null'); }catch(e){ return null; } }
+function hasResumableSave(plant){ const s=readSave(plant); return !!(saveOk(s) && !s.s.over); }
 let _lastSave=0;
+function pickerOpen(){ const pp=$('plantpick'); return !!(pp && pp.classList.contains('show')); }
 function saveGame(force){
   if(HEADLESS || !S || S.over) return;
+  if(pickerOpen()) return;        // the paused backdrop behind the picker isn't a real run — don't clobber saves
   const now=Date.now(); if(!force && now-_lastSave<2500) return; _lastSave=now;
   let snap=null;
-  try{ snap=serializeState(); if(snap) localStorage.setItem(SAVE_KEY, JSON.stringify(snap)); }catch(e){}
+  try{ snap=serializeState(); if(snap) localStorage.setItem(saveKeyFor(curPlant()), JSON.stringify(snap)); }catch(e){}
   if(snap && typeof cloudSyncSave==='function') cloudSyncSave(snap);   // PR B hook
 }
-function clearSave(){
+function clearSave(plant){
   if(HEADLESS) return;
-  try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
-  if(typeof cloudSyncClear==='function') cloudSyncClear();            // PR B hook
+  const p=plant||curPlant();
+  try{ localStorage.removeItem(saveKeyFor(p)); }catch(e){}
+  if(typeof cloudSyncClear==='function') cloudSyncClear(p);           // PR B hook
 }
 // autosave: on each day settle and every meaningful action, plus a forced save
 // whenever the player leaves the tab (the point of "continue where you stopped").
@@ -2874,17 +2981,82 @@ function enterResume(){ if(HEADLESS) return;
   const ps=$('preshift'); if(ps) ps.style.display='flex';
 }
 
-/* ---------- BOOT: resume the saved run, or start fresh ---------- */
-(function boot(){
-  const save=readSave();
-  if(save && save.v===SAVE_VER && save.s && !save.s.over && applySave(save)){
-    enterResume();
-  } else {
-    if(save) clearSave();            // finished/incompatible save → discard
-    newGame(); enterPreshift();
+/* ---------- plant select (title screen + in-game plant switcher) ---------- */
+// A plant is playable once its data tables are registered (the brewery pack fills
+// PLANTS.brewery in g8, which loads after this module — so the picker is rendered
+// from a deferred microtask, by which point every plant module has run).
+function plantPlayable(p){ return !!(p && p.C && p.DEFS && p.CHAIN); }
+function plantSeason(p){ try{ return p.C.N_WEEKS+' weeks × '+p.C.WEEK_LEN+' days'; }catch(e){ return ''; } }
+function renderPlantCards(){
+  const box=$('ppcards'); if(!box || typeof PLANTS==='undefined') return;
+  let html='';
+  for(const id in PLANTS){ const p=PLANTS[id];
+    const playable=plantPlayable(p), locked=!playable;
+    const badge = p.free ? '<div class="pp-badge free">Free</div>'
+                : '<div class="pp-badge premium">Premium pack</div>';
+    const meta = playable ? (p.machines+' machines · '+plantSeason(p)) : 'Coming soon';
+    let resume='', actions='';
+    const sv = playable ? readSave(id) : null;
+    if(sv && saveOk(sv) && !sv.s.over){
+      const wk=sv.s.week||1, cash=(typeof money==='function')?money(sv.s.cash):('$'+(sv.s.cash|0));
+      resume='<div class="pp-resume">🔁 Saved shift — Week '+wk+' · '+cash+'</div>';
+      actions='<button class="pp-btn go" data-plant="'+id+'" data-mode="continue">▶ Continue</button>'
+             +'<button class="pp-btn" data-plant="'+id+'" data-mode="new">New game</button>';
+    } else if(playable){
+      actions='<button class="pp-btn go" data-plant="'+id+'" data-mode="new">▶ '+(p.free?'Play':'Start pack')+'</button>';
+    } else {
+      actions='<button class="pp-btn" disabled>Coming soon</button>';
+    }
+    html+='<div class="pp-card'+(locked?' locked':'')+'">'+badge
+      +'<div class="pp-name">'+(p.name||id)+'</div>'
+      +'<div class="pp-tag">'+(p.tagline||'')+'</div>'
+      +'<div class="pp-meta">'+meta+'</div>'+resume
+      +'<div class="pp-actions">'+actions+'</div></div>';
   }
-  if(typeof requestAnimationFrame!=='undefined') requestAnimationFrame(frame);
-})();
+  box.innerHTML=html;
+  box.querySelectorAll('.pp-btn[data-plant]').forEach(b=>b.onclick=()=>startPlant(b.dataset.plant, b.dataset.mode));
+}
+function enterPlantPick(canClose){
+  if(HEADLESS) return;
+  setSpeed(0);
+  renderPlantCards();
+  const cl=$('ppclose'); if(cl){ cl.style.display=canClose?'block':'none'; cl.onclick=()=>{ $('plantpick').classList.remove('show'); }; }
+  const ps=$('preshift'); if(ps) ps.style.display='none';
+  const tut=$('tut'); if(tut) tut.style.display='none';
+  $('plantpick').classList.add('show');
+}
+function openPlantPick(){ if(HEADLESS) return; saveGame(true); enterPlantPick(true); }
+function startPlant(id, mode){
+  if(HEADLESS) return;
+  $('plantpick').classList.remove('show');
+  if(mode==='continue'){
+    const sv=readSave(id);
+    if(sv && applySave(sv)){ enterResume(); return; }
+  }
+  clearSave(id);                 // start clean for a New game
+  newGame(undefined, id);        // random seed, chosen plant
+  enterPreshift();
+}
+(function wireHome(){ const b=$('homebtn'); if(b) b.onclick=openPlantPick; })();
+
+/* ---------- BOOT: migrate old saves, then let the player choose a plant ---------- */
+// Deferred to a microtask so every plant module (g7 cloud, g8 brewery) has run and
+// registered before the picker is rendered; a bakery world loads underneath as the
+// paused backdrop so the 3D floor/HUD render behind the overlay.
+function boot(){
+  if(HEADLESS) return;
+  migrateSaves();
+  newGame();                     // bakery backdrop, paused
+  const forced=(()=>{ try{ return localStorage.getItem('rf3d_plant'); }catch(e){ return null; } })();
+  if(forced && typeof PLANTS!=='undefined' && plantPlayable(PLANTS[forced])){
+    startPlant(forced, hasResumableSave(forced)?'continue':'new');
+  } else {
+    enterPreshift();             // ready underneath; picker gates play
+    enterPlantPick(false);
+  }
+}
+if(typeof requestAnimationFrame!=='undefined') requestAnimationFrame(frame);
+if(typeof queueMicrotask==='function') queueMicrotask(boot); else setTimeout(boot,0);
 
 /* =============================================================================
    CLOUD SAVES (g7) — sign in with email to save your run to the cloud and pick
@@ -2945,10 +3117,12 @@ async function cloudVerifyCode(email, code){
   }catch(e){ return false; }
 }
 
-/* ---------- cloud saves (one row per user, protected by RLS) ---------- */
-async function cloudPull(){
+/* ---------- cloud saves (one row per user per plant, protected by RLS) ---------- */
+function _cloudPlant(snap){ return (snap&&snap.plant)||(typeof curPlant==='function'?curPlant():'bakery'); }
+async function cloudPull(plant){
   if(!CLOUD_ON||!await _ensureToken()) return null;
-  try{ const r=await fetch(SB_URL+'/rest/v1/saves?select=data,updated_at',{headers:_hdr(true)});
+  const p=plant||(typeof curPlant==='function'?curPlant():'bakery');
+  try{ const r=await fetch(SB_URL+'/rest/v1/saves?select=data,updated_at,plant&plant=eq.'+encodeURIComponent(p),{headers:_hdr(true)});
     if(!r.ok) return null; const rows=await r.json();
     return (rows&&rows[0])?rows[0]:null; }catch(e){ return null; }
 }
@@ -2956,12 +3130,13 @@ async function cloudPush(snap){
   if(!CLOUD_ON||!snap||!await _ensureToken()) return false;
   try{ const r=await fetch(SB_URL+'/rest/v1/saves',{method:'POST',
     headers:Object.assign(_hdr(true),{Prefer:'resolution=merge-duplicates,return=minimal'}),
-    body:JSON.stringify([{user_id:_sess.user.id, data:snap, updated_at:new Date().toISOString()}])});
+    body:JSON.stringify([{user_id:_sess.user.id, plant:_cloudPlant(snap), data:snap, updated_at:new Date().toISOString()}])});
     return r.ok; }catch(e){ return false; }
 }
-async function cloudDelete(){
+async function cloudDelete(plant){
   if(!CLOUD_ON||!await _ensureToken()) return false;
-  try{ const r=await fetch(SB_URL+'/rest/v1/saves?user_id=eq.'+encodeURIComponent(_sess.user.id),
+  const p=plant||(typeof curPlant==='function'?curPlant():'bakery');
+  try{ const r=await fetch(SB_URL+'/rest/v1/saves?user_id=eq.'+encodeURIComponent(_sess.user.id)+'&plant=eq.'+encodeURIComponent(p),
     {method:'DELETE',headers:_hdr(true)}); return r.ok; }catch(e){ return false; }
 }
 
@@ -2972,16 +3147,19 @@ function cloudSyncSave(snap){                 // debounced background push
   const now=Date.now(); if(now-_cloudLast<12000) return; _cloudLast=now;
   cloudPush(snap);
 }
-function cloudSyncClear(){ if(CLOUD_ON&&cloudSignedIn()) cloudDelete(); }
+function cloudSyncClear(plant){ if(CLOUD_ON&&cloudSignedIn()) cloudDelete(plant); }
 
 /* ---------- reconcile local <-> cloud on sign-in (latest updated wins) ---------- */
+// Reconciles the plant currently on the floor; other plants sync lazily as they
+// are played (their next saveGame/openAccount push).
 async function cloudReconcile(){
-  const cloud=await cloudPull();
-  const local=readSave();
+  const plant=(typeof curPlant==='function'?curPlant():'bakery');
+  const cloud=await cloudPull(plant);
+  const local=readSave(plant);
   const localTs=local?local.ts:0;
   const cloudTs=(cloud&&cloud.updated_at)?Date.parse(cloud.updated_at):0;
-  if(cloud&&cloud.data&&!cloud.data.s.over&&cloudTs>localTs){
-    try{ localStorage.setItem(SAVE_KEY, JSON.stringify(cloud.data)); }catch(e){}
+  if(cloud&&cloud.data&&cloud.data.s&&!cloud.data.s.over&&cloudTs>localTs){
+    try{ localStorage.setItem(saveKeyFor(plant), JSON.stringify(cloud.data)); }catch(e){}
     if(!HEADLESS && applySave(cloud.data)){ enterResume(); toast('☁ Loaded your cloud save'); }
     return 'cloud';
   }
@@ -3158,6 +3336,11 @@ const BREW_DEFS = [
 // neglect and blind calendar servicing fall behind. Baked here as scale factors
 // applied once to the authored k / initial-wear values above.
 for(const _d of BREW_DEFS) for(const _c of _d.ch){ _c.k*=0.55; _c.w*=0.45; }
+// 3D shape hints for the generic world builder (g3): upright vessels render as
+// tanks, everything else as a skid/box. Heights tuned so tall fermenters read.
+const _BREW_TANKS={boiler:2.7, chiller:2.4, brewhouse:2.8, ferma:3.5, fermb:3.5, bright:2.9};
+for(const _d of BREW_DEFS){ if(_BREW_TANKS[_d.id]){ _d.shape='tank'; _d.h=_BREW_TANKS[_d.id]; }
+  else { _d.shape='box'; _d.h=(_d.id==='pasteur'?1.5:(_d.id==='mill'?2.0:1.8)); } }
 const BREW_CHAIN = ['mill','brewhouse','ferma','fermb','bright','filler','pasteur','labeler','casepack'];
 const BREW_HALL  = {w:40, d:22, h:7.0};   // taller/wider than the bakery (world slice fills it out)
 
@@ -3183,7 +3366,7 @@ function brewBusFactor(m){
 /* ---------- register the plant (replaces the coming-soon stub from g1) ---------- */
 PLANTS.brewery = { id:'brewery', name:'Ironline Brewery & Bottling Works',
   tagline:'12 machines · steam, glycol & air buses · fouling, calibration & (soon) hygiene.',
-  premium:true, machines:12,
+  premium:true, machines:12, sign:'IRONLINE BREWING CO.',
   C:BREW_C, DEFS:BREW_DEFS, CHAIN:BREW_CHAIN, HALL:BREW_HALL };
 
 </script>

@@ -89,21 +89,26 @@ visible — you know when you last cleaned — and does two things:
    bills $320 sanitation, and pins the vessel at degraded quality until washed.
 
 **CIP (clean-in-place)** is a planned crew job: $130 + ~50 min of downtime,
-resets soil and clears contamination. The cadence that emerges (~every 3–4
-days per vessel, staggered) is the brewer's rhythm the pack is named for.
+resets soil and clears contamination. Opening a **loaded fermenter** for a
+wash sacrifices the batch inside — so the skilled play is timing: wash a
+dirty tank the moment its next fill *starts* (losing only a splash of wort),
+and jump on contamination immediately. That timing rhythm is the brewer's
+discipline the pack is named for.
 
-Verified balance (10-seed policy matrix, `__matrix(seeds,'brewery')`):
+Verified balance (10-seed policy matrix, `__matrix(seeds,'brewery')`, with
+the batch pipeline live):
 
-| policy | wins | finishes | median cash | contaminations/season |
+| policy | wins | finishes | median cash | worst case |
 |---|---|---|---|---|
-| predictive + automation + crew + **CIP** | **7/10** | 7/10 | $31,003 | 2 |
-| blind calendar services, **no hygiene** | 0/10 | 5/10 | $8,154 | 6 |
-| inspect-only | 0/10 | 0/10 | — | 5–6 |
-| run-to-failure | 0/10 | 0/10 | — | 6 |
+| predictive + automation + crew + **timed CIP** | **6/10** | **8/10** | $28,476 | **+$18,196** |
+| blind calendar services, **no hygiene** | 0/10 | 0/10 — dead ~day 10 | $8,295 | $3,540 |
+| inspect-only | 0/10 | 0/10 — dead ~day 13 | $16,910 | $9,109 |
+| run-to-failure | 0/10 | 0/10 — dead ~day 13 | $16,487 | $10,028 |
 
-The designed reading: mechanical diligence alone keeps you *alive*; only
-mechanical diligence **plus hygiene** wins. Skip hygiene = contamination
-roulette.
+The designed reading is stronger than a revenue penalty: because a
+contaminated fermenter **refuses new wort until washed**, ignoring hygiene
+strangles the plant's supply within two weeks. Mechanical diligence alone no
+longer even survives. Skip hygiene = contamination roulette.
 
 ## 5 · Crew & instruments (attention economy)
 
@@ -143,16 +148,35 @@ The pack ships inside the same single HTML file (it's data + one module,
 Per-plant saves (`rf3d_save_brewery`, cloud rows keyed `(user_id, plant)`)
 keep bakery and brewery runs independent.
 
-## 8 · Deliberately not built (yet)
+## 8 · Batch fermentation & the buffer tank
 
-- **Batch fermentation** — fermenters as discrete multi-day batches (with a
-  buffer tank decoupling brewhouse from filler) instead of continuous flow.
-  The largest remaining sim idea; adds a planning layer.
+The brewery is not a straight pipe. Flow runs in **batches**:
+
+- The brewhouse fills **one fermenter at a time** (480-case batches, capped by
+  the tank's own degraded rate — a fouled jacket literally slows the fill).
+- A filled tank **ferments** for 100 min; a breakdown mid-ferment *pauses* the
+  batch (downtime stretches the schedule rather than destroying work).
+- A finished batch **drains through the bright tank** — the transfer pump runs
+  ~3× line rate, but the bright tank's health gates it.
+- The bright tank is a **420-case buffer** the packaging line ships from, so
+  upstream hiccups don't instantly stop shipping — and a dry buffer is the
+  signature "starving line" failure the bottleneck logic surfaces.
+
+Batch state couples into hygiene: **contamination on a loaded tank dumps the
+whole batch**, and the tank then refuses new wort until CIP'd. The fermenter
+pair's healthy steady-state (~160/hr) matches the packaging line, so one tank
+down halves the plant — the buffer buys you the repair window. The day-1
+plant starts *mid-production* (one batch fermenting, one filling, buffer part
+full) so week 1 ships from the first minute. All batch/buffer state
+serializes through saves and is deterministic under the seeded PRNG.
+
+## 9 · Deliberately not built (yet)
+
 - Boil-over / glycol-freeze **cascade events** between coupled utilities.
 - A **filler carousel / catwalk** detail pass on the 3D hall.
 - Pack-specific **achievements/grades** beyond the shared end screen.
 
-## 9 · Regression contract
+## 10 · Regression contract
 
 Everything above must hold while the free bakery stays **byte-identical**:
 `__sim(null,1234567,'bakery')` → cash 9768 / 8 days / 3 strikes;

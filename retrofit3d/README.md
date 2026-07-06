@@ -43,10 +43,12 @@ core game described below. The **Ironline Brewery & Bottling Works** is the
 first *premium plant pack*: 12 machines across a 6-week season, three coupled
 utility buses (steam / glycol / air — follow the colour-coded overhead pipes),
 two new failure types (accelerating **fouling** and silent **calibration
-drift**), a hireable **apprentice** and per-part **condition sensors**, and the
+drift**), a hireable **apprentice** and per-part **condition sensors**,
+**batch fermentation** (one tank fills at a time, batches ferment and drain
+through a bright-tank *buffer* the packaging line ships from), and the
 signature brewer's mechanic — **hygiene**: product-contact vessels build soil
-that drags your beer's *quality and price*, and skipping the 🧼 CIP wash turns
-into contamination roulette. Each plant keeps its own on-device (and cloud)
+that drags your beer's *quality and price*, contamination dumps the batch in
+the tank, and skipping the 🧼 CIP wash turns into contamination roulette. Each plant keeps its own on-device (and cloud)
 save. Design details and the verified balance matrix live in
 [`GDD-IRONLINE.md`](./GDD-IRONLINE.md); until a store is wired up the pack is
 open as a preview (the redeem-key gate is built — see

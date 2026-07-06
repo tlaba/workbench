@@ -535,6 +535,7 @@ function newGame(seed, plantId){
     airP:C.P_NOM, moisture:0, airFactor:1, T:0, bottleneck:'oven',
     speed:1, sel:null, tutStep:0, walk:null, msgs:[] };
   applyWeek(1);
+  if(CURPLANT==='brewery' && typeof initBrewFlow==='function') initBrewFlow();  // seed the batch pipeline
   buildFloor(); selectNone(); updateHUD(); renderTech(); tutorialStep();
 }
 
@@ -772,6 +773,12 @@ function beginWork(j,m,w){ w=w||tech;
   if(w.appr) w.timer=Math.round(w.timer*(C.APPRENTICE_SLOW||1.4));  // apprentice is slower
   w.total=w.timer;
   if(j.type==='repair'||j.type==='replace') m.broken=false; // planned service takes it down cleanly
+  // opening a loaded fermenter for a wash sacrifices whatever's in it — the
+  // player's tradeoff between hygiene and the batch in flight
+  if(j.type==='cip' && m.batch && m.batch.phase!=='idle'){
+    m.batch.phase='idle'; m.batch.fill=0; m.batch.t=0;
+    alert('🧼 '+m.code+' opened for CIP — the batch in the tank is sacrificed.','warn');
+  }
   renderTech();
 }
 function finishJob(j,m,w){ w=w||tech;
@@ -818,7 +825,9 @@ function finishJob(j,m,w){ w=w||tech;
 /* =============================== TICK LOOP =============================== */
 function stepTick(){
   if(CURPLANT==='brewery' && typeof solveBrewBuses==='function') solveBrewBuses(); else solveAir();
-  solveThroughput(); advanceWear(); rollBreakdowns(); advanceTech();
+  // the brewery flows in batches through a buffer (g8); everything else is a straight pipe
+  if(CURPLANT==='brewery' && typeof solveBrewFlow==='function') solveBrewFlow(); else solveThroughput();
+  advanceWear(); rollBreakdowns(); advanceTech();
   // condition sensors keep their channel continuously revealed (vs automation's
   // once-a-morning refresh). No-op on the bakery (no channel carries a sensor).
   for(const _id in MACH){ const _m=MACH[_id]; for(const c of _m.ch) if(c.sensor) c.reveal=c.w; }
@@ -845,7 +854,9 @@ function stepTick(){
       // forces sanitation until you run a CIP.
       if(running && !m.contam && rnd() < (C.CONTAM_K||0.02)*m.soil*m.soil*m.soil){
         m.contam=true; S.contamToday++; S.stats.contam=(S.stats.contam||0)+1;
-        S.produced=Math.max(0, S.produced-(C.CONTAM_DUMP||120));
+        // a loaded fermenter loses its whole batch; elsewhere the day's WIP takes the hit
+        if(m.batch && m.batch.fill>0){ m.batch.fill=0; m.batch.phase='idle'; m.batch.t=0; }
+        else S.produced=Math.max(0, S.produced-(C.CONTAM_DUMP||120));
         S.cash -= (C.CONTAM_CLEAN||300);
         alert('☣ '+m.code+' — contamination detected. Batch dumped; CIP required.','bad');
         GameEvents.emit('contamination',{m:m});
@@ -1104,6 +1115,27 @@ function openSheet(id){
         : (m.soil>0.5?'<div class="hidden-note">Soil is dulling product quality (price). CIP resets it before contamination sets in.</div>':''))+
       '</div>';
   }
+  // batch pipeline state: fermenters show their batch; the bright tank its buffer
+  if(m.batch){
+    const b=m.batch, cap=m.fermCap||480;
+    const ph = b.phase==='fill'?('Filling — '+Math.round(b.fill)+' / '+cap+' cases of wort')
+             : b.phase==='ferment'?('Fermenting — '+Math.ceil(b.t)+'m to go'+(m.broken?' (paused — tank is down)':''))
+             : b.phase==='drain'?('Draining to bright tank — '+Math.round(b.fill)+' left')
+             : 'Idle — awaiting wort';
+    const pct = b.phase==='ferment'? Math.round((1-b.t/(m.fermMins||150))*100) : Math.round((b.fill/cap)*100);
+    hyg+='<div class="cond"><h4>Batch</h4>'+
+      '<div class="chan"><span class="nm">'+ph+'</span>'+
+      '<span class="bar"><i style="width:'+pct+'%;background:'+(b.phase==='idle'?'#2b3a4a':'var(--blue)')+'"></i></span>'+
+      '<span class="pf">'+pct+'%</span></div>'+
+      '<div class="hidden-note">One tank fills at a time; a breakdown pauses the batch, contamination dumps it. A contaminated tank refuses new wort until washed — and a CIP on a loaded tank sacrifices the batch.</div></div>';
+  } else if(m.bufCap){
+    const lv=Math.round(S.buffer||0), pct=Math.round(100*lv/m.bufCap);
+    hyg+='<div class="cond"><h4>Buffer</h4>'+
+      '<div class="chan"><span class="nm">Bright beer on hand — '+lv+' / '+m.bufCap+' cases</span>'+
+      '<span class="bar"><i style="width:'+pct+'%;background:'+(pct<15?'var(--red)':pct<40?'var(--amber)':'var(--green)')+'"></i></span>'+
+      '<span class="pf">'+pct+'%</span></div>'+
+      '<div class="hidden-note">Packaging ships from this tank — it smooths upstream hiccups. Dry buffer = starving line.</div></div>';
+  }
   const disB = m.broken;
   // honest previews from observable numbers only (rate/cap shown in chips, revealed wear)
   const isBn=(id===S.bottleneck);
@@ -1138,10 +1170,11 @@ function openSheet(id){
     ? offAct(label,Q,desc,'Already queued — you\'re on it. Check the job strip above.')
     : act(label,cost,desc,fn,id,cls);
   const cipHrs=((C.CIP_MINS||50)/60).toFixed(1);
+  const liveBatch = m.batch && m.batch.phase!=='idle';
   const cipBtn = (m.soil!=null && !m.broken)
     ? A('🧼 Clean (CIP)','$'+(C.CIP_COST||150),
-        'Wash cycle — resets soil'+(m.contam?' and clears contamination':'')+'.'+
-        PV('⏱ ~'+cipHrs+'h down · '+(m.contam?'stops spoiling every batch':(m.soil>0.6?'restores product quality':'keeps quality high')), m.contam?'good':(m.soil>0.6?'warn':'dim')),'actCIP','cip','')
+        'Wash cycle — resets soil'+(m.contam?' and clears contamination':'')+(liveBatch?'. <b>Opens the tank: the live batch is sacrificed.</b>':'.')+
+        PV('⏱ ~'+cipHrs+'h down · '+(m.contam?'stops spoiling every batch':(m.soil>0.6?'restores product quality':'keeps quality high')), m.contam?'good':(m.soil>0.6?'warn':'dim')),'actCIP','cip',liveBatch?'danger':'')
     :'';
   let actsHtml;
   if(near){
@@ -2685,18 +2718,25 @@ window.__brewPolicies={
   'blind-calendar': ()=>{ const rot=[['boiler','filler'],['chiller','pasteur'],['aircomp','brewhouse'],['mill','ferma'],['bright','fermb'],['labeler','casepack']];
     return (day,tick,S,MACH)=>{ if(tick!==5)return; (rot[(day-1)%rot.length]||[]).forEach(id=>{ if(!MACH[id].broken) actRepair(id); }); }; },
   'predictive+auto+crew': ()=>{ const plan=['aircomp','boiler','chiller','filler','pasteur','brewhouse','ferma','fermb','bright','casepack']; let i=0;
-    return (day,tick,S,MACH)=>{ if(tick!==5)return;
+    return (day,tick,S,MACH)=>{
+      // hygiene reflex runs every tick — a technician on the floor washes a dirty
+      // fermenter the moment its fill starts (sacrificing only a splash of wort)
+      // and jumps on any contamination; flow-through vessels at a daily threshold.
+      const hyg=[]; for(const id of _BCHAIN){ const m=MACH[id];
+        if(m.soil==null || m.broken) continue;
+        const isFerm=!!m.batch;
+        const fermWindow = isFerm && m.soil>0.5 && (m.batch.phase==='idle' || (m.batch.phase==='fill' && m.batch.fill<80));
+        if(m.contam || (isFerm ? fermWindow : (tick===5 && m.soil>0.4))) hyg.push([m.contam?2:m.soil,id]); }
+      hyg.sort((a,b)=>b[0]-a[0]);
+      for(let k=0;k<Math.min(3,hyg.length);k++){ const id=hyg[k][1];
+        if(!tech.queue.some(j=>j.mid===id&&j.type==='cip')) actCIP(id); }
+      if(tick!==5)return;   // the rest is the daily planning round
       if(day===1){ actHire(); actSensor('boiler','scale'); actSensor('chiller','condenser'); actSensor('pasteur','hexch'); actSensor('filler','fillvalve'); }
       if(i<plan.length && S.cash>C.AUTOMATE_COST+2200){ const id=plan[i++]; if(!MACH[id].automated&&!MACH[id].broken) actAutomate(id); }
       const cand=[]; for(const id of _BCHAIN.concat(_BUTIL)){ const m=MACH[id]; if(m.broken)continue;
         for(const c of m.ch){ const rv=c.reveal!=null?c.reveal:c.w; if(rv>0.4) cand.push([rv,id,c.id]); } }
       cand.sort((a,b)=>b[0]-a[0]); const used=new Set(); let n=0;
       for(const[w,id,cid]of cand){ if(n>=6)break; if(used.has(id))continue; used.add(id); actFix(id,cid); n++; }
-      // hygiene: CIP the dirtiest product-contact vessels before they contaminate
-      const hyg=[]; for(const id of _BCHAIN){ const m=MACH[id];
-        if(m.soil!=null && !m.broken && (m.contam||m.soil>0.4)) hyg.push([m.contam?2:m.soil,id]); }
-      hyg.sort((a,b)=>b[0]-a[0]);
-      for(let k=0;k<Math.min(3,hyg.length);k++) actCIP(hyg[k][1]);
       if(day>=18 && MACH[S.bottleneck] && MACH[S.bottleneck].up<1.5 && S.cash>C.UPGRADE_COST+3000) actUpgrade(S.bottleneck); }; },
 };
 window.__matrix=function(seeds, plant){
@@ -2993,6 +3033,7 @@ function serMachine(m){ return {
   up:m.up, u:m.u, automated:!!m.automated, broken:!!m.broken, brokenChan:m.brokenChan||null,
   downMins:m.downMins||0, awaitDelivery:m.awaitDelivery||0, stocked:!!m.stocked,
   rushed:!!m.rushed, nursed:!!m.nursed, replaced:!!m.replaced, soil:m.soil, contam:m.contam,
+  batch:m.batch?{phase:m.batch.phase, fill:m.batch.fill, t:m.batch.t}:undefined,
   ch:m.ch.map(c=>({w:c.w, reveal:c.reveal, revealHazard:c.revealHazard, sensor:!!c.sensor})) }; }
 function serWorker(w){ return w?{busy:w.busy, phase:w.phase, timer:w.timer, total:w.total,
   minsToday:w.minsToday, atPrev:w.atPrev, job:w.job, appr:!!w.appr}:null; }
@@ -3003,7 +3044,7 @@ function serializeState(){
   const s={};
   for(const k of ['cash','day','week','tick','strikes','contractLive','over','won','seed','stats',
     'produced','energyToday','downMinToday','scrapWipMin','qWeighted','qBase','contamToday','dayQuality',
-    'airP','moisture','airFactor','T','bottleneck','tutStep']) s[k]=S[k];
+    'buffer','airP','moisture','airFactor','T','bottleneck','tutStep']) s[k]=S[k];
   const t={busy:tech.busy, phase:tech.phase, timer:tech.timer, total:tech.total,
     minsToday:tech.minsToday, atPrev:tech.atPrev, job:tech.job, queue:tech.queue};
   const ch=(typeof CH!=='undefined'&&CH)?{x:CH.p.x, z:CH.p.z, yaw:CH.yaw}:null;
@@ -3025,6 +3066,7 @@ function applySave(save){
       m.downMins=sm.downMins; m.awaitDelivery=sm.awaitDelivery; m.stocked=sm.stocked;
       m.rushed=sm.rushed; m.nursed=sm.nursed; m.replaced=sm.replaced;
       if(sm.soil!=null){ m.soil=sm.soil; m.contam=!!sm.contam; }
+      if(sm.batch && m.batch) m.batch={phase:sm.batch.phase, fill:sm.batch.fill, t:sm.batch.t};
       m.ch.forEach((c,i)=>{ const sc=sm.ch[i]; if(sc){ c.w=sc.w; c.reveal=sc.reveal; c.revealHazard=sc.revealHazard; c.sensor=!!sc.sensor; } });
     }
     const t=save.tech||{};
@@ -3462,10 +3504,10 @@ function openRedeem(plant){
    PREMIUM PLANT — Ironline Brewery & Bottling Works (g8).
    A bigger, deeper plant: 12 machines, two new failure types (FOUL fouling/scale,
    CAL calibration drift), three coupled utility buses (steam, glycol, air), a second
-   technician + per-part condition sensors, and a hygiene→contamination→quality→price
+   technician + per-part condition sensors, a hygiene→contamination→quality→price
    axis (product-contact vessels accrue soil; CIP resets it; skip it and contamination
-   dumps batches and drops your price). Batch fermentation + the buffer tank are still
-   to come. All bakery-safe: nothing here runs for the free bakery.
+   dumps batches and drops your price), and BATCH fermentation through a buffer tank
+   (see solveBrewFlow below). All bakery-safe: nothing here runs for the free bakery.
    ============================================================================= */
 
 const BREW_C = {
@@ -3607,6 +3649,79 @@ function brewBusFactor(m){
                               : b==='glycol'?(S.glycolF==null?1:S.glycolF)
                               : b==='air'?(S.airF==null?1:S.airF) : 1);
   return f;
+}
+
+/* ---------- batch fermentation + buffer tank ----------
+   The brewery is not a straight pipe. The brewhouse fills a fermenter (one at a
+   time), the batch ferments for a fixed stretch, then drains through the bright
+   tank — a BUFFER — that the packaging line ships from. Upstream trouble doesn't
+   stop shipping immediately (the buffer smooths it); a fermenter breakdown pauses
+   its batch; contamination on a loaded fermenter dumps the whole batch (g1).
+   Replaces solveThroughput() on the brewery only. */
+const BREW_UP=['mill','brewhouse'], BREW_DOWN=['filler','pasteur','labeler','casepack'];
+for(const _d of BREW_DEFS){
+  if(_d.id==='ferma'||_d.id==='fermb'){ _d.ferm=true; _d.fermCap=480; _d.fermMins=100; }
+  if(_d.id==='bright') _d.bufCap=420;
+}
+// the plant was running before you arrived: one batch mid-ferment, one filling,
+// and beer already in the bright tank — so day 1 ships from the first minute.
+function initBrewFlow(){
+  for(const id of ['ferma','fermb']) MACH[id].batch={phase:'idle', fill:0, t:0};
+  MACH.ferma.batch={phase:'ferment', fill:MACH.ferma.fermCap, t:60};
+  MACH.fermb.batch={phase:'fill', fill:200, t:0};
+  S.buffer=350;
+}
+function _capRate(m){ return m.broken?0 : m.effRate*brewBusFactor(m)*(m.nursed?0.55:1); }
+function solveBrewFlow(){
+  for(const id in MACH){ const m=MACH[id]; m.effRate=effRate(m); m.rate=_capRate(m); }
+  const U=Math.min(MACH.mill.rate, MACH.brewhouse.rate);
+  const D=Math.min(MACH.filler.rate, MACH.pasteur.rate, MACH.labeler.rate, MACH.casepack.rate);
+  const bright=MACH.bright, BUF=bright.bufCap||420;
+  if(S.buffer==null) S.buffer=0;
+  // one fermenter fills at a time; a healthy idle tank steps up when none is filling
+  let filling=null;
+  for(const id of ['ferma','fermb']) if(MACH[id].batch.phase==='fill'){ filling=MACH[id]; break; }
+  // a contaminated tank refuses new wort — it sits idle (the CIP window) until washed
+  if(!filling) for(const id of ['ferma','fermb']){ const m=MACH[id];
+    if(m.batch.phase==='idle' && !m.broken && !m.contam){ m.batch.phase='fill'; filling=m; break; } }
+  let upFlow=0;
+  if(filling && !filling.broken){
+    upFlow=Math.min(U, filling.rate)/60;                    // wort/min into the tank
+    filling.batch.fill+=upFlow;
+    if(filling.batch.fill>=filling.fermCap){ filling.batch.fill=filling.fermCap;
+      filling.batch.phase='ferment'; filling.batch.t=filling.fermMins; }
+  }
+  for(const id of ['ferma','fermb']){ const m=MACH[id], b=m.batch;
+    if(b.phase==='ferment'){ if(!m.broken){ b.t--; if(b.t<=0) b.phase='drain'; } }  // a down tank pauses its batch
+    else if(b.phase==='drain'){
+      // transfer pump runs ~3× line rate; the bright tank's health still gates it
+      const dr=Math.min(bright.rate*3/60, b.fill, Math.max(0,BUF-S.buffer));
+      b.fill-=dr; S.buffer+=dr;
+      if(b.fill<=0.01){ b.fill=0; b.phase='idle'; }
+    }
+  }
+  const ship=Math.min(D/60, S.buffer);                       // packaging ships from the buffer
+  S.buffer-=ship;
+  const T=ship*60;
+  // bottleneck: buffer dry → the supply side is the limit; otherwise packaging is
+  let bn, worst=Infinity;
+  if(S.buffer<1 && T<D-1){
+    for(const id of BREW_UP.concat(['ferma','fermb','bright'])){ const m=MACH[id];
+      if(m.rate<worst){ worst=m.rate; bn=id; } }
+  } else {
+    for(const id of BREW_DOWN){ const m=MACH[id]; if(m.rate<worst){ worst=m.rate; bn=id; } }
+  }
+  const prevBn=S.bottleneck; S.T=T; S.bottleneck=bn;
+  if(bn!==prevBn) GameEvents.emit('bottleneckChanged',{from:prevBn,to:bn});
+  // utilization (wear driver) + displayed/animated rate = actual flow
+  for(const id in MACH){ const m=MACH[id];
+    if(m.utility){ m.u=0.8; continue; }
+    if(m.batch){ const active=m.batch.phase!=='idle';
+      m.u=active?1:0.15; m.rate=(active&&!m.broken)?m.rate:0; continue; }
+    if(id==='mill'||id==='brewhouse'){ m.u=clamp((upFlow*60)/Math.max(1,m.effRate),0.1,1); m.rate=upFlow*60; continue; }
+    if(id==='bright'){ m.u=0.3+0.4*(S.buffer/BUF); m.rate=m.rate*(S.buffer>1?1:0.2); continue; }
+    m.u=clamp(T/Math.max(1,m.effRate),0,1); m.rate=T;        // packaging line runs at ship rate
+  }
 }
 
 /* ---------- register the plant (replaces the coming-soon stub from g1) ---------- */

@@ -14,8 +14,9 @@ cloud button just says "not configured" and the game stays local-only.
 ## What you get
 
 - **Email sign-in** — enter your email, get a one-time code, you're in. No passwords.
-- **Cross-device saves** — one save row per user, pushed automatically as you play
-  and pulled when you sign in. Newer save wins if both sides changed.
+- **Cross-device saves** — one save row per user **per plant** (the free bakery and
+  the Ironline Brewery pack keep separate runs), pushed automatically as you play and
+  pulled when you sign in. Newer save wins if both sides changed.
 - **Private by design** — [row-level security](./supabase-setup.sql) means a
   signed-in player can only ever read/write their own save. The key baked into the
   page is the **publishable anon key**, which is safe to ship in client code.

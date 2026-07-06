@@ -59,6 +59,11 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 #techchip b{color:var(--cyan)}
 #techbar{height:3px;background:#0a0e13;border-radius:2px;margin-top:4px;overflow:hidden;display:none}
 #techfill{height:100%;width:0;background:var(--cyan)}
+#crewline{margin-top:4px}
+#crewline .appr{color:var(--dim);font-size:10px}
+#crewline .appr b{color:var(--amber)}
+#hirebtn{width:100%;background:#2c2312;border:1px solid #7a5a2c;color:var(--amber);border-radius:7px;
+  padding:5px 8px;font-size:10.5px;font-weight:700;cursor:pointer}
 
 /* virtual joystick */
 #joy{position:absolute;left:14px;bottom:14px;width:116px;height:116px;border-radius:50%;
@@ -313,7 +318,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
     <button id="acctbtn" title="Sign in to save progress to the cloud">👤</button>
     <button id="homebtn" title="Choose plant">🏭</button>
     <div id="planner"><div class="pl-head">📋 SHIFT PLANNER<button class="x" id="planx">×</button></div><div class="pl-body"></div></div>
-    <div id="techchip">🔧 <b id="techstate">Idle</b><div id="techqueue"></div><div id="techbar"><div id="techfill"></div></div></div>
+    <div id="techchip">🔧 <b id="techstate">Idle</b><div id="techqueue"></div><div id="techbar"><div id="techfill"></div></div><div id="crewline"></div></div>
     <div id="joy"><div id="jnub"></div></div>
     <div id="ichip"></div>
     <div id="preshift">
@@ -1071,9 +1076,16 @@ function openSheet(id){
            : ok ? '<button class="fixbtn off" onclick="offMsg(\'This part is in good shape — no fix needed\')">🔩 OK</button>'
            : '<button class="fixbtn" onclick="actFix(\''+id+'\',\''+c.id+'\')">🔩 $'+fixCost(id,c.id)+'</button>'; }
     }
-    cond+='<div class="chan"><span class="nm">'+c.nm+(c.moist?' 💧':'')+'</span>'+
+    // per-part condition sensor (plants that support it — C.SENSOR_COST set):
+    // keeps this channel's true wear continuously revealed, no re-inspections.
+    let sb='';
+    if(C.SENSOR_COST && near && !m.broken){
+      sb = c.sensor ? '<button class="fixbtn off" onclick="offMsg(\'Sensor installed — this part\\\'s wear stays visible\')">📡 ✓</button>'
+                    : '<button class="fixbtn" title="Condition sensor: wear stays revealed" onclick="actSensor(\''+id+'\',\''+c.id+'\')">📡 $'+C.SENSOR_COST+'</button>';
+    }
+    cond+='<div class="chan"><span class="nm">'+c.nm+(c.moist?' 💧':'')+(c.sensor?' 📡':'')+'</span>'+
       '<span class="bar"><i style="width:'+(shown?barw:0)+'%;background:'+(shown?chanColor(w):'#2b3a4a')+'"></i></span>'+
-      '<span class="pf">'+(shown?(Math.round((1-w)*100)+'% H'):'??')+'</span>'+fx+'</div>';
+      '<span class="pf">'+(shown?(Math.round((1-w)*100)+'% H'):'??')+'</span>'+fx+sb+'</div>';
   }
   if(!rev) cond+='<div class="hidden-note">You are guessing. A $'+inspectCost(id)+' inspection reveals per-part wear — and unlocks 🔩 targeted fixes (cheaper + faster than a full service).</div>';
   cond+='</div>';
@@ -1096,7 +1108,7 @@ function openSheet(id){
   // honest previews from observable numbers only (rate/cap shown in chips, revealed wear)
   const isBn=(id===S.bottleneck);
   const capNow=Math.round(m.base*m.up), rateNow=Math.round(m.rate);
-  const svcH=(SERVICE_MTTR[id]*C.SERVICE_TIME_MULT).toFixed(1);
+  const svcH=(svcMttr(m)*C.SERVICE_TIME_MULT).toFixed(1);   // svcMttr falls back for non-bakery plants
   const worstRev=Math.max(0,...m.ch.map(c=>c.reveal!=null?c.reveal:0));
   const PV=(txt,cls)=>'<span class="pv '+(cls||'dim')+'">'+txt+'</span>';
   const gainLikely=isBn && (capNow-rateNow)>Math.max(4,S.T*0.05);
@@ -1104,7 +1116,7 @@ function openSheet(id){
   const pvRep =PV('⏱ ~'+svcH+'h down · '+(gainLikely?'▲ likely line gain':(worstRev>0.55?'▼ high known risk — cuts it':'▼ cuts breakdown risk')), gainLikely?'good':'warn');
   const pvUpg =PV('⏱ 3h down · '+(isBn?'▲ line gain — the limit will move':'no line gain now (not the limit)'), isBn?'good':'dim');
   const pvAuto=PV('⏱ 2.5h down · ▼ wear −65% for good'+((id==='compressor'&&S.moisture>=0.4)?' · ends the moisture cascade':''), (id==='compressor'&&S.moisture>=0.4)?'good':'dim');
-  const pvRepl=PV('⏱ ~'+(SERVICE_MTTR[id]*C.SERVICE_TIME_MULT+2).toFixed(1)+'h down · like-new +10% cap'+(isBn?' · ▲ line gain':''), isBn?'good':'dim');
+  const pvRepl=PV('⏱ ~'+(svcMttr(m)*C.SERVICE_TIME_MULT+2).toFixed(1)+'h down · like-new +10% cap'+(isBn?' · ▲ line gain':''), isBn?'good':'dim');
   const pvStock=PV('no downtime · a breakdown then skips 2.5× parts + 3h wait','dim');
   const rushAvail=m.broken && !m.rushed &&
     (m.awaitDelivery>0.5 || (tech.busy&&tech.job&&tech.job.mid===id&&tech.phase==='wait'));
@@ -1201,6 +1213,21 @@ function renderTech(){
   if(tech.busy&&tech.total>0&&(tech.phase==='work'||tech.phase==='wait')){
     bar.style.display='block'; $('techfill').style.width=Math.round((1-tech.timer/tech.total)*100)+'%';
   } else bar.style.display='none';
+  // crew line: on plants that support it (C.HIRE_FEE set — the brewery), offer the
+  // hire, then show what the apprentice is doing once they're on the crew.
+  const cl=$('crewline');
+  if(cl){
+    if(!C.HIRE_FEE){ cl.innerHTML=''; }
+    else if(!tech2){
+      cl.innerHTML='<button id="hirebtn" title="A second pair of hands: runs planned jobs in parallel (slower, never solo on emergencies)">🧑‍🔧 Hire apprentice · $'+C.HIRE_FEE+' + $'+(C.APPRENTICE_WAGE_DAY||0)+'/day</button>';
+      const hb=$('hirebtn'); if(hb) hb.onclick=()=>actHire();
+    } else {
+      let ast='idle';
+      if(tech2.busy&&tech2.job){ const m2=MACH[tech2.job.mid];
+        ast=(tech2.phase==='travel'?'heading to ':'working on ')+m2.code+(tech2.phase==='work'?' ('+Math.ceil(tech2.timer)+'m)':''); }
+      cl.innerHTML='<div class="appr">🧑‍🔧 apprentice: <b>'+ast+'</b></div>';
+    }
+  }
 }
 
 /* =============================== ALERTS / TOAST / SOUND =============================== */
@@ -1387,6 +1414,20 @@ $('tutback').onclick=()=>{ if(S.tutStep>0){ S.tutStep--; tutorialStep(); } };
 $('tutskip').onclick=tutDismiss;
 
 $('helpbtn').onclick=()=>{ setSpeed(0); const rev=$('modalcard');
+  if(typeof CURPLANT!=='undefined' && CURPLANT==='brewery'){
+    rev.innerHTML='<h2>How to play — Ironline Brewery</h2><div class="help-body">'+
+     '<b>Goal:</b> survive <span class="k">'+C.N_WEEKS+' weekly contracts</span> ('+C.WEEK_LEN+' days each) and finish with <b>'+money(C.WIN_CASH)+'</b> cash. Quotas climb every week on the same aging 12-machine plant.'+
+     '<ul>'+
+     '<li><b>Same core loop as the bakery:</b> <span class="k">Inspect</span> to reveal wear → <span class="k">🔩 targeted fix</span> beats blind services beats run-to-failure.</li>'+
+     '<li><b>Three utility buses:</b> the boiler (steam), chiller (glycol) and compressor (air) feed the line — follow the coloured overhead pipes. A sick utility slows every machine it feeds.</li>'+
+     '<li><b>Fouling / scale</b> accelerates its own wear as it builds — clean early or it runs away. <b>Calibration drift</b> silently scraps product until you inspect and recalibrate.</li>'+
+     '<li><b>Hygiene:</b> product-contact vessels build <b>soil</b>; it drags your <b>quality</b>, and quality sets your <b>price</b>. Run a <span class="k">🧼 CIP</span> before contamination roulette dumps a batch.</li>'+
+     '<li><b>Crew:</b> hire the <span class="k">🧑‍🔧 apprentice</span> (bottom-right chip) to run planned jobs in parallel — slower than you, never solo on emergencies.</li>'+
+     '<li><b>📡 Condition sensors</b> keep one part\'s wear permanently visible — predictive maintenance you buy per part.</li>'+
+     '<li>Three short-ship days in a week cancels the contract. Every run is a new <b>seed</b>.</li>'+
+     '</ul></div><button class="btn go" onclick="closeReview()">Got it</button>';
+    $('modal').classList.add('show'); return;
+  }
   rev.innerHTML='<h2>How to play</h2><div class="help-body">'+
    '<b>Goal:</b> survive <span class="k">'+C.N_WEEKS+' weekly contracts</span> ('+C.WEEK_LEN+' days each) and finish with <b>'+money(C.WIN_CASH)+'</b> cash. Each week the daily quota climbs — but you keep the same plant, so its wear carries forward. Three short-ship days <i>in a week</i> cancels that contract.'+
    '<ul>'+

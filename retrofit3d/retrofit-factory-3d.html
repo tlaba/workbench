@@ -1680,11 +1680,13 @@ function ensureWorld(){
   wall(HALL.w,texS, 0, HALL.d/2, Math.PI);
   wall(HALL.d,texEW, HALL.w/2,0,-Math.PI/2);
   wall(HALL.d,texEW,-HALL.w/2,0, Math.PI/2);
-  // roof trusses + columns
+  // roof trusses + columns (span count follows hall width)
+  const BREW=(_worldPlant==='brewery');
   const steel=stdMat(0x39434f,0.55,0.6);
-  for(let i=-2;i<=2;i++){ const x=i*6;
+  const spans=Math.floor((HALL.w/2-2)/6);
+  for(let i=-spans;i<=spans;i++){ const x=i*6;
     box(0.3,0.42,HALL.d,steel,x,HALL.h-0.28,0,scene);
-    
+
     cyl(0.14,0.14,HALL.h,steel,x,HALL.h/2,-HALL.d/2+0.15,scene,10);
     cyl(0.14,0.14,HALL.h,steel,x,HALL.h/2, HALL.d/2-0.15,scene,10);
   }
@@ -1697,14 +1699,14 @@ function ensureWorld(){
   SUN=new THREE.DirectionalLight(0xfff2df,1.0);
   SUN.position.set(-9,17,7); SUN.castShadow=true;
   SUN.shadow.mapSize.set(2048,2048);
-  SUN.shadow.camera.left=-19; SUN.shadow.camera.right=19;
-  SUN.shadow.camera.top=14; SUN.shadow.camera.bottom=-14;
+  SUN.shadow.camera.left=-(HALL.w/2+2); SUN.shadow.camera.right=HALL.w/2+2;
+  SUN.shadow.camera.top=HALL.d/2+3; SUN.shadow.camera.bottom=-(HALL.d/2+3);
   SUN.shadow.camera.near=2; SUN.shadow.camera.far=45; SUN.shadow.bias=-0.0007;
   scene.add(SUN); scene.add(SUN.target);
   // hanging bay lights
   const shadeMat=stdMat(0x2c343e,0.5,0.7);
   const bayCols=[0x9fc8e8,0xffe1b0,0x9fc8e8]; let bayI=0; // cool-warm-cool bays
-  for(const lx of [-8,0,8]){
+  for(const lx of (BREW?[-13,0,13]:[-8,0,8])){
     const g=new THREE.Group(); g.position.set(lx,HALL.h-1.05,0);
     cyl(0.03,0.03,0.9,steel,0,0.75,0,g,6);
     const sh=new THREE.Mesh(new THREE.CylinderGeometry(0.55,0.2,0.4,18,1,true),shadeMat); sh.position.y=0.2; g.add(sh);
@@ -1717,13 +1719,16 @@ function ensureWorld(){
   // skylight shafts + dust motes
   const shaftMat=new THREE.MeshBasicMaterial({color:0xfff4d8,transparent:true,opacity:0.045,
     blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide});
-  for(const sx of [-6,1,8]){
+  for(const sx of (BREW?[-9,1,11]:[-6,1,8])){
     const sh=new THREE.Mesh(new THREE.PlaneGeometry(2.6,8.4),shaftMat);
     sh.position.set(sx,3.4,-0.6); sh.rotation.set(0.5,0.12,0); scene.add(sh);
     for(let i=0;i<12;i++){ const d=dotSprite(0xfff2cf,0.045+MR()*0.05,true);
       d.material.opacity=0.35; d.position.set(sx-1+MR()*2, 0.4+MR()*4.6, -2+MR()*2.6);
       d.userData.mote={vy:-(0.03+MR()*0.05),x0:d.position.x}; scene.add(d); PUFFS.push({spr:d,mote:true}); }
   }
+  // ---- set dressing is per-plant: the bakery's flour silo / proofer / bread racks
+  // have no business in a brewery, and the wall furniture is positioned per hall ----
+  if(BREW){ dressIronline(); } else {
   // overhead compressed-air main + drops to the pneumatic machines (the cascade, made visible)
   const pipeM=stdMat(0x545f6a,0.5,0.6);
   function pipeSeg(ax,ay,az,bx,by,bz){ const dx=bx-ax,dy=by-ay,dz=bz-az;
@@ -1876,6 +1881,7 @@ function ensureWorld(){
   // safety bollards along the walkway edge
   for(let x=-13;x<=12;x+=2.6){ if(Math.abs(x-(-11.6))<2.4 && false) continue;
     const b=cyl(0.09,0.11,0.75,stdMat(0xd8a020,0.5,0.3),x,0.37,-2.55,scene,10); }
+  } // end bakery dressing
   // machines ---------------------------------------------------------------
   for(const d of DEFS) buildMachine(d);
   // premium pack: coloured utility bus pipe-work over the line (steam/glycol/air)
@@ -1912,6 +1918,114 @@ function buildBrewBuses(){
       seg(mat, d.pos[0],sp.y,mz, d.pos[0],sp.y,d.pos[1]);               // branch toward the machine row
       seg(mat, d.pos[0],sp.y,d.pos[1], d.pos[0],ty+0.25,d.pos[1]); }    // drop onto the machine
   }
+}
+
+/* ---- Ironline set dressing: brewery-appropriate props sized for the 40×22 hall.
+   No flour, no proofers, no bread racks — kegs, grain sacks, beer cases, a CIP
+   skid, floor drains and the wall furniture repositioned for the bigger shell. ---- */
+function dressIronline(){
+  const woodM=stdMat(0x8a6f4d,0.85,0.02), sackM=stdMat(0xcbbd9a,0.9,0.0);
+  const dk=stdMat(0x2a3038,0.7,0.3), steelS=stdMat(0x9aa3ab,0.5,0.65), galv=stdMat(0x8d979f,0.45,0.6);
+  const kegM=stdMat(0xc4cad0,0.3,0.85), chimeM=stdMat(0x6a747d,0.5,0.6);
+  function pallet(x,z){ const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=MR()*0.6;
+    for(let i=0;i<3;i++) box(1.2,0.09,0.32,woodM,0,0.06,-0.44+i*0.44,g);
+    box(1.2,0.05,1.2,woodM,0,0.14,0,g);
+    scene.add(g); addObst(x,z,0.8,0.8); return g; }
+  // grain sacks on pallets by the mill's back corner
+  for(const [px,pz,n] of [[-11.2,-9.2,4],[-8.7,-9.5,3]]){ const p=pallet(px,pz);
+    for(let i=0;i<n;i++){ const s=box(0.52,0.3,0.82,sackM,-0.25+MR()*0.5,0.32+i*0.27,-0.1+MR()*0.2,p);
+      s.rotation.y=MR()*0.5-0.25; } }
+  // keg clusters: full kegs staged by the case packer, empties by the front door
+  function keg(x,z,y,g){ const k=cyl(0.29,0.29,0.62,kegM,x,y+0.31,z,g,14);
+    const t=new THREE.Mesh(new THREE.TorusGeometry(0.27,0.035,6,16),chimeM); t.position.set(x,y+0.6,z); t.rotation.x=Math.PI/2; g.add(t);
+    const b=new THREE.Mesh(new THREE.TorusGeometry(0.27,0.035,6,16),chimeM); b.position.set(x,y+0.03,z); b.rotation.x=Math.PI/2; g.add(b); return k; }
+  function kegPatch(cx,cz,rows,cols,stacked){ const g=new THREE.Group(); g.position.set(cx,0,cz); g.rotation.y=MR()*0.3;
+    for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){ keg(-0.35+c*0.66,-0.35+r*0.66,0,g);
+      if(stacked&&MR()<0.5) keg(-0.35+c*0.66,-0.35+r*0.66,0.65,g); }
+    scene.add(g); addObst(cx,cz,0.5+cols*0.33,0.5+rows*0.33); }
+  kegPatch(16.6,-9.0,2,3,true); kegPatch(13.2,7.6,2,2,false);
+  // pallets of finished cases near the end of the line
+  const caseM=stdMat(0xb08a52,0.85,0.02);
+  for(const [px,pz] of [[8.6,7.5],[11.1,8.1]]){ const p=pallet(px,pz);
+    for(let lv=0;lv<2;lv++) for(let i=0;i<3;i++){ const c=box(0.42,0.3,0.6,caseM,-0.38+i*0.38,0.32+lv*0.31,(lv%2?0.12:-0.1),p);
+      c.rotation.y=(lv%2?0.06:-0.05); } }
+  // CIP skid behind the fermenters — two small stainless tanks, pump, orange hoses
+  (function(){ const g=new THREE.Group(); g.position.set(0.5,0,-9.3);
+    box(2.4,0.12,1.1,dk,0,0.06,0,g);
+    for(const sx of [-0.6,0.6]){ cyl(0.42,0.42,1.3,kegM,sx,0.85,0,g,16);
+      const dm=new THREE.Mesh(new THREE.SphereGeometry(0.42,16,8,0,Math.PI*2,0,Math.PI/2),kegM); dm.position.set(sx,1.5,0); g.add(dm); }
+    box(0.5,0.45,0.4,stdMat(0x2c4a66,0.5,0.5),0,0.35,0.3,g);          // pump
+    const hose=stdMat(0xd8641e,0.6,0.1);
+    for(let i=0;i<3;i++){ const h=new THREE.Mesh(new THREE.TorusGeometry(0.28,0.035,6,18),hose);
+      h.position.set(1.35,0.35+i*0.09,0.2); h.rotation.y=0.5; g.add(h); }
+    const lbl=makeTextSprite('CIP','#cfe8d8','rgba(16,28,22,.75)',22,6); lbl.position.set(0,2.15,0); g.add(lbl);
+    scene.add(g); })();
+  addObst(0.5,-9.3,1.3,0.7);
+  // wall-mounted wash-down hose reel near the fermenters' aisle
+  (function(){ const g=new THREE.Group(); g.position.set(-4.5,0,-10.6);
+    const reel=new THREE.Mesh(new THREE.TorusGeometry(0.34,0.09,8,18),stdMat(0xb02020,0.55,0.2));
+    reel.position.set(0,1.4,0.15); g.add(reel);
+    const h=cyl(0.035,0.035,1.2,stdMat(0x8a2020,0.7,0.1),0,0.65,0.22,g,6); h.rotation.x=0.12;
+    scene.add(g); })();
+  // floor drains along the wet aisle (breweries hose everything down)
+  for(const dx of [-4,4,12]){
+    const dr=new THREE.Mesh(new THREE.CircleGeometry(0.34,18),stdMat(0x14181d,0.4,0.7));
+    dr.rotation.x=-Math.PI/2; dr.position.set(dx,0.012,-2.6); scene.add(dr);
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(0.34,0.025,6,18),stdMat(0x3a444e,0.5,0.6));
+    ring.rotation.x=Math.PI/2; ring.position.set(dx,0.02,-2.6); scene.add(ring); }
+  // office, MCC, workbench, lab sink — same furniture, repositioned for this shell
+  (function(){ const g=new THREE.Group(); g.position.set(17.2,0,8.2);
+    box(4.4,2.7,4.4,stdMat(0x454e57,0.85,0.05),0,1.35,0,g);
+    const win=new THREE.Mesh(new THREE.PlaneGeometry(2.6,1.0),
+      new THREE.MeshStandardMaterial({color:0x2c3a48,emissive:0x9ab8d0,emissiveIntensity:0.5,roughness:0.2,metalness:0.4}));
+    win.position.set(-2.21,1.6,0); win.rotation.y=-Math.PI/2; g.add(win);
+    box(0.06,2.0,0.9,stdMat(0x3a424a,0.7,0.2),-2.2,1.0,-1.4,g);
+    scene.add(g); })();
+  addObst(17.2,8.2,2.2,2.2);
+  (function(){ const g=new THREE.Group(); g.position.set(19.6,0,-4.5); g.rotation.y=-Math.PI/2;
+    box(1.6,2.1,0.35,stdMat(0x7d8792,0.5,0.5),0,1.25,0,g);
+    box(0.7,1.9,0.04,stdMat(0x6a747d,0.4,0.6),-0.4,1.25,0.2,g);
+    box(0.7,1.9,0.04,stdMat(0x6a747d,0.4,0.6), 0.4,1.25,0.2,g);
+    const warn=new THREE.Mesh(new THREE.PlaneGeometry(0.42,0.3),
+      new THREE.MeshStandardMaterial({color:0xd8a020,emissive:0x442a00,emissiveIntensity:0.3}));
+    warn.position.set(0,1.7,0.23); g.add(warn);
+    for(const cx of [-0.3,0,0.3]) cyl(0.035,0.035,3.6,galv,cx,4.1,0,g,6);
+    scene.add(g); })();
+  addObst(19.4,-4.5,0.35,0.9);
+  (function(){ const g=new THREE.Group(); g.position.set(13.5,0,9.6); g.rotation.y=Math.PI;
+    box(2.2,0.09,0.85,woodM,0,0.92,0,g);
+    for(const sx of [-1.0,1.0]) for(const sz of [-0.32,0.32]) box(0.08,0.9,0.08,dk,sx,0.46,sz,g);
+    box(0.55,0.35,0.4,stdMat(0x9a4030,0.5,0.4),-0.6,1.14,0,g);
+    box(0.02,0.9,1.8,stdMat(0x55606a,0.8,0.2),0,1.85,-0.44,g);
+    for(let i=0;i<5;i++) box(0.03,0.22,0.05,steelS,-0.7+i*0.35,1.8,-0.41,g);
+    scene.add(g); })();
+  addObst(13.5,9.6,1.2,0.55);
+  // little QC lab bench: sink + coloured sample flasks
+  (function(){ const g=new THREE.Group(); g.position.set(-13,0,9.3);
+    box(1.9,0.08,0.95,steelS,0,0.9,0,g);
+    for(const sx of [-0.85,0.85]) for(const sz of [-0.38,0.38]) cyl(0.04,0.04,0.9,dk,sx,0.45,sz,g,6);
+    box(0.8,0.3,0.6,stdMat(0x818b93,0.3,0.85),-0.4,0.82,0,g);
+    for(let i=0;i<4;i++) cyl(0.05,0.07,0.22,stdMat([0xd8a020,0xb87a2a,0xc8913f,0x9a6a2a][i],0.3,0.1),0.25+i*0.18,1.05,-0.1,g,8);
+    const lbl=makeTextSprite('QC LAB','#cfd8e2','rgba(20,26,32,.7)',20,6); lbl.position.set(0,1.9,0); g.add(lbl);
+    scene.add(g); })();
+  addObst(-13,9.3,1.0,0.55);
+  // pallet jack + fire extinguisher
+  (function(){ const g=new THREE.Group(); g.position.set(5.5,0,7.6); g.rotation.y=0.7;
+    const or2=stdMat(0xd8641e,0.5,0.4);
+    box(0.16,0.08,1.3,or2,-0.22,0.12,0.3,g); box(0.16,0.08,1.3,or2,0.22,0.12,0.3,g);
+    box(0.5,0.5,0.3,or2,0,0.3,-0.45,g);
+    const hd2=cyl(0.03,0.03,0.9,dk,0,0.75,-0.75,g,6); hd2.rotation.x=0.6;
+    box(0.3,0.05,0.12,dk,0,1.08,-1.05,g);
+    scene.add(g); })();
+  addObst(5.5,7.6,0.55,0.75);
+  (function(){ const g=new THREE.Group(); g.position.set(6.2,0,10.5);
+    cyl(0.09,0.09,0.5,stdMat(0xb02020,0.4,0.4),0,1.15,0,g,10);
+    cyl(0.03,0.03,0.12,dk,0,1.47,0,g,6);
+    box(0.24,0.3,0.02,stdMat(0xb02020,0.6,0.1),0,1.15,-0.12,g);
+    scene.add(g); })();
+  // safety bollards guarding the staging area (clear of the machine-panel aisle)
+  for(let x=-17;x<=18;x+=3.2)
+    cyl(0.09,0.11,0.75,stdMat(0xd8a020,0.5,0.3),x,0.37,4.6,scene,10);
 }
 
 /* =============================== MACHINES (3D) =============================== */
@@ -2036,6 +2150,135 @@ function buildMachine(d){
     const riser=cyl(0.09,0.09,1.2,stdMat(0x66727f,0.45,0.7),-1.0,1.9,0,g,10); R.anim.riser=riser;
     R.anim.leakAt=new THREE.Vector3(-1.0,2.45,0);
     R.topY=2.5;
+  }
+  /* ---- Ironline Brewery machines (these ids only exist on the brewery) ---- */
+  if(d.id==='boiler'){        // horizontal firetube boiler: drum, fire door, stack to the roof
+    box(2.6,0.14,1.6,darkM,0,0.07,0,g);
+    const drum=cyl(0.75,0.75,2.3,pM(),0,1.05,0,g,20); drum.rotation.z=Math.PI/2;
+    for(const sx of [-0.8,0.8]) box(0.2,0.6,1.1,darkM,sx,0.35,0,g);   // saddles
+    const door=cyl(0.5,0.5,0.12,darkM,-1.2,1.05,0,g,16); door.rotation.z=Math.PI/2;
+    const glow=new THREE.Mesh(new THREE.CircleGeometry(0.22,14),
+      new THREE.MeshStandardMaterial({color:0x0a0602,emissive:0xff7a1e,emissiveIntensity:1.4}));
+    glow.position.set(-1.27,1.05,0); glow.rotation.y=-Math.PI/2; g.add(glow);
+    (R.anim.glows=R.anim.glows||[]).push(glow);                        // firebox breathes with load
+    cyl(0.17,0.22,3.6,steelM,0.85,3.6,0,g,12);                         // stack
+    cyl(0.05,0.05,0.35,chromeM,0.2,1.95,0,g,8);                        // safety valve
+    const dial=cyl(0.14,0.14,0.05,stdMat(0xf2f2ee,0.3,0.1),-0.4,1.6,0.72,g,14); dial.rotation.x=Math.PI/2;
+    R.topY=2.4;
+  }
+  if(d.id==='chiller'){       // glycol chiller skid: condenser fans on top, blue headers
+    const body=box(2.6,1.5,1.9,pM(),0,0.85,0,g); body.castShadow=true;
+    for(const sx of [-0.65,0.65]) cyl(0.48,0.48,0.16,darkM,sx,1.68,0,g,18);   // fan shrouds
+    const fan=new THREE.Group(); fan.position.set(-0.65,1.72,0);
+    for(let i=0;i<3;i++){ const bl=box(0.36,0.02,0.1,chromeM,0,0,0,fan); bl.rotation.y=i*Math.PI/3; }
+    g.add(fan); R.anim.agit=fan;                                       // one fan visibly spins
+    cyl(0.42,0.42,0.06,stdMat(0x22272d,0.4,0.6),0.65,1.72,0,g,18);
+    const glyM=stdMat(0x3a8aff,0.4,0.5,{emissive:0x3a8aff,emissiveIntensity:0.15});
+    for(const sz of [-0.55,0.55]){ const p=cyl(0.09,0.09,1.0,glyM,1.35,0.7,sz,g,10); p.rotation.z=Math.PI/2; }
+    box(0.6,0.7,0.5,darkM,-1.0,0.6,0.75,g);                            // control cabinet
+    R.topY=2.0;
+  }
+  if(d.id==='aircomp'){       // rotary-screw compressor package + receiver
+    box(2.4,0.14,1.4,darkM,0,0.07,0,g);
+    box(1.5,1.1,1.2,pM(),-0.4,0.72,0,g);                               // enclosure
+    const rec=cyl(0.4,0.4,1.15,steelM,0.85,0.72,0,g,16);               // vertical receiver
+    const dm=new THREE.Mesh(new THREE.SphereGeometry(0.4,16,8,0,Math.PI*2,0,Math.PI/2),steelM); dm.position.set(0.85,1.3,0); g.add(dm);
+    const dial=cyl(0.13,0.13,0.05,stdMat(0xf2f2ee,0.3,0.1),-0.4,1.05,0.62,g,14); dial.rotation.x=Math.PI/2;
+    for(const vy of [0.35,0.6,0.85]) box(0.5,0.06,0.02,darkM,-0.85,vy,0.61,g);  // vents
+    R.topY=1.9;
+  }
+  if(d.id==='mill'){          // grain mill: top hopper, roller housing, discharge chute
+    const hop=new THREE.Mesh(new THREE.CylinderGeometry(0.75,0.18,0.95,4),pM());
+    hop.position.y=2.5; hop.rotation.y=Math.PI/4; hop.castShadow=true; g.add(hop);
+    box(1.5,1.4,1.3,pM(),0,1.05,0,g);                                  // roller housing
+    for(const sy of [1.25,0.95]){ const r=cyl(0.16,0.16,1.0,chromeM,0,sy,0.55,g,12); r.rotation.z=Math.PI/2; }
+    const chute=box(0.5,0.7,0.4,steelM,0.85,0.5,0,g); chute.rotation.z=0.5;
+    box(0.4,0.5,0.35,darkM,-0.85,0.5,0.4,g);                           // motor
+    R.topY=3.1;
+  }
+  if(d.id==='brewhouse'){     // copper brew kettle: dome, tapered chimney, manway, valve
+    const kettle=cyl(1.15,1.05,1.5,pM(),0,1.0,0,g,24); kettle.castShadow=true;
+    const dome=new THREE.Mesh(new THREE.SphereGeometry(1.15,22,10,0,Math.PI*2,0,Math.PI*0.5),pM());
+    dome.position.y=1.75; dome.castShadow=true; g.add(dome);
+    cyl(0.3,0.42,2.6,pM(),0,3.9,0,g,14);                               // chimney to the roof
+    const mw=cyl(0.28,0.28,0.1,darkM,0,1.1,1.12,g,14); mw.rotation.x=Math.PI/2;  // manway
+    cyl(0.07,0.07,0.5,chromeM,0.9,0.45,0.75,g,8);                      // racking valve
+    box(1.2,0.35,0.7,steelM,0,0.18,1.35,g);                            // operator step
+    R.anim.ventAt=new THREE.Vector3(0,5.2,0);                          // steam wisps off the stack
+    R.topY=3.1;
+  }
+  if(d.id==='ferma'||d.id==='fermb'){   // conical unitank: legs, cone, jacketed shell, dome
+    for(const a of [0.6,2.2,3.9,5.5]) cyl(0.07,0.09,1.05,darkM,Math.cos(a)*0.62,0.52,Math.sin(a)*0.62,g,8);
+    const cone=new THREE.Mesh(new THREE.CylinderGeometry(0.85,0.14,0.95,20),pM());
+    cone.position.y=1.5; cone.castShadow=true; g.add(cone);
+    const shell=cyl(0.85,0.85,1.9,pM(),0,2.9,0,g,22); shell.castShadow=true;
+    const jacket=cyl(0.88,0.88,0.75,stdMat(0x8a9099,0.5,0.55),0,2.9,0,g,22);    // glycol jacket band
+    const dome=new THREE.Mesh(new THREE.SphereGeometry(0.85,20,10,0,Math.PI*2,0,Math.PI*0.5),pM());
+    dome.position.y=3.85; dome.castShadow=true; g.add(dome);
+    cyl(0.12,0.12,0.35,chromeM,0,4.35,0,g,10);                         // CIP/top port
+    cyl(0.05,0.05,0.4,chromeM,0.55,1.25,0.6,g,8);                      // sample cock
+    cyl(0.08,0.08,0.5,chromeM,0,0.85,0.85,g,8);                        // racking arm
+    R.topY=4.5;
+  }
+  if(d.id==='bright'){        // polished bright tank: dished heads, sight glass, gauge
+    for(const a of [0.8,2.4,4.0,5.6]) cyl(0.07,0.09,0.5,darkM,Math.cos(a)*0.68,0.25,Math.sin(a)*0.68,g,8);
+    const shell=cyl(0.95,0.95,2.2,pM(),0,1.6,0,g,24); shell.castShadow=true;
+    const dome=new THREE.Mesh(new THREE.SphereGeometry(0.95,22,10,0,Math.PI*2,0,Math.PI*0.5),pM());
+    dome.position.y=2.7; dome.castShadow=true; g.add(dome);
+    const sg=new THREE.Mesh(new THREE.CylinderGeometry(0.045,0.045,1.6,8),
+      new THREE.MeshStandardMaterial({color:0xd8b25a,emissive:0xc89a3a,emissiveIntensity:0.35,roughness:0.2}));
+    sg.position.set(0,1.6,0.98); g.add(sg);                            // sight glass of beer
+    const dial=cyl(0.13,0.13,0.05,stdMat(0xf2f2ee,0.3,0.1),0,2.95,0.5,g,14); dial.rotation.x=Math.PI/2;
+    cyl(0.06,0.06,0.45,chromeM,0.75,0.5,0.6,g,8);                      // outlet valve
+    R.topY=3.4;
+  }
+  if(d.id==='filler'){        // rotary filler/capper: spinning crown of bottles behind guarding
+    cyl(1.1,1.2,0.5,pM(),0,0.25,0,g,24);                               // base
+    cyl(0.24,0.24,1.5,steelM,0,1.25,0,g,14);                           // column
+    const crown=new THREE.Group(); crown.position.y=1.35;
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(0.78,0.07,8,26),chromeM); ring.rotation.x=Math.PI/2; crown.add(ring);
+    const amber=stdMat(0xb8741e,0.25,0.15);
+    for(let i=0;i<8;i++){ const a=i*Math.PI/4;
+      cyl(0.065,0.065,0.28,amber,Math.cos(a)*0.78,-0.2,Math.sin(a)*0.78,crown,8); }
+    g.add(crown); R.anim.agit=crown;                                   // carousel turns with line rate
+    cyl(0.5,0.5,0.12,darkM,0,1.85,0,g,16);                             // cap hopper
+    for(const sx of [-1.15,1.15]) box(0.7,0.08,0.3,steelM,sx,0.95,0,g);// in/out conveyor stubs
+    const guard=new THREE.Mesh(new THREE.BoxGeometry(2.3,1.15,2.0),
+      new THREE.MeshStandardMaterial({color:0xd8e4ec,transparent:true,opacity:0.12,roughness:0.15,metalness:0.1,depthWrite:false}));
+    guard.position.y=1.15; g.add(guard);
+    R.topY=2.2;
+  }
+  if(d.id==='pasteur'){       // tunnel pasteurizer: long arched hood, misty mouths, spray bar
+    box(3.4,0.9,1.7,pM(),0,0.55,0,g);
+    const hood=new THREE.Mesh(new THREE.CylinderGeometry(0.85,0.85,3.4,18,1,false,0,Math.PI),pM());
+    hood.rotation.z=Math.PI/2; hood.rotation.y=Math.PI/2; hood.position.y=1.0; hood.castShadow=true; g.add(hood);
+    for(const sx of [-1.72,1.72]) box(0.06,0.65,1.1,darkM,sx,0.75,0,g); // tunnel mouths
+    const spray=cyl(0.05,0.05,3.0,steelM,0,1.9,0,g,8); spray.rotation.z=Math.PI/2;
+    for(let i=0;i<4;i++) cyl(0.03,0.03,0.18,steelM,-1.2+i*0.8,1.98,0,g,6);
+    const shim=new THREE.Mesh(new THREE.PlaneGeometry(3.0,0.8),
+      new THREE.MeshBasicMaterial({color:0xdce8f0,transparent:true,opacity:0.05,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide}));
+    shim.position.set(0,2.2,0); g.add(shim); R.anim.shim=shim;         // heat shimmer while running
+    R.topY=2.1;
+  }
+  if(d.id==='labeler'){       // labeler: label roll spins, applicator arm, little screen
+    box(1.7,1.5,1.2,pM(),0,0.85,0,g);
+    const roll=cyl(0.3,0.3,0.32,stdMat(0xe8e8e2,0.4,0.05),-0.55,1.9,0,g,18); roll.rotation.z=Math.PI/2; R.anim.roll=roll;
+    box(0.5,0.12,0.3,darkM,0.15,1.75,0,g);                             // applicator arm
+    for(const sx of [-1.0,1.0]) box(0.4,0.08,0.3,steelM,sx,0.95,0,g);  // rails
+    const scr=new THREE.Mesh(new THREE.PlaneGeometry(0.36,0.26),
+      new THREE.MeshStandardMaterial({map:screenTex,emissive:0xffffff,emissiveMap:screenTex,emissiveIntensity:0.6,roughness:0.4}));
+    scr.position.set(0.45,1.2,0.62); g.add(scr);
+    R.topY=2.3;
+  }
+  if(d.id==='casepack'){      // case packer: frame, pick head bobs, cases on the outfeed
+    for(const sx of [-0.95,0.95]) for(const sz of [-0.65,0.65]) box(0.1,1.8,0.1,steelM,sx,0.9,sz,g);
+    box(2.1,0.12,1.5,steelM,0,1.82,0,g);                               // top frame
+    box(1.9,0.75,1.3,pM(),0,0.55,0,g);                                 // body
+    const head=box(0.7,0.25,0.7,darkM,0,1.55,0,g); R.anim.head=head;   // pick-and-place head
+    box(1.0,0.07,0.9,steelM,1.5,0.85,0,g);                             // outfeed
+    const caseM2=stdMat(0xb08a52,0.85,0.02);
+    box(0.44,0.3,0.6,caseM2,1.35,1.02,0,g); box(0.44,0.3,0.6,caseM2,1.8,1.02,0.1,g);
+    R.topY=2.2;
   }
   if(g.children.length===0){   // no plant-specific builder (e.g. brewery pack) → generic vessel/skid from shape+size
     const h=d.h||1.9;
@@ -2540,8 +2783,9 @@ function sync3D(dt,t){
         {scale:0.55,vy:0.8,ttl:2.6,op:0.62,grow:0.6});
       if(!brokenAny) brokenAny=d;
     } else if(m.broken && !brokenAny) brokenAny=d;
+    if(A.ventAt && running && MR()<dt*3*asc)   // steam/vapour off any vented stack (oven, brew kettle)
+      spawnPuff(d.pos[0]+A.ventAt.x, A.ventAt.y, d.pos[1]+A.ventAt.z, 0xdfe4e8,{scale:0.28,vy:0.9,ttl:1.6,op:0.28,grow:0.6});
     if(d.id==='oven' && running){
-      if(MR()<dt*3*asc) spawnPuff(d.pos[0]+A.ventAt.x, A.ventAt.y, d.pos[1]+A.ventAt.z, 0xdfe4e8,{scale:0.28,vy:0.9,ttl:1.6,op:0.28,grow:0.6});
       if(MR()<dt*2.2*asc) spawnPuff(d.pos[0]+A.mouthAt.x, A.mouthAt.y, d.pos[1]+A.mouthAt.z, 0xffc890,{scale:0.2,vy:1.1,ttl:0.8,add:true,op:0.12,grow:0.7});
     }
     if(d.id==='mixer' && running && MR()<dt*1.1*asc)

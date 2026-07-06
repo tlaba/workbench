@@ -70,3 +70,24 @@ That's it — the 👤 button will now offer email sign-in, and your run syncs.
 - **Nothing is trusted from the page beyond your own row:** the anon key alone
   can't touch any save; every request carries your user JWT and RLS enforces
   `auth.uid() = user_id` on the database side.
+
+## Premium packs (entitlements)
+
+The same `supabase-setup.sql` also creates the tables for **gating premium packs**
+(e.g. the Ironline Brewery) behind redeem keys — optional, only needed if you sell
+or gift packs.
+
+- **Default (no Supabase configured):** premium packs stay **open as a preview** —
+  the game can't gate against a store that isn't there, so nothing is locked. This
+  is how the public build behaves today.
+- **With Supabase configured:** premium plants show **🔒 Redeem key** in the plant
+  picker until unlocked. Mint keys yourself in the SQL editor:
+  `insert into public.pack_keys (key, pack) values ('IRON-ABCD-1234', 'brewery');`
+  A signed-in player redeems one via the picker; `redeem_key()` (a `security
+  definer` RPC) atomically claims the key and grants the entitlement. Owned packs
+  are cached in `localStorage` (`rf3d_ent`) so they keep working offline.
+- **Dev/self-host bypass:** set `localStorage.rf3d_dev_unlock = "1"` to unlock every
+  pack on that device (for testing or a free self-hosted build).
+- **Security:** `pack_keys` has RLS enabled with **no policies**, so the client can
+  never read or write it directly — only the `security definer` `redeem_key()`
+  function touches it, and it only ever grants a pack to `auth.uid()`.

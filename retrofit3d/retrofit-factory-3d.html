@@ -3105,34 +3105,44 @@ function enterResume(){ if(HEADLESS) return;
 // from a deferred microtask, by which point every plant module has run).
 function plantPlayable(p){ return !!(p && p.C && p.DEFS && p.CHAIN); }
 function plantSeason(p){ try{ return p.C.N_WEEKS+' weeks × '+p.C.WEEK_LEN+' days'; }catch(e){ return ''; } }
+function plantOwned(id){ return (typeof packUnlocked==='function') ? packUnlocked(id) : true; }
 function renderPlantCards(){
   const box=$('ppcards'); if(!box || typeof PLANTS==='undefined') return;
   let html='';
   for(const id in PLANTS){ const p=PLANTS[id];
-    const playable=plantPlayable(p), locked=!playable;
+    const playable=plantPlayable(p), owned=plantOwned(id);
+    const dim = !playable || !owned;
     const badge = p.free ? '<div class="pp-badge free">Free</div>'
                 : '<div class="pp-badge premium">Premium pack</div>';
     const meta = playable ? (p.machines+' machines · '+plantSeason(p)) : 'Coming soon';
     let resume='', actions='';
-    const sv = playable ? readSave(id) : null;
-    if(sv && saveOk(sv) && !sv.s.over){
-      const wk=sv.s.week||1, cash=(typeof money==='function')?money(sv.s.cash):('$'+(sv.s.cash|0));
-      resume='<div class="pp-resume">🔁 Saved shift — Week '+wk+' · '+cash+'</div>';
-      actions='<button class="pp-btn go" data-plant="'+id+'" data-mode="continue">▶ Continue</button>'
-             +'<button class="pp-btn" data-plant="'+id+'" data-mode="new">New game</button>';
-    } else if(playable){
-      actions='<button class="pp-btn go" data-plant="'+id+'" data-mode="new">▶ '+(p.free?'Play':'Start pack')+'</button>';
-    } else {
+    if(!playable){
       actions='<button class="pp-btn" disabled>Coming soon</button>';
+    } else if(!owned){
+      resume='<div class="pp-resume" style="color:var(--amber)">🔒 Premium — redeem a key to unlock.</div>';
+      actions='<button class="pp-btn" data-plant="'+id+'" data-act="redeem">🔓 Redeem key</button>';
+    } else {
+      const sv=readSave(id);
+      if(sv && saveOk(sv) && !sv.s.over){
+        const wk=sv.s.week||1, cash=(typeof money==='function')?money(sv.s.cash):('$'+(sv.s.cash|0));
+        resume='<div class="pp-resume">🔁 Saved shift — Week '+wk+' · '+cash+'</div>';
+        actions='<button class="pp-btn go" data-plant="'+id+'" data-act="continue">▶ Continue</button>'
+               +'<button class="pp-btn" data-plant="'+id+'" data-act="new">New game</button>';
+      } else {
+        actions='<button class="pp-btn go" data-plant="'+id+'" data-act="new">▶ '+(p.free?'Play':'Start pack')+'</button>';
+      }
     }
-    html+='<div class="pp-card'+(locked?' locked':'')+'">'+badge
+    html+='<div class="pp-card'+(dim?' locked':'')+'">'+badge
       +'<div class="pp-name">'+(p.name||id)+'</div>'
       +'<div class="pp-tag">'+(p.tagline||'')+'</div>'
       +'<div class="pp-meta">'+meta+'</div>'+resume
       +'<div class="pp-actions">'+actions+'</div></div>';
   }
   box.innerHTML=html;
-  box.querySelectorAll('.pp-btn[data-plant]').forEach(b=>b.onclick=()=>startPlant(b.dataset.plant, b.dataset.mode));
+  box.querySelectorAll('.pp-btn[data-plant]').forEach(b=>b.onclick=()=>{
+    if(b.dataset.act==='redeem'){ if(typeof openRedeem==='function') openRedeem(b.dataset.plant); }
+    else startPlant(b.dataset.plant, b.dataset.act);
+  });
 }
 function enterPlantPick(canClose){
   if(HEADLESS) return;
@@ -3146,6 +3156,7 @@ function enterPlantPick(canClose){
 function openPlantPick(){ if(HEADLESS) return; saveGame(true); enterPlantPick(true); }
 function startPlant(id, mode){
   if(HEADLESS) return;
+  if(!plantOwned(id)){ enterPlantPick(false); if(typeof openRedeem==='function') openRedeem(id); return; }
   $('plantpick').classList.remove('show');
   if(mode==='continue'){
     const sv=readSave(id);
@@ -3267,10 +3278,47 @@ function cloudSyncSave(snap){                 // debounced background push
 }
 function cloudSyncClear(plant){ if(CLOUD_ON&&cloudSignedIn()) cloudDelete(plant); }
 
+/* ---------- entitlements (which premium packs this account owns) ----------
+   Free plants are always open. Premium packs unlock via a redeem key (or the
+   dev bypass). When no Supabase is configured the packs stay open as a preview
+   (there's no store to gate against); once you wire up a project + sell keys,
+   the gate goes live. Owned packs are cached locally so they work offline. */
+function devUnlocked(){ try{ return !!localStorage.getItem('rf3d_dev_unlock'); }catch(e){ return false; } }
+let _ent=null;
+function _loadEnt(){ if(_ent) return _ent; try{ _ent=new Set(JSON.parse(localStorage.getItem('rf3d_ent')||'[]')); }catch(e){ _ent=new Set(); } return _ent; }
+function _saveEnt(){ try{ localStorage.setItem('rf3d_ent', JSON.stringify([..._loadEnt()])); }catch(e){} }
+function hasEntitlement(pack){ return _loadEnt().has(pack); }
+function packUnlocked(plant){
+  const p=(typeof PLANTS!=='undefined')?PLANTS[plant]:null;
+  if(!p || p.free) return true;      // free plants are always open
+  if(devUnlocked()) return true;     // local dev / self-host bypass
+  if(!CLOUD_ON) return true;         // no store wired up → premium preview stays playable
+  return hasEntitlement(plant);      // gated: the account must own this pack
+}
+async function cloudFetchEntitlements(){
+  if(!CLOUD_ON||!await _ensureToken()) return;
+  try{ const r=await fetch(SB_URL+'/rest/v1/entitlements?select=pack',{headers:_hdr(true)});
+    if(!r.ok) return; const rows=await r.json(); const s=_loadEnt();
+    for(const row of rows) if(row&&row.pack) s.add(row.pack); _saveEnt(); }catch(e){}
+}
+async function redeemKey(key){
+  if(!CLOUD_ON) return {ok:false,msg:'Cloud sign-in isn\'t configured for this build.'};
+  if(!cloudSignedIn()) return {ok:false,msg:'Sign in first, then redeem.'};
+  if(!await _ensureToken()) return {ok:false,msg:'Session expired — sign in again.'};
+  try{ const r=await fetch(SB_URL+'/rest/v1/rpc/redeem_key',{method:'POST',
+      headers:_hdr(true), body:JSON.stringify({k:String(key).trim()})});
+    if(!r.ok) return {ok:false,msg:'That key is invalid or already used.'};
+    let pack=null; try{ pack=await r.json(); }catch(e){}
+    if(typeof pack==='string' && pack){ _loadEnt().add(pack); _saveEnt(); return {ok:true,pack}; }
+    await cloudFetchEntitlements(); return {ok:true};
+  }catch(e){ return {ok:false,msg:'Network error — try again.'}; }
+}
+
 /* ---------- reconcile local <-> cloud on sign-in (latest updated wins) ---------- */
 // Reconciles the plant currently on the floor; other plants sync lazily as they
 // are played (their next saveGame/openAccount push).
 async function cloudReconcile(){
+  cloudFetchEntitlements();          // pull owned packs into the local cache on sign-in
   const plant=(typeof curPlant==='function'?curPlant():'bakery');
   const cloud=await cloudPull(plant);
   const local=readSave(plant);
@@ -3340,6 +3388,32 @@ function acctCodeStep(email){
     toast('☁ Signed in as '+email);
   };
   $('acct-back').onclick=()=>openAccount();
+}
+
+/* ---------- redeem a premium pack key ---------- */
+function packModal(html){ const rev=$('modalcard'); if(!rev) return; rev.innerHTML=html; $('modal').classList.add('show'); }
+function openRedeem(plant){
+  if(HEADLESS) return; if(typeof setSpeed==='function') setSpeed(0);
+  const p=(typeof PLANTS!=='undefined')?PLANTS[plant]:null; const name=p?p.name:plant;
+  if(!CLOUD_ON){
+    packModal('<h2>🔒 '+name+'</h2><div class="sub">Cloud sign-in isn\'t configured for this build, so premium packs can\'t be gated — '+name+' is open as a preview. (Setup lives in <span class="k">retrofit3d/CLOUD-SAVES.md</span>.)</div>'
+      +'<button class="btn go" onclick="closeReview()">OK</button>'); return;
+  }
+  if(!cloudSignedIn()){
+    packModal('<h2>🔒 Unlock '+name+'</h2><div class="sub">Sign in with your email, then redeem your pack key to unlock '+name+' on any device.</div>'
+      +'<button class="btn go" id="rk-signin">Sign in</button><button class="btn" onclick="closeReview()">Cancel</button>');
+    $('rk-signin').onclick=()=>openAccount(); return;
+  }
+  packModal('<h2>🔓 Redeem '+name+'</h2><div class="sub">Enter your pack key to unlock '+name+' on <b>'+cloudEmail()+'</b>.</div>'
+    +'<input id="rk-key" class="acct-in" placeholder="your pack key">'
+    +'<button class="btn go" id="rk-go">Redeem</button><div id="rk-msg" class="sub"></div>'
+    +'<button class="btn" onclick="closeReview()">Cancel</button>');
+  $('rk-go').onclick=async()=>{ const k=($('rk-key').value||'').trim(); if(!k){ $('rk-msg').textContent='Enter a key.'; return; }
+    $('rk-go').textContent='Redeeming…';
+    const res=await redeemKey(k);
+    if(res.ok){ toast('🔓 Unlocked '+name+'!'); if($('modal')) closeReview(); if(typeof renderPlantCards==='function') renderPlantCards(); }
+    else{ $('rk-go').textContent='Redeem'; $('rk-msg').textContent=res.msg||'Could not redeem.'; }
+  };
 }
 (function wireAcct(){ const b=$('acctbtn'); if(b){ b.onclick=openAccount; applyAcctBtn(); } })();
 

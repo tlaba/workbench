@@ -2431,24 +2431,49 @@ window.__policies={
       let w=0; for(const c of m.ch)w=Math.max(w,c.w); if(w>mx){mx=w;worst=id;} }
     if(worst&&mx>0.5) actRepair(worst); }; },
 };
-window.__matrix=function(seeds){
+// Brewery reference disciplines (for balance validation). The 12-machine plant
+// is only survivable with condition-based upkeep + automation + a hired
+// apprentice; neglect and calendar-only servicing fall behind.
+const _BCHAIN=['mill','brewhouse','ferma','fermb','bright','filler','pasteur','labeler','casepack'];
+const _BUTIL=['boiler','chiller','aircomp'];
+window.__brewPolicies={
+  'run-to-failure': ()=>()=>null,
+  'inspect-only': ()=>(day,tick,S,MACH)=>{ if(tick!==5)return;
+    for(const id of _BCHAIN){ if(!MACH[id].broken && !MACH[id].ch.some(c=>c.reveal!=null)){ actInspect(id); break; } } },
+  'blind-calendar': ()=>{ const rot=[['boiler','filler'],['chiller','pasteur'],['aircomp','brewhouse'],['mill','ferma'],['bright','fermb'],['labeler','casepack']];
+    return (day,tick,S,MACH)=>{ if(tick!==5)return; (rot[(day-1)%rot.length]||[]).forEach(id=>{ if(!MACH[id].broken) actRepair(id); }); }; },
+  'predictive+auto+crew': ()=>{ const plan=['aircomp','boiler','chiller','filler','pasteur','brewhouse','ferma','fermb','bright','casepack']; let i=0;
+    return (day,tick,S,MACH)=>{ if(tick!==5)return;
+      if(day===1){ actHire(); actSensor('boiler','scale'); actSensor('chiller','condenser'); actSensor('pasteur','hexch'); actSensor('filler','fillvalve'); }
+      if(i<plan.length && S.cash>C.AUTOMATE_COST+2200){ const id=plan[i++]; if(!MACH[id].automated&&!MACH[id].broken) actAutomate(id); }
+      const cand=[]; for(const id of _BCHAIN.concat(_BUTIL)){ const m=MACH[id]; if(m.broken)continue;
+        for(const c of m.ch){ const rv=c.reveal!=null?c.reveal:c.w; if(rv>0.4) cand.push([rv,id,c.id]); } }
+      cand.sort((a,b)=>b[0]-a[0]); const used=new Set(); let n=0;
+      for(const[w,id,cid]of cand){ if(n>=6)break; if(used.has(id))continue; used.add(id); actFix(id,cid); n++; }
+      if(day>=18 && MACH[S.bottleneck] && MACH[S.bottleneck].up<1.5 && S.cash>C.UPGRADE_COST+3000) actUpgrade(S.bottleneck); }; },
+};
+window.__matrix=function(seeds, plant){
   seeds=seeds||[11,22,33,44,55,66,77,88,99,110];
+  plant=plant||'bakery';
+  const pols = plant==='brewery' ? window.__brewPolicies : window.__policies;
   const med=a=>{ const s=[...a].sort((x,y)=>x-y); return s[Math.floor(s.length/2)]; };
   const out={};
-  for(const name in window.__policies){
-    const runs=seeds.map(sd=>{ const r=window.__sim(window.__policies[name](), sd);
-      return {seed:sd, end:r.end, won:r.won, strikes:r.strikes, brk:r.stats.nBrk,
+  for(const name in pols){
+    const runs=seeds.map(sd=>{ const r=window.__sim(pols[name](), sd, plant);
+      return {seed:sd, end:r.end, won:r.won, strikes:r.strikes, brk:r.stats.nBrk, days:r.days,
         emerg:Math.round(r.stats.emerg), planned:Math.round(r.stats.planned+r.stats.insp),
         down:+r.stats.downH.toFixed(1)}; });
     const ends=runs.map(r=>r.end);
-    out[name]={ wins:runs.filter(r=>r.won).length, med:med(ends),
+    const seasonDays = plant==='brewery'?30:20;
+    out[name]={ wins:runs.filter(r=>r.won).length, finished:runs.filter(r=>r.days>=seasonDays).length,
+      medDays:med(runs.map(r=>r.days)), med:med(ends),
       min:Math.min(...ends), max:Math.max(...ends),
       brk:med(runs.map(r=>r.brk)), emerg:med(runs.map(r=>r.emerg)),
       planned:med(runs.map(r=>r.planned)), downH:med(runs.map(r=>r.down)), runs };
   }
   try{ console.table(Object.fromEntries(Object.entries(out).map(([k,v])=>
-    [k,{wins:v.wins+'/'+seeds.length, med:'$'+v.med, range:v.min+'..'+v.max,
-        brk:v.brk, emerg:'$'+v.emerg, planned:'$'+v.planned, downH:v.downH}]))); }catch(e){}
+    [k,{wins:v.wins+'/'+seeds.length, finished:v.finished+'/'+seeds.length, medDays:v.medDays,
+        med:'$'+v.med, range:v.min+'..'+v.max, brk:v.brk}]))); }catch(e){}
   return out;
 };
 
@@ -3035,16 +3060,16 @@ function acctCodeStep(email){
 const BREW_C = {
   TICKS_PER_DAY:480, WEEK_LEN:5, N_WEEKS:6, D_MAX:30, ALPHA:2.0, MU:3.0, KAPPA:6.0,
   P_NOM:7.0, P_MIN:4.0, LAMBDA_LEAK:0.35, M0:0.05, M_SEAL:0.75, AIR_DRAW:32, COMP_CAP:40,
-  STARTING_CASH:15000, WIN_CASH:60000, PRICE:3.60, SALVAGE:1.10,
-  CONTRACT_DEMAND:700, CONTRACT_FLOOR:350, SHORT_SHIP_PENALTY:900,
+  STARTING_CASH:16000, WIN_CASH:25000, PRICE:4.50, SALVAGE:1.10,
+  CONTRACT_DEMAND:450, CONTRACT_FLOOR:225, SHORT_SHIP_PENALTY:900,
   ENERGY_PRICE:0.18, TECH_WAGE_DAY:300, OVERHEAD_DAY:180,
   TRAVEL_MIN:15, INSPECT_MIN:30,
   EMERGENCY_PART_MULT:2.5, EMERGENCY_DELIVERY_MIN:180,
   LABOR_REPAIR:220, LABOR_EMERGENCY_MULT:1.75, LABOR_FIX:70, FIX_TIME_FRAC:0.30, SERVICE_TIME_MULT:1.5,
   CASCADE_DAMAGE:450, WIP_SCRAP_RATE:55,
-  UPGRADE_COST:2000, UPGRADE_TIER:1.4, AUTOMATE_COST:1300,
+  UPGRADE_COST:2000, UPGRADE_TIER:1.4, AUTOMATE_COST:900,
   REPAIR_FLOOR:0.08, FIX_FLOOR:0.04, OVERHAUL_FLOOR:0.11, SIGMA_INSPECT:0.05,
-  STRIKES_TO_LOSE:3, HEALTH_CONDEMN:0.15, WEAR_SCALE:0.85, HAZARD_SCALE:0.4,
+  STRIKES_TO_LOSE:3, HEALTH_CONDEMN:0.15, WEAR_SCALE:0.35, HAZARD_SCALE:0.18,
   FOUL_ACCEL:1.6,   // fouling/scale compounds: dirty surfaces foul faster
   HIRE_FEE:1800, APPRENTICE_WAGE_DAY:170, APPRENTICE_SLOW:1.4,   // second technician
   SENSOR_COST:180,  // per-channel condition sensor (stays revealed)
@@ -3052,12 +3077,12 @@ const BREW_C = {
 // Six weekly contracts on the same aging plant; base bottleneck ≈150/hr → ~1200
 // bottles/day at full health, so weeks 5–6 out-run a base line and force capacity.
 BREW_C.WEEKS = [
-  { demand:700,  floor:350 },   // Wk1 — settling in
-  { demand:850,  floor:425 },   // Wk2
-  { demand:1000, floor:500 },   // Wk3 — needs a healthy line
-  { demand:1150, floor:575 },   // Wk4
-  { demand:1300, floor:650 },   // Wk5 — exceeds base capacity
-  { demand:1500, floor:750 },   // Wk6 — needs real added capacity
+  { demand:450,  floor:225 },   // Wk1 — settling in
+  { demand:560,  floor:280 },   // Wk2
+  { demand:690,  floor:345 },   // Wk3 — needs a healthy line
+  { demand:830,  floor:415 },   // Wk4
+  { demand:1000, floor:500 },   // Wk5 — brushing base capacity
+  { demand:1200, floor:600 },   // Wk6 — needs added capacity (upgrade)
 ];
 
 // ch types: DRAG/SEIZE/DRIFT/LEAK (rate/energy/hazard), FOUL (accelerating scale,
@@ -3127,6 +3152,12 @@ const BREW_DEFS = [
          {id:'belt',    nm:'Accumulation belt',     type:'DRAG', k:0.00012, w:0.20, part:70},
          {id:'sensor',  nm:'Case sensor',           type:'DRIFT',k:0.00009, w:0.15, part:40} ]},
 ];
+// Balance pass (verified via the brewery policy sweep): slow the per-channel wear
+// rate and start the plant healthier, so a predictive + automation + apprentice
+// strategy can actually keep 12 machines alive across the 6-week season while
+// neglect and blind calendar servicing fall behind. Baked here as scale factors
+// applied once to the authored k / initial-wear values above.
+for(const _d of BREW_DEFS) for(const _c of _d.ch){ _c.k*=0.55; _c.w*=0.45; }
 const BREW_CHAIN = ['mill','brewhouse','ferma','fermb','bright','filler','pasteur','labeler','casepack'];
 const BREW_HALL  = {w:40, d:22, h:7.0};   // taller/wider than the bakery (world slice fills it out)
 

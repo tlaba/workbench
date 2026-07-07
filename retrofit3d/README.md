@@ -17,7 +17,7 @@ https://tlaba.github.io/workbench/retrofit3d/retrofit-factory-3d.html
 |---|---|
 | [`retrofit-factory-3d.html`](./retrofit-factory-3d.html) | **Playable browser prototype.** Single self-contained HTML — no build, no deps (three.js inlined). A real-time 3D factory hall you walk around as the technician, six animated machines, the full tuned economy running a deterministic seeded simulation. |
 | [`GDD.md`](./GDD.md) | The 25-section developer-ready Game Design Document — vision, pillars, canonical machine stats, economy formulas, and the tuned constants the prototype uses verbatim. |
-| [`GDD-IRONLINE.md`](./GDD-IRONLINE.md) | Design doc for the **Ironline Brewery & Bottling Works** premium plant pack — the 12-machine plant, the three utility buses, the new failure physics, and the hygiene→quality→price economy, with its verified balance matrix. |
+| [`GDD-IRONLINE.md`](./GDD-IRONLINE.md) · [`GDD-EMBERLINE.md`](./GDD-EMBERLINE.md) · [`GDD-BLACKWEIR.md`](./GDD-BLACKWEIR.md) | Design docs for the three premium plant packs — the **Ironline Brewery** (hygiene→price + batch fermentation), the **Emberline Diecast Foundry** (a heat bank + rework spiral, flat price), and the **Blackweir Waterworks** (an inflow-fed basin bomb + silent compliance) — each with its verified balance matrix. |
 | [`MONETIZATION.md`](./MONETIZATION.md) | A staged, product-fit monetization plan — free web build as the funnel, premium plant packs, a paid Complete Edition, and an education/B2B licensing channel built on the game's reliability-engineering core. |
 | [`CLOUD-SAVES.md`](./CLOUD-SAVES.md) · [`supabase-setup.sql`](./supabase-setup.sql) | Optional cloud sign-in: how to point the game at a Supabase project so players can save their run to the cloud and continue on any device (the schema + row-level-security policies, and the ~5-minute setup). |
 
@@ -36,22 +36,26 @@ follows you across devices, reconciling local vs. cloud by whichever is newer. I
 stays dormant (local-only) until a Supabase project is configured — see
 [`CLOUD-SAVES.md`](./CLOUD-SAVES.md).
 
-## Two plants — the free bakery and the Ironline Brewery
+## Four plants — the free bakery and three premium packs
 
 The game opens on a **plant picker**. The free **Old Bakery Plant** is the full
-core game described below. The **Ironline Brewery & Bottling Works** is the
-first *premium plant pack*: 12 machines across a 6-week season, three coupled
-utility buses (steam / glycol / air — follow the colour-coded overhead pipes),
-two new failure types (accelerating **fouling** and silent **calibration
-drift**), a hireable **apprentice** and per-part **condition sensors**,
-**batch fermentation** (one tank fills at a time, batches ferment and drain
-through a bright-tank *buffer* the packaging line ships from), and the
-signature brewer's mechanic — **hygiene**: product-contact vessels build soil
-that drags your beer's *quality and price*, contamination dumps the batch in
-the tank, and skipping the 🧼 CIP wash turns into contamination roulette. Each plant keeps its own on-device (and cloud)
-save. Design details and the verified balance matrix live in
-[`GDD-IRONLINE.md`](./GDD-IRONLINE.md); until a store is wired up the pack is
-open as a preview (the redeem-key gate is built — see
+core game described below. Three *premium plant packs* build on the same
+engine — each 12 machines across a 6-week season with three colour-coded
+utility buses, a hireable **apprentice**, per-part **condition sensors**, and a
+signature economy axis all its own:
+
+| Plant | Buses | Signature mechanics | Where money dies |
+|---|---|---|---|
+| **Ironline Brewery & Bottling Works** | steam · glycol · air | **hygiene → quality → price**; **batch fermentation** through a bright-tank buffer; fouling + calibration drift | low quality → low **price** |
+| **Emberline Diecast & Alloy Works** | gas · hydraulic · water | the **Heat Bank** (molten metal is banked inventory with a superheat you must never freeze); the **Rework Spiral** (defects re-melt the same metal twice); **THERM** (downtime is wear) | energy + re-melt + warranty **fines** (flat price) |
+| **Blackweir Municipal Waterworks** | power · air · chem | the **river never stops** (an inflow-fed basin you keep half-empty, forecast-a-day storms); **silent compliance** (calibration drift is a permit violation, not a price cut) | weir-spill + violation **fines** + the pump power bill (flat price) |
+
+Each plant keeps its own on-device (and cloud) save and its own reference
+policy matrix (`window.__matrix(seeds, plantId)`). Design details + the
+verified balance matrices live in
+[`GDD-IRONLINE.md`](./GDD-IRONLINE.md), [`GDD-EMBERLINE.md`](./GDD-EMBERLINE.md)
+and [`GDD-BLACKWEIR.md`](./GDD-BLACKWEIR.md). Until a store is wired up the packs
+are open as a preview (the redeem-key gate is built — see
 [`CLOUD-SAVES.md`](./CLOUD-SAVES.md)).
 
 ## You are the technician — walk the floor

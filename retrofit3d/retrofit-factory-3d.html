@@ -2418,7 +2418,7 @@ function updatePuffs(dt,t){
 /* =============================== WALKING / INTERACTION =============================== */
 const WALK_SPEED=3.5;
 function buildFloor(){ if(HEADLESS) return;   // called by newGame()
-  if(worldBuilt && _worldPlant!==CURPLANT) rebuildWorld(); else ensureWorld();
+  if(worldBuilt && _worldPlant!==CURPLANT){ rebuildWorld(); NAV=null; } else ensureWorld();
   resetDynamics(); }
 function resetDynamics(){
   if(!CH) return;
@@ -2515,8 +2515,11 @@ function collide(p){
       } else { const d=Math.sqrt(d2); p.x=cx+vx/d*r; p.z=cz+vz/d*r; }
     }
   }
-  p.x=clamp(p.x,-14.3,14.3); p.z=clamp(p.z,-8.3,8.3);
+  const bx=HALL.w/2-0.7, bz=HALL.d/2-0.7;   // keep the player inside the hall (any plant's size)
+  p.x=clamp(p.x,-bx,bx); p.z=clamp(p.z,-bz,bz);
 }
+function hallBX(){ return HALL.w/2-0.8; }
+function hallBZ(){ return HALL.d/2-0.8; }
 function lerpAngle(a,b,t){ let d=b-a; while(d>Math.PI)d-=Math.PI*2; while(d<-Math.PI)d+=Math.PI*2; return a+d*t; }
 
 /* =============================== NAVIGATION (grid A*) ===============================
@@ -2528,7 +2531,8 @@ function buildNav(){
   const ox=-HALL.w/2, oz=-HALL.d/2, blocked=new Uint8Array(w*h), pad=0.5;
   for(let cz=0;cz<h;cz++) for(let cx=0;cx<w;cx++){
     const x=ox+(cx+0.5)*cs, z=oz+(cz+0.5)*cs;
-    let bl=(x<-14.2||x>14.2||z<-8.2||z>8.2)?1:0;
+    const bx=hallBX(), bz=hallBZ();
+    let bl=(x<-bx||x>bx||z<-bz||z>bz)?1:0;
     if(!bl) for(const o of OBST){
       if(x>o.x-o.hw-pad&&x<o.x+o.hw+pad&&z>o.z-o.hd-pad&&z<o.z+o.hd+pad){bl=1;break;} }
     blocked[cz*w+cx]=bl;
@@ -2627,7 +2631,7 @@ function hideRoute(){ if(routeLine) routeLine.visible=false; if(routeRing) route
 function cancelWalk(){ if(S.walk) S.walk=null; hideRoute(); }
 function routeTo(x,z,open){
   if(!CH) return false;
-  const path=findPath(CH.p.x,CH.p.z,clamp(x,-14.2,14.2),clamp(z,-8.2,8.2));
+  const path=findPath(CH.p.x,CH.p.z,clamp(x,-hallBX(),hallBX()),clamp(z,-hallBZ(),hallBZ()));
   if(!path||!path.length){ toast("Can't find a way there"); return false; }
   S.walk={path:path, i:0, open:open||null};
   showRoute(path);
@@ -4407,6 +4411,393 @@ if(typeof PLANT_PIPES!=='undefined'){
   };
 }
 
+/* =============================== 3D: LIFELIKE PER-MACHINE GEOMETRY =============================== */
+/* Foundry palette: hot machines lean rust/amber; steel + chrome trim; emissive orange
+   for furnace glows. Every builder adds recognizable industrial hardware to g, sets
+   R.topY, and wires anim hooks (agit/head/roll/shim/glows/ventAt) where they fit. */
+const FDX_ORANGE=0xff6a1e, FDX_AMBER=0xff8a2a, FDX_HAZARD=0xd8a020, FDX_QUENCH=0x2a5a9a;
+function FDX_screen(g,x,y,z,w,h,ry){
+  const s=new THREE.Mesh(new THREE.PlaneGeometry(w||0.44,h||0.32),
+    new THREE.MeshStandardMaterial({map:screenTex,emissive:0xffffff,emissiveMap:screenTex,emissiveIntensity:0.65,roughness:0.4}));
+  s.position.set(x,y,z); if(ry) s.rotation.y=ry; g.add(s); return s;
+}
+function FDX_glowDisc(g,r,x,y,z,ry,hex,inten){
+  const m=new THREE.Mesh(new THREE.CircleGeometry(r,18),
+    new THREE.MeshStandardMaterial({color:0x0a0402,emissive:hex||FDX_ORANGE,emissiveIntensity:inten==null?1.4:inten,side:THREE.DoubleSide}));
+  m.position.set(x,y,z); if(ry!=null) m.rotation.y=ry; g.add(m); return m;
+}
+function FDX_hazSkirt(g,w,d,y){
+  return box(w,0.16,d,stdMat(FDX_HAZARD,0.6,0.2),0,y==null?0.16:y,0,g);
+}
+if(typeof PLANT_BUILDERS!=='undefined'){
+
+  // ---- gasskid: gas train & regen burner skid ---------------------------------
+  PLANT_BUILDERS['gasskid']=function(d,g,R,ctx){ const {pM,steelM,darkM,chromeM}=ctx;
+    box(3.0,0.16,2.2,darkM,0,0.08,0,g);                                   // skid base
+    box(1.5,0.9,1.6,pM(),-0.35,0.62,0,g);                                 // burner body block
+    // two angled burner "horns"
+    for(const sz of [-0.5,0.5]){ const horn=cyl(0.16,0.22,1.2,pM(),0.45,0.95,sz,g,14);
+      horn.rotation.z=-0.7; horn.rotation.x=sz>0?0.18:-0.18;
+      cyl(0.1,0.1,0.24,chromeM,0.9,1.28,sz,g,10).rotation.z=-0.7; }        // nozzle tips
+    const blower=cyl(0.5,0.5,0.7,pM(),-1.05,0.62,0.55,g,18); blower.rotation.z=Math.PI/2; // combustion blower drum
+    cyl(0.2,0.2,0.4,darkM,-1.05,0.62,-0.35,g,12).rotation.z=Math.PI/2;     // blower motor
+    cyl(0.09,0.09,1.0,steelM,-0.35,1.55,0,g,10);                          // regen media riser
+    const ctl=box(0.55,0.85,0.4,darkM,0.7,0.55,-0.75,g);                  // control box
+    FDX_screen(g,0.7,0.75,-0.96,0.36,0.26,Math.PI);
+    FDX_hazSkirt(g,3.04,2.24,0.17);
+    R.topY=1.7;
+  };
+
+  // ---- hpu: central hydraulic power unit --------------------------------------
+  PLANT_BUILDERS['hpu']=function(d,g,R,ctx){ const {pM,steelM,darkM,chromeM}=ctx;
+    box(2.6,0.14,2.0,darkM,0,0.07,0,g);                                   // skid
+    box(1.9,0.9,1.5,stdMat(0x6a7078,0.55,0.4),0,0.62,0,g);                // grey reservoir tank
+    box(1.94,0.1,1.54,steelM,0,1.12,0,g);                                 // reservoir lid
+    // 3 vertical accumulator bottles with domed tops
+    for(let i=0;i<3;i++){ const bx=-0.7+i*0.7, bz=0.55;
+      cyl(0.22,0.22,1.3,pM(),bx,1.35,bz,g,14);
+      const dm=new THREE.Mesh(new THREE.SphereGeometry(0.22,14,8,0,Math.PI*2,0,Math.PI/2),chromeM);
+      dm.position.set(bx,2.0,bz); g.add(dm); }
+    box(0.9,0.34,0.4,steelM,0,0.9,0.55,g);                                // manifold block
+    const pumpM=stdMat(0x2c4a66,0.5,0.5);
+    box(0.6,0.55,0.5,pumpM,-0.55,0.55,-0.6,g);                            // pump/motor set
+    const mot=cyl(0.24,0.24,0.55,darkM,0.35,0.62,-0.6,g,14); mot.rotation.z=Math.PI/2;
+    // braided-looking HP risers
+    for(const rx of [-0.35,0,0.35]){ const h=cyl(0.05,0.05,0.9,stdMat(0x5a6068,0.4,0.7),rx,1.05,-0.55,g,8); h.rotation.x=0.25; }
+    FDX_screen(g,0.7,0.75,-0.77,0.34,0.26,Math.PI);
+    R.topY=2.15;
+  };
+
+  // ---- tower: cooling tower & circ pumps --------------------------------------
+  PLANT_BUILDERS['tower']=function(d,g,R,ctx){ const {pM,steelM,darkM,chromeM}=ctx;
+    const H=3.0, r=1.1;
+    box(2.9,0.16,2.4,darkM,0,0.08,0,g);                                   // basin/skid
+    box(2.9,0.35,2.4,stdMat(0x4a5258,0.6,0.3),0,0.33,0,g);                // cold-water basin
+    const shell=cyl(r,r*1.05,H,pM(),0,0.5+H*0.5,0,g,26); shell.castShadow=true;   // tower shell
+    // horizontal louver rings
+    for(let i=0;i<4;i++){ const ring=new THREE.Mesh(new THREE.TorusGeometry(r+0.03,0.05,8,26),darkM);
+      ring.position.y=0.9+i*0.5; ring.rotation.x=Math.PI/2; g.add(ring); }
+    cyl(r*1.02,r*1.02,0.16,steelM,0,0.5+H,0,g,26);                        // fan deck ring
+    // spinning fan disc on top
+    const fan=new THREE.Group(); fan.position.y=0.5+H+0.12;
+    cyl(0.14,0.14,0.16,darkM,0,0,0,fan,12);                              // hub
+    for(let i=0;i<5;i++){ const bl=box(0.9,0.02,0.22,chromeM,0,0,0,fan); bl.rotation.y=i*(Math.PI*2/5); bl.position.set(Math.cos(i*(Math.PI*2/5))*0.5,0,Math.sin(i*(Math.PI*2/5))*0.5); bl.rotation.z=0.25; }
+    g.add(fan); R.anim.agit=fan;
+    // twin-pump skid at the base
+    for(const sx of [-0.55,0.55]){ box(0.5,0.4,0.7,steelM,sx,0.55,1.1,g);
+      const p=cyl(0.16,0.16,0.5,pM(),sx,0.55,1.55,g,12); p.rotation.x=Math.PI/2; }
+    const waterM=stdMat(0x38c0d0,0.4,0.5,{emissive:0x2090a0,emissiveIntensity:0.12});
+    cyl(0.1,0.1,1.4,waterM,-1.15,0.7,1.1,g,10).rotation.z=Math.PI/2;      // circ header
+    R.topY=0.5+H+0.4;
+  };
+
+  // ---- charger: ingot & scrap charger (skip hoist) ----------------------------
+  PLANT_BUILDERS['charger']=function(d,g,R,ctx){ const {pM,steelM,darkM,chromeM}=ctx;
+    box(2.4,0.14,2.2,darkM,0,0.07,0,g);
+    // 4 posts + top beam
+    for(const sx of [-0.9,0.9]) for(const sz of [-0.8,0.8]) box(0.14,2.3,0.14,steelM,sx,1.2,sz,g);
+    box(2.0,0.16,0.5,steelM,0,2.35,-0.8,g);                               // top beam (back)
+    box(2.0,0.16,0.5,steelM,0,2.35,0.8,g);
+    // inclined track up the back
+    const trk=box(0.16,2.6,0.5,darkM,-0.95,1.35,-0.9,g); trk.rotation.x=0.35;
+    const trk2=box(0.16,2.6,0.5,darkM,0.95,1.35,-0.9,g); trk2.rotation.x=0.35;
+    // charge bucket / skip
+    const skip=box(1.2,0.85,0.9,pM(),0,1.05,-0.55,g); skip.rotation.x=0.35;
+    box(1.24,0.1,0.94,chromeM,0,1.5,-0.75,g);                            // skip rim
+    // weigh platform
+    box(1.6,0.18,1.1,steelM,0,0.24,0.55,g);
+    for(const c of [[-0.6,0.2],[0.6,0.2],[-0.6,0.9],[0.6,0.9]]) cyl(0.08,0.08,0.16,darkM,c[0],0.16,c[1],g,8); // load cells
+    const hoistMot=cyl(0.22,0.22,0.4,darkM,0,2.6,-0.5,g,12); hoistMot.rotation.z=Math.PI/2; // hoist drive
+    R.topY=2.55;
+  };
+
+  // ---- melt: TOWER MELT FURNACE (hero) ----------------------------------------
+  PLANT_BUILDERS['melt']=function(d,g,R,ctx){ const {pM,steelM,darkM,chromeM}=ctx;
+    const H=3.0, r=1.25;
+    cyl(r+0.15,r+0.2,0.4,darkM,0,0.2,0,g,26);                            // hearth base
+    const shell=cyl(r,r,H,pM(),0,0.4+H*0.5,0,g,28); shell.castShadow=true; // furnace shell
+    // binding bands
+    for(let i=0;i<4;i++){ const b=new THREE.Mesh(new THREE.TorusGeometry(r+0.02,0.06,8,28),darkM);
+      b.position.y=0.7+i*0.7; b.rotation.x=Math.PI/2; g.add(b); }
+    // domed top
+    const dome=new THREE.Mesh(new THREE.SphereGeometry(r,26,12,0,Math.PI*2,0,Math.PI*0.5),pM());
+    dome.position.y=0.4+H; dome.castShadow=true; g.add(dome);
+    cyl(0.35,0.35,0.3,darkM,0,0.4+H+0.35,0,g,16);                        // roof ring
+    // bolted charge door (front, +z)
+    const door=cyl(0.5,0.5,0.14,darkM,0,2.1,r*0.96,g,18); door.rotation.x=Math.PI/2;
+    for(let i=0;i<8;i++){ const a=i*Math.PI/4; cyl(0.04,0.04,0.06,chromeM,Math.cos(a)*0.42,2.1+Math.sin(a)*0.42,r*1.02,g,6).rotation.x=Math.PI/2; } // bolts
+    // tap spout low on the side (+x) with GLOWING orifice
+    const spout=box(0.7,0.34,0.34,darkM,r*0.9,0.85,0,g); spout.rotation.z=-0.25;
+    const glow=FDX_glowDisc(g,0.14,r*1.25,0.72,0,Math.PI/2,FDX_ORANGE,1.5);
+    (R.anim.glows=R.anim.glows||[]).push(glow);
+    // a molten stream hint under the spout
+    const gl=new THREE.PointLight(FDX_AMBER,0.6,5,2); gl.position.set(r*1.2,0.7,0); g.add(gl); R.anim.glowL=gl;
+    // short offgas stack
+    cyl(0.28,0.34,2.2,steelM,-r*0.55,0.4+H+0.9,-r*0.55,g,14);
+    R.anim.ventAt=new THREE.Vector3(-r*0.55,0.4+H+2.1,-r*0.55);
+    R.topY=0.4+H+0.6;
+  };
+
+  // ---- hold: holding furnace & launder ----------------------------------------
+  PLANT_BUILDERS['hold']=function(d,g,R,ctx){ const {pM,steelM,darkM,chromeM}=ctx;
+    const H=1.7, r=1.05;
+    cyl(r+0.1,r+0.15,0.3,darkM,0,0.15,0,g,24);                           // base
+    const shell=cyl(r,r,H,pM(),0,0.3+H*0.5,0,g,26); shell.castShadow=true; // squat cylinder
+    for(let i=0;i<3;i++){ const b=new THREE.Mesh(new THREE.TorusGeometry(r+0.02,0.05,8,26),darkM);
+      b.position.y=0.5+i*0.55; b.rotation.x=Math.PI/2; g.add(b); }
+    // lid
+    const lid=cyl(r*0.95,r*1.02,0.22,steelM,0,0.3+H+0.1,0,g,26);
+    cyl(0.18,0.18,0.35,chromeM,0.3,0.3+H+0.3,0,g,12);                     // charge port
+    // launder trough leading toward the cells (+x)
+    const trough=box(1.6,0.28,0.5,darkM,r+0.75,0.95,0,g);
+    box(1.6,0.1,0.34,pM(),r+0.75,1.02,0,g);                             // trough liner (molten channel)
+    const troughGlow=FDX_glowDisc(g,0.12,r+1.55,1.02,0,Math.PI/2,FDX_AMBER,1.1);
+    (R.anim.glows=R.anim.glows||[]).push(troughGlow);
+    // pour spout + small burner glow
+    box(0.4,0.2,0.24,darkM,r*0.85,0.95,0.5,g).rotation.z=-0.2;
+    const burn=FDX_glowDisc(g,0.1,0,0.55,r*0.98,0,FDX_ORANGE,1.0);
+    (R.anim.glows=R.anim.glows||[]).push(burn);
+    R.topY=0.3+H+0.4;
+  };
+
+  // ---- dca / dcb: DIECAST CELL (shared builder) -------------------------------
+  function FDX_diecast(d,g,R,ctx){ const {pM,steelM,darkM,chromeM}=ctx;
+    box(3.6,0.7,1.9,darkM,0,0.35,0,g);                                    // machine base
+    box(3.6,0.14,1.9,steelM,0,0.77,0,g);                                  // bed plate
+    // horizontal shot cylinder (chrome, on its side) at the injection end (-x)
+    const shot=cyl(0.34,0.34,1.3,chromeM,-1.4,1.05,0,g,18); shot.rotation.z=Math.PI/2;
+    cyl(0.16,0.16,0.5,darkM,-2.05,1.05,0,g,12).rotation.z=Math.PI/2;      // accumulator butt
+    // fixed platen (-x side) + moving platen
+    const fixed=box(0.34,1.5,1.5,pM(),-0.55,1.55,0,g);
+    const moving=box(0.34,1.4,1.5,pM(),0.65,1.55,0,g); R.anim.head=moving;  // strokes (bobs)
+    // 4 tie-bar rods linking them
+    for(const sy of [-0.45,0.45]) for(const sz of [-0.5,0.5]){ const bar=cyl(0.07,0.07,1.5,chromeM,0.05,1.55+sy,sz,g,10); bar.rotation.z=Math.PI/2; }
+    // die block between platens
+    box(0.3,0.9,0.9,stdMat(0x8a6a4a,0.5,0.4),0.05,1.55,0,g);
+    // control cabinet with emissive screen (+x, front +z)
+    box(0.7,1.5,0.6,darkM,1.55,0.85,0.55,g);
+    FDX_screen(g,1.55,1.15,0.86,0.42,0.3,0);
+    const beacon=cyl(0.07,0.07,0.16,stdMat(0xffb020,0.4,0.2,{emissive:0xffb020,emissiveIntensity:0.4}),1.55,1.68,0.55,g,8);
+    // safety guard (translucent) over the die area
+    const guard=new THREE.Mesh(new THREE.BoxGeometry(1.6,1.5,1.7),
+      new THREE.MeshStandardMaterial({color:0xd8e4ec,transparent:true,opacity:0.1,roughness:0.15,metalness:0.1,depthWrite:false}));
+    guard.position.set(0.05,1.55,0); g.add(guard);
+    R.topY=2.35;
+  }
+  PLANT_BUILDERS['dca']=function(d,g,R,ctx){ FDX_diecast(d,g,R,ctx); };
+  PLANT_BUILDERS['dcb']=function(d,g,R,ctx){ FDX_diecast(d,g,R,ctx); };
+
+  // ---- trim: trim press -------------------------------------------------------
+  PLANT_BUILDERS['trim']=function(d,g,R,ctx){ const {pM,steelM,darkM,chromeM}=ctx;
+    box(2.2,0.5,2.0,darkM,0,0.25,0,g);                                    // bed / base
+    box(2.0,0.16,1.8,steelM,0,0.55,0,g);                                  // bolster plate
+    // 4-post frame
+    for(const sx of [-0.75,0.75]) for(const sz of [-0.6,0.6]) cyl(0.11,0.11,2.4,steelM,sx,1.6,sz,g,12);
+    box(2.0,0.35,1.6,pM(),0,2.9,0,g);                                     // crown / top
+    box(0.5,0.5,0.5,darkM,0,3.2,0,g);                                     // drive housing
+    // moving bolster (ram) — bobs with the stroke
+    const ram=box(1.3,0.5,1.1,pM(),0,1.55,0,g); R.anim.head=ram;
+    box(1.1,0.14,0.9,chromeM,0,1.28,0,g);                                 // trim die face
+    // scrap chute (+x, angled down)
+    const chute=box(0.9,0.7,0.7,steelM,1.35,0.7,0,g); chute.rotation.z=0.5;
+    for(let i=0;i<3;i++) box(0.3,0.12,0.4,stdMat(0x9a7a4a,0.6,0.3),1.7,0.25,-0.3+i*0.3,g); // scrap
+    FDX_screen(g,0.8,1.9,0.82,0.36,0.26,0);
+    R.topY=3.4;
+  };
+
+  // ---- hto: T6 HEAT-TREAT OVEN & QUENCH ---------------------------------------
+  PLANT_BUILDERS['hto']=function(d,g,R,ctx){ const {pM,steelM,darkM,chromeM}=ctx;
+    // long insulated oven box (occupies -x half)
+    box(2.0,1.7,2.2,pM(),-0.5,1.05,0,g);
+    box(2.06,0.14,2.26,darkM,-0.5,1.95,0,g);                              // roof cap
+    FDX_hazSkirt(g,3.14,2.54,0.16);
+    // tunnel mouth at the -x end with inner glow
+    box(0.14,1.0,1.2,darkM,-1.5,1.0,0,g);
+    const glow=FDX_glowDisc(g,0.5,-1.42,1.0,0,-Math.PI/2,FDX_ORANGE,1.5);
+    (R.anim.glows=R.anim.glows||[]).push(glow);
+    glow.geometry=new THREE.PlaneGeometry(1.0,0.8); glow.geometry.__isPlane=true;    // wider mouth
+    const gl=new THREE.PointLight(FDX_AMBER,0.7,6,2); gl.position.set(-1.4,1.0,0); g.add(gl); R.anim.glowL=gl;
+    // quench tank at the +x end — a bluish pool
+    box(1.3,0.7,1.6,steelM,1.2,0.35,0,g);
+    const pool=new THREE.Mesh(new THREE.BoxGeometry(1.1,0.06,1.4),
+      new THREE.MeshStandardMaterial({color:FDX_QUENCH,emissive:0x1a3a6a,emissiveIntensity:0.3,roughness:0.15,metalness:0.5,transparent:true,opacity:0.9}));
+    pool.position.set(1.2,0.72,0); g.add(pool);
+    // vent stack (set ventAt to its top for vapour)
+    cyl(0.22,0.26,2.0,steelM,-0.5,2.9,-0.8,g,14);
+    R.anim.ventAt=new THREE.Vector3(-0.5,3.9,-0.8);
+    // heat-shimmer plane over the oven mouth
+    const shim=new THREE.Mesh(new THREE.PlaneGeometry(1.0,1.4),
+      new THREE.MeshBasicMaterial({color:0xffc890,transparent:true,opacity:0.05,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide}));
+    shim.position.set(-1.55,1.6,0); shim.rotation.y=Math.PI/2; g.add(shim); R.anim.shim=shim;
+    box(0.55,1.1,0.4,darkM,-1.4,0.75,1.1,g);                             // control cabinet
+    FDX_screen(g,-1.4,1.05,1.31,0.36,0.26,0);
+    R.topY=2.4;
+  };
+
+  // ---- cnc: CNC machining center ----------------------------------------------
+  PLANT_BUILDERS['cnc']=function(d,g,R,ctx){ const {pM,steelM,darkM,chromeM}=ctx;
+    box(2.4,0.5,2.2,darkM,0,0.25,0,g);                                    // base
+    box(2.2,1.7,2.0,pM(),0,1.35,0,g);                                     // enclosure
+    box(2.24,0.14,2.04,steelM,0,2.24,0,g);                                // roof
+    // tinted window panel (front +z)
+    const win=new THREE.Mesh(new THREE.PlaneGeometry(1.4,1.0),
+      new THREE.MeshStandardMaterial({color:0x1a2a33,emissive:0x6ab0d0,emissiveIntensity:0.25,transparent:true,opacity:0.55,roughness:0.15,metalness:0.4}));
+    win.position.set(0,1.4,1.01); g.add(win);
+    // spindle head inside (bobs)
+    const spindle=box(0.4,0.7,0.4,chromeM,0,1.55,0.2,g); R.anim.head=spindle;
+    cyl(0.1,0.05,0.3,darkM,0,1.2,0.2,g,10);                              // tool
+    // control screen on a pendant
+    box(0.5,0.7,0.14,darkM,1.15,1.5,0.9,g);
+    FDX_screen(g,1.15,1.55,0.98,0.4,0.3,0);
+    // chip conveyor stub (+x)
+    box(1.0,0.4,0.6,steelM,1.45,0.5,0,g);
+    box(0.9,0.08,0.5,darkM,1.5,0.72,0,g);
+    R.topY=2.4;
+  };
+
+  // ---- xrq: X-ray & gauge gate ------------------------------------------------
+  PLANT_BUILDERS['xrq']=function(d,g,R,ctx){ const {pM,steelM,darkM,chromeM}=ctx;
+    // shielded cabinet (heavy dark box)
+    box(1.8,2.0,1.8,stdMat(0x2a2e33,0.7,0.35),0,1.0,0,g);
+    box(1.86,0.16,1.86,darkM,0,2.05,0,g);
+    FDX_hazSkirt(g,1.9,1.9,0.18);
+    // conveyor passing THROUGH it (in/out belt stubs along x)
+    for(const sx of [-1.35,1.35]){ box(1.0,0.4,0.7,steelM,sx,0.7,0,g);
+      const b=new THREE.Mesh(new THREE.BoxGeometry(0.9,0.06,0.6),new THREE.MeshStandardMaterial({map:beltTex,roughness:0.95,metalness:0}));
+      b.position.set(sx,0.92,0); g.add(b); }
+    box(0.5,0.5,0.9,darkM,-0.9,1.0,0,g);                                  // entry tunnel
+    box(0.5,0.5,0.9,darkM,0.9,1.0,0,g);                                   // exit tunnel
+    // screen (front +z)
+    box(0.6,0.8,0.14,darkM,0.5,1.4,0.92,g);
+    FDX_screen(g,0.5,1.5,1.0,0.44,0.32,0);
+    // warning beacon on top
+    const beacon=cyl(0.12,0.14,0.24,stdMat(0xff2020,0.35,0.2,{emissive:0xff2020,emissiveIntensity:0.7}),0,2.28,0,g,12);
+    (R.anim.glows=R.anim.glows||[]).push(beacon);
+    cyl(0.03,0.03,0.2,darkM,0,2.5,0,g,6);
+    R.topY=2.4;
+  };
+}
+
+/* =============================== 3D: FOUNDRY HALL DRESSING =============================== */
+/* Hall 42×24: walls at x=±21, z=±12. Machine-panel aisle z≈-2.5..+1 kept CLEAR;
+   props hug the back wall (z≈-10.5, behind the line) and the front corners. */
+function FDX_dress(){
+  const steelS=stdMat(0x9aa3ab,0.5,0.65), dk=stdMat(0x2a3038,0.7,0.3), galv=stdMat(0x8d979f,0.45,0.6);
+  const ingotM=stdMat(0xb7bdc4,0.4,0.7), rust=stdMat(0x7a4a30,0.8,0.2), sandM=stdMat(0xbfa878,0.9,0.02);
+  const woodM=stdMat(0x8a6f4d,0.85,0.02), or2=stdMat(0xd8641e,0.5,0.4);
+  // --- ingot bundles (stacked bars) near the charger/melt ---
+  function ingotStack(x,z,rows){ const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=MR()*0.5-0.25;
+    box(1.5,0.09,1.1,woodM,0,0.06,0,g);                                   // pallet
+    for(let r=0;r<rows;r++){ const yy=0.16+r*0.18, n=4-(r%2);
+      for(let i=0;i<n;i++) box(0.26,0.16,1.0,ingotM,-0.55+i*(1.1/n)+(r%2?0.14:0),yy,0,g); }
+    scene.add(g); addObst(x,z,0.85,0.65); return g; }
+  ingotStack(-19,-10.3,3); ingotStack(-16.2,-10.6,2);
+  // --- scrap bins (rusty skips of returns) ---
+  function scrapBin(x,z){ const g=new THREE.Group(); g.position.set(x,0,z); g.rotation.y=MR()*0.4;
+    for(const sx of [-0.6,0.6]) box(0.06,0.7,1.0,rust,sx,0.45,0,g);
+    for(const sz of [-0.5,0.5]) box(1.2,0.7,0.06,rust,0,0.45,sz,g);
+    box(1.2,0.06,1.0,rust,0,0.14,0,g);
+    for(let i=0;i<7;i++) box(0.18,0.14,0.18,ingotM,-0.4+MR()*0.8,0.55+MR()*0.25,-0.3+MR()*0.6,g); // scrap chunks
+    scene.add(g); addObst(x,z,0.65,0.55); }
+  scrapBin(-13.7,-10.4); scrapBin(-11,-10.6);
+  // --- ladle on a stand (near the melt/hold) ---
+  (function(){ const g=new THREE.Group(); g.position.set(-6.3,0,-10.5);
+    for(const sx of [-0.55,0.55]) for(const sz of [-0.45,0.45]) box(0.1,1.0,0.1,steelS,sx,0.5,sz,g); // stand legs
+    box(1.3,0.12,1.1,steelS,0,1.0,0,g);
+    const ladle=cyl(0.55,0.45,0.85,dk,0,1.5,0,g,18);                      // ladle shell
+    cyl(0.5,0.5,0.1,stdMat(0x8a6a4a,0.6,0.3),0,1.9,0,g,18);               // refractory rim
+    const glow=FDX_glowDisc(g,0.42,0,1.88,0,-Math.PI/2,FDX_AMBER,0.8); glow.rotation.x=-Math.PI/2; glow.position.set(0,1.9,0);
+    const tr=new THREE.Mesh(new THREE.TorusGeometry(0.56,0.05,8,18),steelS); tr.position.y=1.5; tr.rotation.x=Math.PI/2; g.add(tr); // trunnion ring
+    scene.add(g); addObst(-6.3,-10.5,0.7,0.6); })();
+  // --- sand-mould boxes (green-sand flasks) stacked ---
+  (function(){ const g=new THREE.Group(); g.position.set(-1.5,0,-10.6);
+    for(let r=0;r<3;r++){ const yy=0.2+r*0.42;
+      const fl=box(1.1,0.38,0.9,sandM,(r%2?0.1:-0.1),yy,0,g);
+      box(1.14,0.06,0.94,dk,(r%2?0.1:-0.1),yy+0.19,0,g); }               // flask frame
+    scene.add(g); addObst(-1.5,-10.6,0.65,0.5); })();
+  // --- slag pot ---
+  (function(){ const g=new THREE.Group(); g.position.set(2.8,0,-10.6);
+    const pot=cyl(0.7,0.5,0.9,rust,0,0.55,0,g,18);
+    cyl(0.68,0.68,0.12,dk,0,1.0,0,g,18);
+    const cr=new THREE.Mesh(new THREE.TorusGeometry(0.72,0.06,8,18),dk); cr.position.y=1.0; cr.rotation.x=Math.PI/2; g.add(cr);
+    box(0.5,0.5,0.5,stdMat(0x3a3e42,0.7,0.3,{emissive:0x6a2a10,emissiveIntensity:0.3}),0,1.15,0,g); // cooled slag
+    scene.add(g); addObst(2.8,-10.6,0.7,0.6); })();
+  // --- more ingot staging near the back-right (cnc/xrq end) ---
+  ingotStack(13,-10.4,2);
+  // --- gantry-crane rail overhead spanning the line (thin; player walks under) ---
+  (function(){ const y=6.4;
+    for(const sz of [-9,-3]){ cyl(0.1,0.1,38,galv,0,y,sz,scene,10).rotation.z=Math.PI/2; } // two runway rails
+    // cross bridge girder + trolley/hook block
+    const bx=-6;
+    box(0.24,0.4,6.4,dk,bx,y,-6,scene);                                   // bridge girder (spans z)
+    box(0.5,0.4,0.5,stdMat(0xd8a020,0.5,0.3),bx,y-0.1,-6,scene);          // trolley
+    cyl(0.04,0.04,1.6,dk,bx,y-1.0,-6,scene,6);                            // hoist rope
+    const hook=cyl(0.16,0.1,0.3,steelS,bx,y-1.9,-6,scene,10);
+    // rail support brackets on the walls
+    for(const sz of [-9,-3]) for(const sx of [-19,19]) box(0.3,0.5,0.5,dk,sx,y,sz,scene);
+  })();
+  // --- safety bollards along the walkway (clear of the machine-panel aisle) ---
+  for(let x=-17;x<=18;x+=3.4)
+    cyl(0.09,0.11,0.75,stdMat(FDX_HAZARD,0.5,0.3),x,0.37,2.6,scene,10);
+  // --- floor cast-pit covers / drains along the line front ---
+  for(const dx of [-11,-4,4,12]){
+    const dr=new THREE.Mesh(new THREE.CircleGeometry(0.34,18),stdMat(0x14181d,0.4,0.7));
+    dr.rotation.x=-Math.PI/2; dr.position.set(dx,0.012,-2.9); scene.add(dr);
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(0.34,0.025,6,18),stdMat(0x3a444e,0.5,0.6));
+    ring.rotation.x=Math.PI/2; ring.position.set(dx,0.02,-2.9); scene.add(ring); }
+  // --- office / control room (front-right corner) ---
+  (function(){ const g=new THREE.Group(); g.position.set(17.4,0,9.0);
+    box(4.4,2.7,4.4,stdMat(0x454e57,0.85,0.05),0,1.35,0,g);
+    const win=new THREE.Mesh(new THREE.PlaneGeometry(2.6,1.0),
+      new THREE.MeshStandardMaterial({color:0x2c3a48,emissive:0x9ab8d0,emissiveIntensity:0.5,roughness:0.2,metalness:0.4}));
+    win.position.set(-2.21,1.6,0); win.rotation.y=-Math.PI/2; g.add(win);
+    box(0.06,2.0,0.9,stdMat(0x3a424a,0.7,0.2),-2.2,1.0,-1.4,g);
+    const lbl=makeTextSprite('CONTROL','#cfd8e2','rgba(20,26,32,.7)',20,6); lbl.position.set(0,3.1,0); g.add(lbl);
+    scene.add(g); })();
+  addObst(17.4,9.0,2.2,2.2);
+  // --- MCC panel line on the left wall ---
+  (function(){ const g=new THREE.Group(); g.position.set(-19.6,0,2.0); g.rotation.y=Math.PI/2;
+    box(3.2,2.1,0.4,stdMat(0x7d8792,0.5,0.5),0,1.25,0,g);
+    for(const sx of [-1.0,0,1.0]) box(0.9,1.9,0.04,stdMat(0x6a747d,0.4,0.6),sx,1.25,0.22,g);
+    const warn=new THREE.Mesh(new THREE.PlaneGeometry(0.42,0.3),
+      new THREE.MeshStandardMaterial({color:FDX_HAZARD,emissive:0x442a00,emissiveIntensity:0.3}));
+    warn.position.set(0,1.9,0.23); g.add(warn);
+    scene.add(g); })();
+  addObst(-19.6,2.0,0.35,1.6);
+  // --- workbench (front area, clear of aisle) ---
+  (function(){ const g=new THREE.Group(); g.position.set(7.0,0,10.6); g.rotation.y=Math.PI;
+    box(2.2,0.09,0.85,woodM,0,0.92,0,g);
+    for(const sx of [-1.0,1.0]) for(const sz of [-0.32,0.32]) box(0.08,0.9,0.08,dk,sx,0.46,sz,g);
+    box(0.55,0.35,0.4,stdMat(0x9a4030,0.5,0.4),-0.6,1.14,0,g);            // vise / tool
+    box(0.02,0.9,1.8,stdMat(0x55606a,0.8,0.2),0,1.85,-0.44,g);            // pegboard
+    for(let i=0;i<5;i++) box(0.03,0.22,0.05,steelS,-0.7+i*0.35,1.8,-0.41,g);
+    scene.add(g); })();
+  addObst(7.0,10.6,1.2,0.55);
+  // --- QC / metallurgy bench (front-left) ---
+  (function(){ const g=new THREE.Group(); g.position.set(-14,0,10.4);
+    box(1.9,0.08,0.95,steelS,0,0.9,0,g);
+    for(const sx of [-0.85,0.85]) for(const sz of [-0.38,0.38]) cyl(0.04,0.04,0.9,dk,sx,0.45,sz,g,6);
+    box(0.8,0.3,0.6,stdMat(0x818b93,0.3,0.85),-0.4,0.82,0,g);
+    for(let i=0;i<4;i++) cyl(0.05,0.07,0.22,stdMat([0xd8a020,0xb87a2a,0xc8913f,0x9a6a2a][i],0.3,0.1),0.25+i*0.18,1.05,-0.1,g,8);
+    const lbl=makeTextSprite('MET LAB','#cfd8e2','rgba(20,26,32,.7)',20,6); lbl.position.set(0,1.9,0); g.add(lbl);
+    scene.add(g); })();
+  addObst(-14,10.4,1.0,0.55);
+  // --- pallet jack + fire extinguisher ---
+  (function(){ const g=new THREE.Group(); g.position.set(4.5,0,7.6); g.rotation.y=0.7;
+    box(0.16,0.08,1.3,or2,-0.22,0.12,0.3,g); box(0.16,0.08,1.3,or2,0.22,0.12,0.3,g);
+    box(0.5,0.5,0.3,or2,0,0.3,-0.45,g);
+    const hd2=cyl(0.03,0.03,0.9,dk,0,0.75,-0.75,g,6); hd2.rotation.x=0.6;
+    box(0.3,0.05,0.12,dk,0,1.08,-1.05,g);
+    scene.add(g); })();
+  addObst(4.5,7.6,0.55,0.75);
+  (function(){ const g=new THREE.Group(); g.position.set(-8,0,10.9);
+    cyl(0.09,0.09,0.5,stdMat(0xb02020,0.4,0.4),0,1.15,0,g,10);
+    cyl(0.03,0.03,0.12,dk,0,1.47,0,g,6);
+    box(0.24,0.3,0.02,stdMat(0xb02020,0.6,0.1),0,1.15,-0.12,g);
+    scene.add(g); })();
+}
+if(typeof PLANT_DRESS!=='undefined') PLANT_DRESS['foundry']=FDX_dress;
+
 /* =============================== REGISTER THE PLANT =============================== */
 PLANTS.foundry = { id:'foundry', name:'Emberline Diecast & Alloy Works',
   tagline:'12 machines · gas, hydraulic & water buses · a heat bank you must never freeze and a rework spiral that melts metal twice.',
@@ -4802,6 +5193,427 @@ if(typeof PLANT_PIPES!=='undefined'){
     }
   };
 }
+
+/* =============================================================================
+   3D: per-machine builders + hall dressing for the waterworks.
+   Presentation only. Each builder adds recognizable industrial geometry to the
+   passed group g (so the generic tank/box fallback is skipped) and sets R.topY.
+   pM() paints the main body (keeps live health-grime / soil tints); steelM /
+   darkM / chromeM trim. Wired anim hooks (agit/glows/ventAt/shim) animate with
+   the sim. Namespaced WTX_. All materials are minted INSIDE the functions so the
+   rebuildWorld() teardown (which disposes meshes+materials) never poisons a later
+   rebuild. Water surfaces are bluish translucent; UV lamps emissive violet.
+   ============================================================================= */
+if(typeof PLANT_BUILDERS!=='undefined' && typeof THREE!=='undefined'){
+
+  // ---- shared geometry helpers (pure; take materials as args, hold none) ----
+  function WTX_concrete(){ return stdMat(0x8b9099,0.92,0.04); }
+  function WTX_wetMat(){ return new THREE.MeshStandardMaterial({color:0x2f6f9a,transparent:true,opacity:0.55,roughness:0.12,metalness:0.35,side:THREE.DoubleSide}); }
+  function WTX_screen(){ return new THREE.MeshStandardMaterial({map:screenTex,emissive:0xffffff,emissiveMap:screenTex,emissiveIntensity:0.6,roughness:0.4}); }
+  function WTX_water(g,w,d,y,x,z){ const p=new THREE.Mesh(new THREE.PlaneGeometry(w,d),WTX_wetMat());
+    p.rotation.x=-Math.PI/2; p.position.set(x||0,y,z||0); g.add(p); return p; }
+  // vertical poly/steel tank with a domed cap
+  function WTX_domeTank(g,x,z,r,h,bodyMat,capMat){ const c=cyl(r,r,h,bodyMat,x,h*0.5,z,g,18);
+    const dm=new THREE.Mesh(new THREE.SphereGeometry(r,16,8,0,Math.PI*2,0,Math.PI/2),capMat||bodyMat);
+    dm.position.set(x,h,z); dm.castShadow=true; g.add(dm); return c; }
+  // squat motor drum (horizontal) with cooling fins hint
+  function WTX_motor(g,x,y,z,r,len,mat){ const m=cyl(r,r,len,mat,x,y,z,g,14); m.rotation.z=Math.PI/2;
+    const f=new THREE.Mesh(new THREE.CylinderGeometry(r*0.55,r*0.55,len*0.4,10),mat); f.rotation.z=Math.PI/2; f.position.set(x+len*0.55,y,z); g.add(f); return m; }
+  // hand-wheel gate valve on a pipe
+  function WTX_valve(g,x,y,z,mat,whMat){ box(0.16,0.22,0.16,mat,x,y,z,g);
+    const w=new THREE.Mesh(new THREE.TorusGeometry(0.12,0.02,6,14),whMat); w.position.set(x,y+0.2,z); w.rotation.x=Math.PI/2; g.add(w);
+    cyl(0.02,0.02,0.12,whMat,x,y+0.12,z,g,6); }
+  // short horizontal pipe run (local), returns nothing
+  function WTX_pipe(g,ax,ay,az,bx,by,bz,r,mat){ const dx=bx-ax,dy=by-ay,dz=bz-az,L=Math.hypot(dx,dy,dz); if(L<0.01) return;
+    const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,L,10),mat);
+    m.position.set((ax+bx)/2,(ay+by)/2,(az+bz)/2);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),new THREE.Vector3(dx,dy,dz).normalize());
+    m.castShadow=true; g.add(m); }
+  function WTX_screenPanel(g,x,y,z){ const scr=new THREE.Mesh(new THREE.PlaneGeometry(0.4,0.29),WTX_screen());
+    scr.position.set(x,y,z); g.add(scr); return scr; }
+
+  // ---------- substn: switchgear cabinet row + green transformer + bushings ----------
+  PLANT_BUILDERS['substn']=function(d,g,R,ctx){ const {pM,steelM,darkM,chromeM}=ctx;
+    box(d.hw*2+0.1,0.14,d.hd*2+0.1,darkM,0,0.07,0,g);                    // house pad
+    const cabM=stdMat(0x8a9198,0.55,0.55);
+    for(let i=0;i<3;i++){ const cx=-1.05+i*0.58;
+      box(0.52,1.75,0.9,cabM,cx,0.95,-0.15,g);                          // switchgear cabinet
+      box(0.5,0.5,0.02,stdMat(0x30363c,0.6,0.4),cx,1.25,0.31,g);        // door face
+      for(const gy of [0.55,0.8]) box(0.34,0.05,0.02,darkM,cx,gy,0.32,g); // louvres
+      cyl(0.02,0.02,0.1,chromeM,cx+0.16,1.55,0.32,g,6); }               // handle
+    // green oil-filled transformer beside the row
+    box(1.15,1.15,1.05,pM(),1.15,0.62,-0.1,g);                          // transformer tank (green body = pM, wears)
+    box(0.9,0.3,0.9,pM(),1.15,1.3,-0.1,g);                              // conservator hump
+    for(const bx of [-0.3,0,0.3]){ const bu=cyl(0.07,0.1,0.55,stdMat(0xd8ceb2,0.5,0.1),1.15+bx,1.65,0.15,g,10);
+      bu.rotation.x=-0.32; }                                            // 3 HV bushings angled up
+    box(0.35,0.4,0.6,stdMat(0x2c343c,0.6,0.4),1.15,0.35,0.62,g);        // radiator/cable box
+    const warn=new THREE.Mesh(new THREE.PlaneGeometry(0.36,0.26),
+      new THREE.MeshStandardMaterial({color:0xd8a020,emissive:0x3a2400,emissiveIntensity:0.5,roughness:0.5}));
+    warn.position.set(-1.05,1.5,0.33); g.add(warn);                     // warning placard/screen
+    WTX_screenPanel(g,-0.2,1.35,0.33);
+    for(const px of [-1.5,1.6]) cyl(0.04,0.04,1.9,darkM,px,0.95,-1.0,g,6);// fence posts
+    for(const py of [0.6,1.4]) WTX_pipe(g,-1.5,py,-1.0,1.6,py,-1.0,0.02,steelM); // fence rails
+    R.topY=2.0;
+  };
+
+  // ---------- blower: corrugated shed + 2 PD blower units + motor drums + air header ----------
+  PLANT_BUILDERS['blower']=function(d,g,R,ctx){ const {pM,steelM,darkM,chromeM}=ctx;
+    box(d.hw*2,0.12,d.hd*2,darkM,0,0.06,0,g);                           // skid
+    box(2.6,1.7,1.9,pM(),0,0.95,-0.2,g);                                // corrugated shed enclosure
+    for(let i=0;i<9;i++) box(0.02,1.5,1.9,stdMat(0x2c333a,0.7,0.3),-1.2+i*0.3,0.95,0.75,g); // corrugations (front face)
+    box(2.6,0.14,1.95,steelM,0,1.82,-0.2,g);                            // roof cap
+    // two blue positive-displacement blower units in front of the shed
+    const blowM=stdMat(0x2f6ea0,0.4,0.6);
+    for(const bx of [-0.7,0.7]){
+      const body=cyl(0.34,0.34,0.9,blowM,bx,0.55,0.85,g,16); body.rotation.z=Math.PI/2; // blower case
+      cyl(0.36,0.36,0.12,darkM,bx-0.5,0.55,0.85,g,16).rotation.z=Math.PI/2;              // end cover
+      WTX_motor(g,bx+0.25,0.55,0.85,0.22,0.55,stdMat(0x2c343c,0.6,0.4));                 // motor drum
+      box(0.5,0.14,0.9,darkM,bx,0.07,0.85,g); }                          // baseframe
+    // air header pipe rising and running over the units
+    const hdM=stdMat(0x8d979f,0.4,0.6);
+    WTX_pipe(g,-0.9,1.25,0.85,0.9,1.25,0.85,0.09,hdM);
+    WTX_pipe(g,0.9,1.25,0.85,0.9,1.7,0.2,0.09,hdM);
+    WTX_valve(g,-0.7,1.25,0.85,darkM,chromeM);
+    WTX_screenPanel(g,-1.15,1.1,0.78);
+    R.topY=2.0;
+  };
+
+  // ---------- chemskid: white poly day-tanks on bunded tray + metering pump + mixer motor ----------
+  PLANT_BUILDERS['chemskid']=function(d,g,R,ctx){ const {pM,steelM,darkM,chromeM}=ctx;
+    // bunded skid base — a low tray with a raised lip
+    box(2.8,0.16,2.0,stdMat(0x5a6068,0.85,0.1),0,0.08,0,g);
+    for(const [lx,lz,lw,ld] of [[0,-0.98,2.8,0.06],[0,0.98,2.8,0.06],[-1.4,0,0.06,2.0],[1.4,0,0.06,2.0]])
+      box(lw,0.22,ld,stdMat(0x6a707a,0.8,0.15),lx,0.19,lz,g);           // tray lip
+    const polyM=()=>{ const m=stdMat(0xdadde2,0.5,0.05); return m; };
+    const bodyM=pM();                                                    // one tinted body so wear shows
+    for(let i=0;i<3;i++){ const tx=-0.85+i*0.85;
+      WTX_domeTank(g, tx, -0.1, 0.36, 1.35, i===1?bodyM:polyM(), i===1?bodyM:polyM());
+      cyl(0.36,0.36,0.05,darkM,tx,0.18,-0.1,g,14);                       // tank foot ring
+      box(0.05,0.9,0.02,stdMat(0x9aa0a8,0.4,0.2),tx+0.36,0.7,-0.1,g); }  // level sight strip
+    // mixer motor on the centre tank + agitator shaft
+    cyl(0.16,0.16,0.32,stdMat(0x2c343c,0.6,0.4),0,1.7,-0.1,g,12);
+    const agit=new THREE.Group(); agit.position.set(0,1.35,-0.1); g.add(agit); R.anim.agit=agit;
+    cyl(0.03,0.03,0.9,chromeM,0,-0.45,0,agit,6);
+    for(const a of [0,Math.PI/2,Math.PI,3*Math.PI/2]){ const bl=box(0.24,0.04,0.06,chromeM,Math.cos(a)*0.14,-0.85,Math.sin(a)*0.14,agit); bl.rotation.y=a; }
+    // metering pump skid at the front
+    box(0.4,0.35,0.32,stdMat(0x2c4a66,0.5,0.5),1.0,0.35,0.7,g);
+    cyl(0.09,0.09,0.28,chromeM,1.0,0.62,0.7,g,10);
+    WTX_pipe(g,1.0,0.5,0.7,1.0,0.5,0.98,0.03,chromeM);
+    WTX_screenPanel(g,-1.15,1.0,0.02);
+    R.topY=2.3;
+  };
+
+  // ---------- screens: inclined bar rack over concrete channel + rake gearmotor + trash chute ----------
+  PLANT_BUILDERS['screens']=function(d,g,R,ctx){ const {pM,steelM,darkM,chromeM}=ctx;
+    const conc=pM();
+    box(2.4,0.5,2.2,conc,0,0.25,0,g);                                   // channel walls (body wears)
+    box(1.6,0.42,2.2,stdMat(0x1c2228,0.85,0.1),0,0.3,0,g);              // recessed dark channel
+    WTX_water(g,1.5,2.0,0.44,0,0);                                      // water in the channel
+    // inclined bar rack (tilted panel of vertical slats)
+    const rack=new THREE.Group(); rack.position.set(0,0.45,0.2); rack.rotation.x=-0.55; g.add(rack);
+    for(let i=0;i<11;i++) box(0.045,1.7,0.05,steelM,-0.85+i*0.17,0.75,0,rack); // vertical bars
+    box(2.0,0.09,0.4,steelM,0,1.55,0,rack);                            // top cross beam
+    box(2.0,0.09,0.4,steelM,0,0.05,0,rack);                            // bottom cross beam
+    for(const sx of [-0.95,0.95]) box(0.08,1.7,0.08,darkM,sx,0.75,0,rack); // side frames
+    // rake drive gearmotor at the top
+    box(0.5,0.4,0.5,stdMat(0x2c343c,0.6,0.4),0,2.05,-0.55,g);
+    WTX_motor(g,0.35,2.05,-0.55,0.16,0.4,darkM);
+    // trash chute off the back
+    const chute=box(0.6,0.9,0.5,steelM,0.95,1.4,-0.55,g); chute.rotation.z=0.4;
+    box(0.55,0.35,0.55,darkM,1.25,0.6,-0.55,g);                        // skip/bin under chute
+    WTX_screenPanel(g,-1.05,1.0,0.72);
+    R.topY=2.4;
+  };
+
+  // ---------- lowlift: 3 vertical turbine pump cans from a wet-well + motors + discharge elbows ----------
+  PLANT_BUILDERS['lowlift']=function(d,g,R,ctx){ const {pM,steelM,darkM,chromeM}=ctx;
+    box(d.hw*2,0.6,d.hd*2,pM(),0,0.3,0,g);                              // wet-well gallery deck
+    box(2.0,0.5,1.9,stdMat(0x141a20,0.85,0.1),0,0.3,0,g);              // recessed wet-well
+    WTX_water(g,1.9,1.8,0.54,0,0);
+    const canM=stdMat(0x2f7a56,0.45,0.55);
+    for(const cx of [-0.8,0,0.8]){
+      cyl(0.28,0.3,1.5,canM,cx,1.35,0,g,16);                           // pump can / column
+      cyl(0.3,0.3,0.14,darkM,cx,0.62,0,g,16);                          // sole plate
+      cyl(0.22,0.22,0.4,stdMat(0x2c343c,0.6,0.4),cx,2.25,0,g,14);      // motor drum on top
+      cyl(0.13,0.13,0.12,darkM,cx,2.5,0,g,10);                         // motor fan cowl
+      // discharge elbow to the front header
+      WTX_pipe(g,cx,1.9,0,cx,1.9,0.55,0.11,steelM);
+      const el=new THREE.Mesh(new THREE.SphereGeometry(0.14,10,8),steelM); el.position.set(cx,1.9,0.6); g.add(el); }
+    WTX_pipe(g,-0.9,1.9,0.6,0.9,1.9,0.6,0.11,steelM);                  // common discharge header
+    WTX_valve(g,0,1.9,0.6,darkM,chromeM);
+    WTX_screenPanel(g,-1.15,1.1,0.95);
+    R.topY=2.7;
+  };
+
+  // ---------- flashmix: in-line mixer on a vertical riser + injection quill + top motor (agit) ----------
+  PLANT_BUILDERS['flashmix']=function(d,g,R,ctx){ const {pM,steelM,darkM,chromeM}=ctx;
+    box(d.hw*2,0.5,d.hd*2,pM(),0,0.25,0,g);                            // concrete chamber base
+    box(0.9,0.55,0.9,stdMat(0x1c2228,0.85,0.1),0,0.35,0,g);            // open mix cell
+    WTX_water(g,0.8,0.8,0.58,0,0);
+    const riser=cyl(0.24,0.28,1.5,steelM,0,1.35,0,g,18);               // vertical mix riser (stainless)
+    cyl(0.3,0.3,0.14,chromeM,0,0.85,0,g,18);                           // flange
+    cyl(0.3,0.3,0.14,chromeM,0,1.9,0,g,18);                            // top flange
+    // motor + impeller shaft (agit) down the riser
+    box(0.34,0.42,0.34,stdMat(0x2c343c,0.6,0.4),0,2.25,0,g);           // drive motor
+    cyl(0.1,0.1,0.16,darkM,0,2.05,0,g,12);                             // gear reducer
+    const agit=new THREE.Group(); agit.position.set(0,1.35,0); g.add(agit); R.anim.agit=agit;
+    cyl(0.035,0.035,1.4,chromeM,0,0.3,0,agit,6);                       // shaft up into motor
+    for(const a of [0,Math.PI/2,Math.PI,3*Math.PI/2]){ const bl=box(0.34,0.05,0.09,chromeM,Math.cos(a)*0.2,-0.35,Math.sin(a)*0.2,agit); bl.rotation.y=a; }
+    // chem injection quill entering the riser
+    const quill=cyl(0.03,0.03,0.7,stdMat(0x9a6adf,0.4,0.4),0.4,1.55,0,g,6); quill.rotation.z=0.9;
+    cyl(0.05,0.05,0.14,darkM,0.55,1.75,0,g,8);
+    WTX_screenPanel(g,0.45,1.1,0.55);
+    R.topY=2.55;
+  };
+
+  // ---------- flocc: long open basin + 3 horizontal paddle wheels (one animated) + walkway ----------
+  PLANT_BUILDERS['flocc']=function(d,g,R,ctx){ const {pM,steelM,darkM,chromeM}=ctx;
+    box(d.hw*2,0.8,d.hd*2,pM(),0,0.4,0,g);                             // basin walls
+    box(d.hw*2-0.4,0.7,d.hd*2-0.4,stdMat(0x16202a,0.8,0.1),0,0.42,0,g);// water pocket
+    WTX_water(g,d.hw*2-0.5,d.hd*2-0.5,0.78,0,0);
+    const bladeM=stdMat(0x455a4a,0.6,0.2), shaftM=steelM;
+    // three paddle wheels across the basin (shaft along z); one spins with the sim
+    let first=true;
+    for(const wx of [-1.1,0,1.1]){
+      const holder=new THREE.Group(); holder.position.set(wx,0.95,0); holder.rotation.x=Math.PI/2; g.add(holder);
+      const wheel=new THREE.Group(); holder.add(wheel);
+      cyl(0.06,0.06,1.7,shaftM,0,0,0,wheel,8);                        // horizontal shaft (local y)
+      for(let i=0;i<4;i++){ const a=i*Math.PI/2;
+        const bl=box(0.5,1.5,0.05,bladeM,Math.cos(a)*0.42,0,Math.sin(a)*0.42,wheel); bl.rotation.y=a; }
+      for(const hy of [-0.7,0.7]) for(let i=0;i<2;i++){ const a=i*Math.PI/2;
+        const arm=box(0.8,0.05,0.05,shaftM,0,hy,0,wheel); arm.rotation.y=a; }
+      // bearing pedestals on the basin walls
+      for(const bz of [-0.85,0.85]) box(0.18,0.5,0.18,darkM,wx,0.6,bz,g);
+      if(first){ R.anim.agit=wheel; first=false; }
+    }
+    // walkway across the top
+    box(d.hw*2,0.08,0.5,stdMat(0x9aa0a8,0.6,0.3),0,1.5,0,g);
+    for(const rx of [-1.7,0,1.7]) cyl(0.03,0.03,0.5,steelM,rx,1.7,0.25,g,6);
+    WTX_pipe(g,-1.8,1.9,0.25,1.8,1.9,0.25,0.02,steelM);               // handrail top
+    WTX_screenPanel(g,-1.7,1.1,1.05);
+    R.topY=2.0;
+  };
+
+  // ---------- clarifier: wide circular tank + rotating bridge scraper (agit) + launder ring + center column ----------
+  PLANT_BUILDERS['clarifier']=function(d,g,R,ctx){ const {pM,steelM,darkM,chromeM}=ctx;
+    const r=Math.min(d.hw,d.hd)-0.1;
+    cyl(r,r,1.0,pM(),0,0.5,0,g,32);                                    // circular concrete tank
+    cyl(r-0.14,r-0.14,0.85,stdMat(0x16242e,0.8,0.1),0,0.55,0,g,32);    // inner basin
+    const disc=new THREE.Mesh(new THREE.CircleGeometry(r-0.2,32),WTX_wetMat()); disc.rotation.x=-Math.PI/2; disc.position.y=0.985; g.add(disc); // water surface
+    // effluent launder weir ring at the rim
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(r-0.05,0.06,8,40),steelM); ring.position.y=0.98; ring.rotation.x=Math.PI/2; g.add(ring);
+    // center feed column
+    cyl(0.24,0.28,1.35,stdMat(0x9aa0a8,0.6,0.3),0,1.0,0,g,16);
+    cyl(0.42,0.42,0.14,darkM,0,1.05,0,g,16);                          // feed well collar
+    // rotating bridge scraper spanning the diameter
+    const bridge=new THREE.Group(); bridge.position.y=1.15; g.add(bridge); R.anim.agit=bridge;
+    box(r*2-0.1,0.12,0.22,steelM,0,0.35,0,bridge);                    // bridge beam
+    for(const rx of [-1.7,0,1.7]) cyl(0.02,0.02,0.4,steelM,rx,0.6,0.11,bridge,6); // handrail stanchions
+    WTX_pipe(bridge,-(r-0.2),0.78,0.11,(r-0.2),0.78,0.11,0.02,steelM);           // bridge handrail
+    for(const sx of [-1.3,-0.5,0.4,1.2]) box(0.1,1.0,0.16,darkM,sx,-0.35,0,bridge); // scraper arms hanging
+    box(0.4,0.35,0.3,stdMat(0x2c343c,0.6,0.4),0,0.55,0,bridge);       // center drive housing
+    R.topY=1.9;
+  };
+
+  // ---------- filters: row of 4 open sand-bed cells + wash troughs + valve gallery ----------
+  PLANT_BUILDERS['filters']=function(d,g,R,ctx){ const {pM,steelM,darkM,chromeM}=ctx;
+    box(d.hw*2,0.3,d.hd*2,pM(),0,0.15,0,g);                            // deck slab
+    const sandM=stdMat(0xc9bd94,0.95,0.02);
+    for(let i=0;i<4;i++){ const cx=-1.28+i*0.85;
+      box(0.78,0.8,1.9,pM(),cx,0.55,0,g);                             // cell wall (concrete body wears)
+      box(0.6,0.7,1.7,stdMat(0x14181d,0.85,0.1),cx,0.6,0,g);          // open cell
+      box(0.58,0.14,1.6,sandM,cx,0.78,0,g);                          // sand bed surface
+      WTX_water(g,0.55,1.5,0.9,cx,0);                                 // supernatant water
+      box(0.7,0.1,0.22,steelM,cx,0.95,0.7,g); }                       // wash-water trough
+    // valve gallery along the front
+    WTX_pipe(g,-1.5,0.4,1.15,1.5,0.4,1.15,0.09,steelM);               // header
+    for(let i=0;i<4;i++){ const cx=-1.28+i*0.85;
+      WTX_pipe(g,cx,0.4,1.15,cx,0.55,0.6,0.06,steelM);
+      WTX_valve(g,cx,0.55,1.15,darkM,chromeM); }
+    WTX_screenPanel(g,1.35,0.85,1.32);
+    R.topY=1.4;
+  };
+
+  // ---------- uv: stainless pipe spool + glowing violet lamp sleeves + control panel ----------
+  PLANT_BUILDERS['uv']=function(d,g,R,ctx){ const {pM,steelM,darkM,chromeM}=ctx;
+    box(d.hw*2,0.4,d.hd*2,pM(),0,0.2,0,g);                            // skid
+    for(const sx of [-0.7,0.7]) box(0.2,0.6,0.7,darkM,sx,0.55,0,g);   // saddle supports
+    const spool=cyl(0.42,0.42,2.0,stdMat(0xc2c8ce,0.3,0.85),0,0.95,0,g,22); spool.rotation.z=Math.PI/2; // horizontal spool
+    for(const fx of [-1.0,1.0]){ const fl=new THREE.Mesh(new THREE.TorusGeometry(0.44,0.06,8,22),chromeM); fl.position.set(fx,0.95,0); fl.rotation.y=Math.PI/2; g.add(fl); }
+    // rack of glowing violet lamp sleeves (emissive; tracked in glows)
+    R.anim.glows=R.anim.glows||[];
+    for(let i=0;i<5;i++){ const lz=-0.28+ (i%3)*0.28, ly=0.78+Math.floor(i/3)*0.34;
+      const lm=new THREE.MeshStandardMaterial({color:0x6a3a9a,emissive:0x9a4ad0,emissiveIntensity:1.0,roughness:0.3,metalness:0.2});
+      const lamp=cyl(0.05,0.05,1.7,lm,0,ly,lz,g,10); lamp.rotation.z=Math.PI/2;
+      R.anim.glows.push(lamp); }
+    const uvL=new THREE.PointLight(0x9a4ad0,0.6,3.2,2.0); uvL.position.set(0,0.95,0); g.add(uvL); R.anim.glowL=uvL;
+    // control / ballast cabinet with a screen
+    box(0.55,1.0,0.5,pM(),1.25,0.7,0.5,g);
+    WTX_screenPanel(g,1.25,0.9,0.76);
+    WTX_pipe(g,-1.2,0.95,0,-1.2,1.6,0,0.09,steelM);                  // outlet riser
+    R.topY=1.7;
+  };
+
+  // ---------- contact: covered serpentine baffled channel + analyzer cabinet + chlorine cylinder ----------
+  PLANT_BUILDERS['contact']=function(d,g,R,ctx){ const {pM,steelM,darkM,chromeM}=ctx;
+    box(d.hw*2,0.9,d.hd*2,pM(),0,0.45,0,g);                            // contact tank block
+    box(d.hw*2-0.4,0.8,d.hd*2-0.4,stdMat(0x16242e,0.8,0.1),0,0.5,0,g); // water pocket
+    WTX_water(g,d.hw*2-0.5,d.hd*2-0.5,0.88,0,0);
+    // internal serpentine baffle walls (upright boxes, alternating gaps)
+    for(let i=0;i<5;i++){ const bx=-1.1+i*0.55; const flip=i%2? -1:1;
+      box(0.08,0.85,d.hd*2-0.7,pM(),bx,0.5,flip*0.35,g); }
+    box(d.hw*2,0.1,d.hd*2,stdMat(0x7a828a,0.7,0.3),0,0.95,0,g);        // partial cover deck
+    // chlorine residual analyzer cabinet
+    box(0.5,1.0,0.4,stdMat(0x8a9198,0.5,0.4),-1.35,0.7,0.9,g);
+    WTX_screenPanel(g,-1.35,0.95,1.11);
+    // yellow chlorine cylinder standing beside
+    cyl(0.22,0.22,1.2,stdMat(0xd8c020,0.5,0.2),1.35,0.6,0.9,g,16);
+    const cap=new THREE.Mesh(new THREE.SphereGeometry(0.22,12,8,0,Math.PI*2,0,Math.PI/2),stdMat(0xb0a018,0.5,0.2)); cap.position.set(1.35,1.2,0.9); g.add(cap);
+    cyl(0.06,0.06,0.16,darkM,1.35,1.34,0.9,g,8);                       // valve bonnet
+    WTX_pipe(g,1.35,1.3,0.9,0.7,1.3,0.9,0.03,stdMat(0xd8c020,0.5,0.2));// feed line to eductor
+    R.topY=1.7;
+  };
+
+  // ---------- highlift: 2 horizontal split-case pumps + red motors + discharge headers + check valves ----------
+  PLANT_BUILDERS['highlift']=function(d,g,R,ctx){ const {pM,steelM,darkM,chromeM}=ctx;
+    box(d.hw*2,0.16,d.hd*2,darkM,0,0.08,0,g);                          // station floor
+    const volM=pM(), motM=stdMat(0xa03828,0.5,0.4);
+    for(const pz of [-0.55,0.55]){
+      box(1.3,0.35,0.7,stdMat(0x6a707a,0.85,0.1),-0.1,0.32,pz,g);      // painted plinth
+      const vol=cyl(0.44,0.44,1.0,volM,-0.35,0.75,pz,g,20); vol.rotation.z=Math.PI/2; // split-case volute
+      cyl(0.5,0.5,0.16,steelM,-0.35,0.75,pz-0.5,g,20).rotation.x=Math.PI/2;            // suction flange
+      // red motor drum on the plinth, coupled
+      const mot=cyl(0.3,0.3,0.85,motM,0.6,0.78,pz,g,16); mot.rotation.z=Math.PI/2;
+      cyl(0.15,0.15,0.2,darkM,1.1,0.78,pz,g,12).rotation.z=Math.PI/2;                  // motor fan
+      cyl(0.1,0.1,0.2,chromeM,0.12,0.78,pz,g,10).rotation.z=Math.PI/2;                 // coupling guard
+      // discharge header rising up with a check-valve bulge
+      WTX_pipe(g,-0.35,1.15,pz,-0.35,2.0,pz,0.12,steelM);
+      const chk=new THREE.Mesh(new THREE.SphereGeometry(0.2,12,10),steelM); chk.position.set(-0.35,1.55,pz); chk.scale.set(1,1.3,1); g.add(chk);
+      WTX_valve(g,-0.35,1.9,pz,darkM,chromeM);
+    }
+    WTX_pipe(g,-0.35,2.0,-0.55,-0.35,2.0,0.55,0.12,steelM);            // common discharge manifold
+    WTX_screenPanel(g,1.15,1.1,0.9);
+    R.topY=2.4;
+  };
+}
+
+/* =============================== 3D: hall dressing =============================== */
+function WTX_dress(){
+  const W=WTR_HALL.w, D=WTR_HALL.d;                     // 44 × 24
+  const conc=stdMat(0x8b9099,0.9,0.05), dk=stdMat(0x2a3038,0.7,0.3);
+  const steelS=stdMat(0x9aa3ab,0.5,0.65), galv=stdMat(0x8d979f,0.45,0.6);
+  const rail=stdMat(0xd0d4d8,0.5,0.4), water=()=>new THREE.MeshStandardMaterial({color:0x2f6f9a,transparent:true,opacity:0.5,roughness:0.12,metalness:0.35,side:THREE.DoubleSide});
+  const chlorM=stdMat(0xc8c030,0.5,0.2), chainM=stdMat(0x5a6068,0.5,0.6);
+
+  // ---- pipe-and-valve gallery along the front wall (behind the treatment train) ----
+  (function(){ const g=new THREE.Group(); g.position.set(-4,0,-10.6); scene.add(g);
+    const pm=stdMat(0x60707c,0.45,0.6);
+    for(const py of [1.4,1.9,2.4]){ const seg=cyl(0.1,0.1,16,pm,0,py,0,g,10); seg.rotation.z=Math.PI/2; }
+    for(let x=-7;x<=7;x+=3.5){ cyl(0.06,0.06,2.4,galv,x,1.2,0,g,8);            // vertical drops
+      box(0.2,0.24,0.2,dk,x,1.4,0.16,g);                                       // valve body
+      const wh=new THREE.Mesh(new THREE.TorusGeometry(0.16,0.025,6,16),rail); wh.position.set(x,1.4,0.32); wh.rotation.x=Math.PI/2; g.add(wh); }
+    for(const px of [-8,8]) box(0.16,2.6,0.4,dk,px,1.3,0,g);                   // pipe support posts
+  })();
+
+  // ---- chlorine cylinder rack: several yellow-green cylinders chained to a rack ----
+  (function(){ const g=new THREE.Group(); g.position.set(11.5,0,-10.4); scene.add(g);
+    box(3.4,0.16,0.9,dk,0,0.08,0,g);                                          // rack base
+    box(3.4,1.8,0.1,galv,0,0.9,-0.4,g);                                       // back rack panel
+    for(let i=0;i<6;i++){ const cx=-1.4+i*0.56;
+      cyl(0.22,0.22,1.5,chlorM,cx,0.9,0,g,16);
+      const cap=new THREE.Mesh(new THREE.SphereGeometry(0.22,12,8,0,Math.PI*2,0,Math.PI/2),stdMat(0xa8a028,0.5,0.2)); cap.position.set(cx,1.65,0); g.add(cap);
+      cyl(0.05,0.05,0.14,dk,cx,1.78,0,g,8); }
+    for(const cy of [0.7,1.3]){ const ch=cyl(0.02,0.02,3.0,chainM,0,cy,0.05,g,6); ch.rotation.z=Math.PI/2; } // securing chains
+    addObst(11.5,-10.4,1.8,0.6);
+  })();
+
+  // ---- chemical drums stacked near the chem skid ----
+  (function(){ const g=new THREE.Group(); g.position.set(6.5,0,10.6); scene.add(g);
+    const cols=[0x2f6ea0,0xc8b020,0xb0402c,0x4a8a5a];
+    for(let i=0;i<4;i++){ const dx=-0.9+i*0.6;
+      cyl(0.3,0.3,0.9,stdMat(cols[i],0.55,0.15),dx,0.45,0,g,16);
+      const t=new THREE.Mesh(new THREE.TorusGeometry(0.3,0.03,6,16),dk); t.position.set(dx,0.85,0); t.rotation.x=Math.PI/2; g.add(t); }
+    // one drum stacked on top
+    cyl(0.3,0.3,0.9,stdMat(0x6a707a,0.55,0.15),-0.3,1.35,0,g,16);
+    addObst(6.5,10.6,1.3,0.4);
+  })();
+
+  // ---- sample bottles on a lab bench (the compliance grab-samples) ----
+  (function(){ const g=new THREE.Group(); g.position.set(-13.5,0,10.4); scene.add(g);
+    box(2.2,0.08,0.9,steelS,0,0.9,0,g);
+    for(const sx of [-1.0,1.0]) for(const sz of [-0.36,0.36]) cyl(0.04,0.04,0.9,dk,sx,0.45,sz,g,6);
+    box(0.7,0.3,0.6,stdMat(0x818b93,0.3,0.85),-0.6,0.82,0,g);                  // sink
+    for(let i=0;i<6;i++) cyl(0.05,0.07,0.24,stdMat([0x4aa0d0,0x88c060,0xd0c040,0xc06040,0x8060c0,0x50c0a0][i],0.3,0.1),0.1+i*0.16,1.08,-0.05,g,8);
+    const lbl=makeTextSprite('LAB','#cfd8e2','rgba(18,24,30,.7)',20,6); lbl.position.set(0,1.85,0); g.add(lbl);
+    addObst(-13.5,10.4,1.1,0.5);
+  })();
+
+  // ---- bypass weir spillway at the basin end: sloped surface with a translucent water sheet ----
+  (function(){ const g=new THREE.Group(); g.position.set(-20.2,0,-9.0); scene.add(g);
+    box(0.6,1.6,4.0,conc,0,0.8,0,g);                                          // weir wall
+    const face=box(1.8,0.1,4.0,conc,0.9,1.0,0,g); face.rotation.z=-0.5;       // sloped apron
+    // translucent bluish water sheet lying over the sloped apron
+    const sheet=new THREE.Mesh(new THREE.PlaneGeometry(1.9,3.8),water());
+    sheet.position.set(0.95,1.12,0); sheet.rotation.x=-Math.PI/2+0.5; g.add(sheet);
+    // pooled water at the toe
+    const pool=new THREE.Mesh(new THREE.PlaneGeometry(2.2,4.0),water()); pool.rotation.x=-Math.PI/2; pool.position.set(1.9,0.05,0); g.add(pool);
+    box(0.4,0.8,4.0,conc,2.0,0.4,0,g);                                        // downstream channel wall
+    addObst(-20.2,-9.0,0.9,2.0);
+  })();
+
+  // ---- handrails around the open basins (behind the treatment train, clear of the aisle) ----
+  (function(){ const g=new THREE.Group(); g.position.set(0,0,-8.1); scene.add(g);
+    for(let x=-9;x<=15;x+=2.4){ cyl(0.03,0.03,1.0,rail,x,0.5,0,g,6); }        // posts
+    WTX_dressPipe(g,-9,1.0,0,15,1.0,0,0.025,rail);                            // top rail
+    WTX_dressPipe(g,-9,0.55,0,15,0.55,0,0.02,rail);                           // mid rail
+  })();
+
+  // ---- safety bollards along the staging edge (clear of the machine-panel aisle) ----
+  for(let x=-18;x<=18;x+=3.0)
+    cyl(0.09,0.11,0.75,stdMat(0xd8a020,0.5,0.3),x,0.37,5.0,scene,10);
+
+  // ---- office / control room ----
+  (function(){ const g=new THREE.Group(); g.position.set(18.5,0,10.0); scene.add(g);
+    box(4.6,2.8,3.2,stdMat(0x454e57,0.85,0.05),0,1.4,0,g);
+    const win=new THREE.Mesh(new THREE.PlaneGeometry(3.0,1.0),
+      new THREE.MeshStandardMaterial({color:0x2c3a48,emissive:0x9ab8d0,emissiveIntensity:0.5,roughness:0.2,metalness:0.4}));
+    win.position.set(0,1.7,-1.61); g.add(win);
+    const lbl=makeTextSprite('SCADA','#cfe4d8','rgba(16,26,20,.72)',22,7); lbl.position.set(0,3.1,0); g.add(lbl);
+    addObst(18.5,10.0,2.3,1.6);
+  })();
+
+  // ---- MCC line-up on the side wall ----
+  (function(){ const g=new THREE.Group(); g.position.set(21.0,0,-3.0); g.rotation.y=-Math.PI/2; scene.add(g);
+    box(3.0,2.1,0.4,stdMat(0x7d8792,0.5,0.5),0,1.25,0,g);
+    for(let i=0;i<4;i++){ box(0.6,1.9,0.05,stdMat(0x6a747d,0.4,0.6),-1.1+i*0.72,1.25,0.22,g);
+      const scr=new THREE.Mesh(new THREE.PlaneGeometry(0.2,0.15),new THREE.MeshStandardMaterial({color:0x1a2a1a,emissive:0x2a8a3a,emissiveIntensity:0.5})); scr.position.set(-1.1+i*0.72,1.7,0.25); g.add(scr); }
+    addObst(21.0,-3.0,0.4,1.6);
+  })();
+
+  // ---- maintenance workbench ----
+  (function(){ const g=new THREE.Group(); g.position.set(-20.5,0,-2.5); g.rotation.y=Math.PI/2; scene.add(g);
+    box(2.4,0.09,0.9,stdMat(0x8a6f4d,0.85,0.02),0,0.92,0,g);
+    for(const sx of [-1.1,1.1]) for(const sz of [-0.34,0.34]) box(0.08,0.9,0.08,dk,sx,0.46,sz,g);
+    box(0.6,0.35,0.4,stdMat(0x9a4030,0.5,0.4),-0.7,1.14,0,g);                 // vice/tool
+    box(0.02,0.95,1.9,stdMat(0x55606a,0.8,0.2),0,1.9,-0.46,g);                // pegboard
+    for(let i=0;i<5;i++) box(0.03,0.24,0.05,steelS,-0.75+i*0.37,1.85,-0.43,g);
+    addObst(-20.5,-2.5,0.5,1.2);
+  })();
+
+  // ---- fire extinguisher on the wall ----
+  (function(){ const g=new THREE.Group(); g.position.set(-21.4,0,3.0); scene.add(g);
+    cyl(0.1,0.1,0.55,stdMat(0xb02020,0.4,0.4),0,1.15,0,g,10);
+    cyl(0.03,0.03,0.12,dk,0,1.47,0,g,6);
+    box(0.26,0.32,0.02,stdMat(0xb02020,0.6,0.1),0.13,1.15,0,g).rotation.y=Math.PI/2;
+  })();
+}
+// dressing-local pipe helper (mirrors WTX_pipe but for scene-dressing groups)
+function WTX_dressPipe(g,ax,ay,az,bx,by,bz,r,mat){ const dx=bx-ax,dy=by-ay,dz=bz-az,L=Math.hypot(dx,dy,dz); if(L<0.01) return;
+  const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,L,8),mat);
+  m.position.set((ax+bx)/2,(ay+by)/2,(az+bz)/2);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),new THREE.Vector3(dx,dy,dz).normalize());
+  g.add(m); }
+if(typeof PLANT_DRESS!=='undefined'){ PLANT_DRESS['waterworks']=WTX_dress; }
 
 /* =============================== REGISTER THE PLANT =============================== */
 PLANTS.waterworks = { id:'waterworks', name:'Blackweir Municipal Waterworks',

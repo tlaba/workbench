@@ -1317,6 +1317,7 @@ function shiftLedgerRows(l){
   return '<table class="ledger">'+
     row('Revenue',l.revenue,1)+ row('Energy',-l.energy)+ row('Technician wage',-l.wages)+
     row('Overhead',-l.overhead)+ (l.wipScrap>0?row('Scrapped WIP',-l.wipScrap):'')+
+    (l.fines>0?row('⚠ Fines / penalties',-l.fines):'')+
     (l.penalty>0?row('⚠ Short-ship penalty (STRIKE)',-l.penalty):'')+
     '<tr class="tot"><td>Net day</td><td id="rv-net" class="'+(l.net>=0?'pos':'neg')+'">'+money(0)+'</td></tr>'+
     '<tr class="tot"><td>Cash on hand</td><td id="rv-cash">'+money(S.cash-l.net)+'</td></tr>'+
@@ -4457,7 +4458,407 @@ window.__policySets.foundry={
     }; },
 };
 
-/* PREMIUM PLANT — Clearwater Waterworks (g10). Populated by the plant-pack build. */
+/* =============================================================================
+   PREMIUM PLANT — Blackweir Municipal Waterworks (g10).
+   Two inversions of the bakery/brewery. (1) The buffer is a BOMB, not a cushion:
+   an equalization basin fed by an inflow you cannot stop; overflowing the bypass
+   weir is the disaster, and three seeded, forecast-a-day-ahead storm days surge
+   inflow to 2.1× while multiplying FOUL wear on the front-of-train — so
+   maintenance is calendar-strategic (service BEFORE the storm), not just
+   condition-strategic. (2) The economy is loss-defense: price is FLAT ($4.20/kGal)
+   and water always ships, so there is no quality premium — money dies in
+   settleHook FINES (weir spill + silent compliance violation-minutes) and the
+   pump-heavy power bill. Debuts THERM as an operating cost: starve the basin and
+   the pumps short-cycle, and the cycling eats their windings.
+   All bakery/brewery-safe: only 'waterworks' reads any of this.
+   ============================================================================= */
+
+const WTR_C = {
+  TICKS_PER_DAY:480, WEEK_LEN:5, N_WEEKS:6, D_MAX:30, ALPHA:2.0, MU:3.0, KAPPA:6.0,
+  P_NOM:7.0, P_MIN:4.0, LAMBDA_LEAK:0.35, M0:0.05, M_SEAL:0.75, AIR_DRAW:32, COMP_CAP:40,
+  STARTING_CASH:15000, WIN_CASH:26000, PRICE:4.20, SALVAGE:4.20,   // SALVAGE=PRICE: over sells at full price, clawed back beyond 1.5× in settleHook
+  CONTRACT_DEMAND:480, CONTRACT_FLOOR:240, SHORT_SHIP_PENALTY:900,
+  ENERGY_PRICE:0.18, TECH_WAGE_DAY:300, OVERHEAD_DAY:180,
+  TRAVEL_MIN:15, INSPECT_MIN:30,
+  EMERGENCY_PART_MULT:2.5, EMERGENCY_DELIVERY_MIN:180,
+  LABOR_REPAIR:220, LABOR_EMERGENCY_MULT:1.75, LABOR_FIX:70, FIX_TIME_FRAC:0.30, SERVICE_TIME_MULT:1.5,
+  CASCADE_DAMAGE:450, WIP_SCRAP_RATE:55,
+  UPGRADE_COST:2000, UPGRADE_TIER:1.4, AUTOMATE_COST:900,
+  REPAIR_FLOOR:0.08, FIX_FLOOR:0.04, OVERHAUL_FLOOR:0.11, SIGMA_INSPECT:0.05,
+  STRIKES_TO_LOSE:3, HEALTH_CONDEMN:0.15, WEAR_SCALE:0.30, HAZARD_SCALE:0.09,
+  CLEARWELL_CAP:480,              // treated-water buffer after the train; high-lift ships from it
+  BUS_FLOOR:0.40,                 // a broken utility limps on standby, not a total stop
+  FOUL_ACCEL:1.4,
+  THERM_CYCLE:0.03,               // per running↔stopped transition, per THERM channel (engine-generic + basin short-cycle)
+  HIRE_FEE:1800, APPRENTICE_WAGE_DAY:170, APPRENTICE_SLOW:1.4,
+  SENSOR_COST:180,
+  // ---- basin / storm knobs ----
+  BASIN_CAP:900, BASIN_LOW:0.10, STORM_PEAK:2.1, SPILL_FINE:6, SPILL_STRIKE:60,
+  // ---- compliance knobs ----
+  VIOL_FINE:9, VIOL_CAP:1300, VIOL_STRIKE:90, LAB_COST:60,
+  SALES_CAP:1.5,                  // treated water sells up to 1.5× the daily contract
+  // HYGIENE deliberately unset.
+};
+// Weekly contract kGal/day against a healthy filter bottleneck of ~1,260/day: weeks
+// 5–6 brush base capacity and the finale storm rides on peak demand.
+WTR_C.WEEKS = [
+  { demand:480,  floor:240 },   // Wk1
+  { demand:620,  floor:310 },   // Wk2
+  { demand:760,  floor:380 },   // Wk3
+  { demand:900,  floor:450 },   // Wk4
+  { demand:1080, floor:540 },   // Wk5 — brushing capacity
+  { demand:1250, floor:625 },   // Wk6 — finale storm on peak demand
+];
+
+/* ---- machine defs. Compliance-critical calibration channels use the engine-silent
+   type 'DCAL' (like the foundry) so the shared CAL-scrap path stays byte-identical
+   for the bakery/brewery — the waterworks owns its violation math in solveFlow — and
+   carry compliance:true. THERM channels take wear on stop/start + basin short-cycle. ---- */
+const WTR_DEFS = [
+  // ---- utilities (produce buses) ----
+  { id:'substn', name:'Main Substation & Switchgear', code:'PWR-100', pos:[-16,9], hw:1.6, hd:1.2, face:-1, rot:0,
+    base:60, energy:3, risk:0.06, crit:5, insp:60, utility:true, replaceCost:3600, color:'#6a7a5a',
+    ch:[ {id:'trafo',   nm:'Transformer windings', type:'DRIFT',k:0.00013, w:0.18, part:180},
+         {id:'breaker', nm:'Main breaker',         type:'SEIZE',k:0.00014, w:0.20, part:300},
+         {id:'oil',     nm:'Insulating oil',       type:'LEAK', k:0.00013, w:0.18, part:70} ]},
+  { id:'blower', name:'Aeration Blower House', code:'BLW-200', pos:[0,9], hw:1.5, hd:1.2, face:-1, rot:0,
+    base:50, energy:8, risk:0.07, crit:5, insp:55, utility:true, replaceCost:3000, color:'#3a6a8a',
+    ch:[ {id:'filter', nm:'Intake air filter',     type:'FOUL', k:0.00018, w:0.22, part:50},
+         {id:'lobes',  nm:'PD blower lobes',       type:'SEIZE',k:0.00016, w:0.24, part:320},
+         {id:'header', nm:'Air header',            type:'LEAK', k:0.00015, w:0.20, part:45} ]},
+  { id:'chemskid', name:'Chemical Dosing Skid', code:'CHM-300', pos:[14,9], hw:1.5, hd:1.2, face:-1, rot:0,
+    base:48, energy:2, risk:0.06, crit:5, insp:55, utility:true, replaceCost:2600, color:'#c8c8cc',
+    ch:[ {id:'carrier',  nm:'Carrier-water line',  type:'FOUL', k:0.00017, w:0.20, part:60},
+         {id:'meterpump',nm:'Metering pump',       type:'SEIZE',k:0.00015, w:0.22, part:180},
+         {id:'batchcal', nm:'Batch calibration',   type:'DCAL', k:0.00016, w:0.16, part:70, compliance:true} ]},
+  // ---- treatment train ----
+  { id:'screens', name:'Bar Screens & Grit', code:'SCR-400', pos:[-19,-6], hw:1.3, hd:1.2, face:1, rot:0,
+    base:260, energy:4, risk:0.07, crit:4, insp:45, buses:['power'], replaceCost:2400, color:'#7a7f8a',
+    ch:[ {id:'ragging',   nm:'Bar-rack ragging',   type:'FOUL', k:0.00019, w:0.24, part:70},
+         {id:'rake',      nm:'Rake drive',         type:'SEIZE',k:0.00015, w:0.22, part:150},
+         {id:'trashpump', nm:'Grit trash pump',    type:'DRAG', k:0.00012, w:0.20, part:80} ]},
+  { id:'lowlift', name:'Low-Lift Pump Station', code:'LLP-450', pos:[-15,-6], hw:1.35, hd:1.25, face:1, rot:0,
+    base:230, energy:9, risk:0.08, crit:5, insp:60, buses:['power'], replaceCost:3400, color:'#4a8a6a',
+    ch:[ {id:'windings', nm:'Pump motor windings', type:'THERM',k:0.00011, w:0.18, part:260},
+         {id:'bearing',  nm:'Line-shaft bearing',  type:'SEIZE',k:0.00016, w:0.22, part:170},
+         {id:'gland',    nm:'Packing gland',       type:'LEAK', k:0.00014, w:0.20, part:55} ]},
+  { id:'flashmix', name:'Flash Mix & Coagulation', code:'COA-500', pos:[-11,-6], hw:1.15, hd:1.15, face:1, rot:0,
+    base:220, energy:3, risk:0.06, crit:4, insp:50, buses:['chem','power'], replaceCost:2600, color:'#8a9a6a',
+    ch:[ {id:'dosecal', nm:'Coagulant dose cal',   type:'DCAL', k:0.00018, w:0.18, part:75, compliance:true},
+         {id:'mixer',   nm:'Flash-mix impeller',   type:'SEIZE',k:0.00014, w:0.20, part:120},
+         {id:'quill',   nm:'Injection quill',      type:'FOUL', k:0.00015, w:0.18, part:60} ]},
+  { id:'flocc', name:'Flocculation Basins', code:'FLC-550', pos:[-7,-6], hw:1.9, hd:1.2, face:1, rot:0,
+    base:210, energy:3, risk:0.05, crit:4, insp:45, buses:['power'], replaceCost:2500, color:'#7a8f7a',
+    ch:[ {id:'gearbox',   nm:'Paddle gearbox',     type:'SEIZE',k:0.00014, w:0.20, part:150},
+         {id:'chain',     nm:'Drive chain',        type:'DRAG', k:0.00012, w:0.20, part:70},
+         {id:'shaftseal', nm:'Paddle shaft seal',  type:'DRIFT',k:0.00012, w:0.18, part:60} ]},
+  { id:'clarifier', name:'Circular Clarifier', code:'CLR-600', pos:[-2,-6.5], hw:2.0, hd:2.0, face:1, rot:0,
+    base:195, energy:3, risk:0.05, crit:4, insp:50, buses:['air'], replaceCost:2600, color:'#9aa4ac',
+    ch:[ {id:'scraper', nm:'Bridge scraper drive', type:'SEIZE',k:0.00013, w:0.20, part:150},
+         {id:'launder', nm:'Effluent launder',     type:'FOUL', k:0.00017, w:0.22, part:90},
+         {id:'bridge',  nm:'Rotating bridge',      type:'DRAG', k:0.00011, w:0.18, part:70} ]},
+  { id:'filters', name:'Rapid Gravity Filters', code:'FLT-700', pos:[3,-6], hw:1.7, hd:1.3, face:1, rot:0,
+    base:175, energy:4, risk:0.07, crit:5, insp:60, buses:['air'], replaceCost:3200, color:'#b0a88a',
+    ch:[ {id:'media',   nm:'Sand-bed media',       type:'FOUL', k:0.00020, w:0.24, part:130},
+         {id:'bwvalve', nm:'Backwash valve',       type:'SEIZE',k:0.00015, w:0.22, part:140},
+         {id:'turbcal', nm:'Turbidity cal',        type:'DCAL', k:0.00018, w:0.18, part:80, compliance:true} ]},
+  { id:'uv', name:'UV Disinfection', code:'UVD-800', pos:[8,-6], hw:1.3, hd:1.1, face:1, rot:0,
+    base:200, energy:7, risk:0.07, crit:5, insp:60, buses:['power'], replaceCost:3000, color:'#8a6f9a',
+    ch:[ {id:'sleeve',  nm:'Quartz sleeve fouling', type:'FOUL', k:0.00017, w:0.20, part:90},
+         {id:'ballast', nm:'Lamp ballast',          type:'THERM',k:0.00012, w:0.18, part:200},
+         {id:'uvcal',   nm:'UV-intensity cal',      type:'DCAL', k:0.00018, w:0.18, part:80, compliance:true} ]},
+  { id:'contact', name:'Chlorine Contact Tank', code:'CCT-850', pos:[13,-6], hw:1.6, hd:1.3, face:1, rot:0,
+    base:215, energy:2, risk:0.05, crit:4, insp:50, buses:['chem'], replaceCost:2500, color:'#9ab0b8',
+    ch:[ {id:'rescal',   nm:'Residual analyzer cal',type:'DCAL', k:0.00017, w:0.16, part:75, compliance:true},
+         {id:'feedline', nm:'Chlorine feed line',   type:'LEAK', k:0.00013, w:0.18, part:55},
+         {id:'eductor',  nm:'Vacuum eductor',       type:'SEIZE',k:0.00013, w:0.20, part:110} ]},
+  { id:'highlift', name:'High-Lift Pump Station', code:'HLP-900', pos:[18,-6], hw:1.4, hd:1.25, face:1, rot:0,
+    base:240, energy:14, risk:0.08, crit:5, insp:60, buses:['power'], replaceCost:3600, color:'#8a5a4a',
+    ch:[ {id:'windings',  nm:'Pump motor windings', type:'THERM',k:0.00011, w:0.18, part:260},
+         {id:'thrust',    nm:'Thrust bearing',      type:'SEIZE',k:0.00016, w:0.22, part:190},
+         {id:'checkvalve',nm:'Discharge check valve',type:'LEAK',k:0.00014, w:0.20, part:70} ]},
+];
+// Balance pass (brewery-style): slow wear + start healthier.
+for(const _d of WTR_DEFS) for(const _c of _d.ch){ _c.k*=0.55; _c.w*=0.45; }
+// 3D shape hints for the generic world builder (g3).
+const _WTR_TANKS={ clarifier:2.4, contact:2.2, uv:2.0 };
+for(const _d of WTR_DEFS){
+  if(_WTR_TANKS[_d.id]){ _d.shape='tank'; _d.h=_WTR_TANKS[_d.id]; }
+  else { _d.shape='box'; _d.h=(_d.id==='flocc'?1.4:(_d.id==='highlift'||_d.id==='lowlift')?1.9:_d.id==='screens'?2.2:1.7); }
+}
+const WTR_CHAIN = ['screens','lowlift','flashmix','flocc','clarifier','filters','uv','contact','highlift'];
+const WTR_HALL  = { w:44, d:24, h:6.8 };
+const WTR_COMPLY = [['chemskid','batchcal'],['flashmix','dosecal'],['filters','turbcal'],['uv','uvcal'],['contact','rescal']];
+// diurnal demand curve (24 hourly points, normalised to mean 1.0): overnight trough,
+// evening peak — the overnight trough is when a healthy train pre-drains the basin.
+const _WTR_DIU=[0.60,0.55,0.55,0.58,0.66,0.82,1.02,1.20,1.30,1.24,1.14,1.10,1.16,1.22,1.16,1.10,1.22,1.42,1.45,1.34,1.14,0.95,0.80,0.68];
+const WTR_DIURNAL=(()=>{ const m=_WTR_DIU.reduce((a,b)=>a+b,0)/_WTR_DIU.length; return _WTR_DIU.map(v=>v/m); })();
+
+/* =============================== BUSES (power, air, chem) =============================== */
+// a broken utility falls back to standby capacity (backup generator / spare blower /
+// day-tank gravity feed) — the plant LIMPS at BUS_FLOOR rather than a total stop, so
+// a single utility failure doesn't instantly overflow the basin.
+function WTR_busFrom(m, wts){ if(!m) return 0; if(m.broken) return C.BUS_FLOOR; let f=1;
+  for(const c of m.ch){ const k=wts[c.type]; if(k) f*=(1-k*c.w); } return clamp(f,0,1); }
+function WTR_solveBuses(){
+  S.powerF = WTR_busFrom(MACH.substn,   {DRIFT:0.6, SEIZE:0.6, LEAK:0.4});
+  S.airF   = WTR_busFrom(MACH.blower,   {FOUL:0.6, SEIZE:0.6, LEAK:0.4});
+  S.chemF  = WTR_busFrom(MACH.chemskid, {FOUL:0.6, SEIZE:0.6});   // batchcal is compliance, not flow
+  S.moisture = 0;
+}
+function WTR_busFactor(m){
+  if(!m.buses) return 1; let f=1;
+  for(const b of m.buses) f *= (b==='power'?(S.powerF==null?1:S.powerF)
+                             : b==='air'?(S.airF==null?1:S.airF)
+                             : b==='chem'?(S.chemF==null?1:S.chemF) : 1);
+  return f;
+}
+
+/* =============================== BASIN + STORMS + COMPLIANCE =============================== */
+// Day 1 opens mid-operation: basin at 50%, three storm days seeded from the run PRNG
+// (one per third of the season), and the forecast for a day-1 storm exposed.
+function WTR_initFlow(){
+  const s1=6+Math.floor(rnd()*5), s2=14+Math.floor(rnd()*6), s3=24+Math.floor(rnd()*6);
+  S.px = { basin:0.5*C.BASIN_CAP, clearwell:0.6*C.CLEARWELL_CAP, spill:0, violMin:0, storms:[s1,s2,s3],
+    stormToday:(S.day===s1||S.day===s2||S.day===s3), forecast:false, labToday:null,
+    spillToday:0, deliveredToday:0, inflowToday:0, peakBasin:0.5*C.BASIN_CAP };
+}
+function WTR_capRate(m){ return m.broken?0 : m.effRate*WTR_busFactor(m)*(m.nursed?0.55:1); }
+function WTR_solveFlow(){
+  const px=S.px, K=C;
+  for(const id in MACH){ const m=MACH[id]; m.effRate=effRate(m); m.rate=WTR_capRate(m); }
+  const tick=S.tick;
+  px.stormToday = px.storms.indexOf(S.day)>=0;
+  const h=Math.floor(tick/20)%24, dm=WTR_DIURNAL[h];
+  const demand=K.CONTRACT_DEMAND;
+  let stormMult=1;
+  if(px.stormToday){ const hh=tick/20; const bell=Math.max(0, 1-Math.abs(hh-13)/6); stormMult=1+(K.STORM_PEAK-1)*bell; }
+  const inflow=(demand/480)*dm*stormMult;               // kGal this tick — arrives regardless of plant state
+  px.basin += inflow; px.inflowToday += inflow;
+  // Treatment (basin → clearwell): the tightest of the train BEFORE the clearwell.
+  // A treatment breakdown stops the fill but the clearwell keeps the town supplied
+  // for a while — the output buffer that a raw-water basin cannot provide.
+  let T=Infinity, bn='filters', worst=Infinity;
+  for(const id of ['screens','lowlift','flashmix','flocc','clarifier','filters','uv','contact']){
+    const r=MACH[id].rate; if(r<T)T=r; if(r<worst){worst=r;bn=id;} }
+  const cwRoom=Math.max(0, C.CLEARWELL_CAP - px.clearwell);
+  const treatIn=Math.min(T/60, px.basin, cwRoom);       // kGal/tick into the clearwell
+  px.basin -= treatIn; px.clearwell += treatIn;
+  // Shipping (clearwell → town): the high-lift pumps drain the clearwell.
+  const shipCap=MACH.highlift.rate/60;
+  let deliver=Math.min(shipCap, px.clearwell); if(deliver<0) deliver=0;
+  px.clearwell -= deliver; px.deliveredToday += deliver;
+  if(MACH.highlift.rate<worst){ worst=MACH.highlift.rate; bn='highlift'; }
+  S.T = deliver*60;                                      // base stepTick books S.produced += S.T/60 (no CAL scrap here)
+  // ---- bypass weir overflow ----
+  if(px.basin > K.BASIN_CAP){ const over=px.basin-K.BASIN_CAP; px.spill+=over; px.spillToday+=over; px.basin=K.BASIN_CAP; }
+  if(px.basin<0) px.basin=0;
+  if(px.basin>px.peakBasin) px.peakBasin=px.basin;
+  // ---- basin low → pumps short-cycle → THERM eats the windings ----
+  if(px.basin < K.BASIN_CAP*K.BASIN_LOW && tick%12===0){
+    for(const c of MACH.lowlift.ch) if(c.type==='THERM') c.w=clamp(c.w+K.THERM_CYCLE,0,1);
+    if(px.basin < K.BASIN_CAP*K.BASIN_LOW*0.5)
+      for(const c of MACH.highlift.ch) if(c.type==='THERM') c.w=clamp(c.w+K.THERM_CYCLE,0,1);
+  }
+  // ---- storm turbidity: extra FOUL wear on the front-of-train (service BEFORE, not during) ----
+  if(px.stormToday){
+    const bump=(id,cid,mult)=>{ const c=MACH[id].ch.find(x=>x.id===cid); if(c) c.w=clamp(c.w + c.k*mult*K.WEAR_SCALE,0,1); };
+    bump('screens','ragging',3.5); bump('clarifier','launder',2.0); bump('filters','media',2.0);
+  }
+  // ---- the air bus is what CLEANS: low airF accelerates filter/clarifier fouling ----
+  const airF=S.airF==null?1:S.airF;
+  if(airF<0.99){ const ex=(1-airF)*0.00004;
+    for(const [id,cid] of [['filters','media'],['clarifier','launder']]){ const c=MACH[id].ch.find(x=>x.id===cid); if(c) c.w=clamp(c.w+ex,0,1); } }
+  // ---- silent compliance: violation-minutes accrue only while water ships ----
+  if(deliver>0.001){
+    let v=0; for(const [id,cid] of WTR_COMPLY){ const c=MACH[id].ch.find(x=>x.id===cid); if(c) v+=Math.max(0,c.w-0.25)*2.2; }
+    px.violMin += Math.min(1,v);
+  }
+  // ---- bottleneck (limit reads on the tightest treatment stage) + per-machine utilisation ----
+  const prevBn=S.bottleneck; S.bottleneck=bn;
+  if(bn!==prevBn) GameEvents.emit('bottleneckChanged',{from:prevBn,to:bn});
+  const treatHr=treatIn*60, shipHr=deliver*60;
+  for(const id in MACH){ const m=MACH[id];
+    if(m.utility){ m.u=0.8; continue; }
+    const r = (id==='highlift')? shipHr : treatHr;       // train runs at treat rate, high-lift at ship rate
+    m.rate=r; m.u=clamp(r/Math.max(1,m.effRate),0,1);
+  }
+}
+
+/* =============================== SETTLE (fines, energy, sales cap, forecast) =============================== */
+function WTR_settleHook(ledger){
+  const px=S.px, K=C; if(!px) return 0;
+  let charge=0; const lines=[];
+  // sales cap: base paid full price on all 'over' (SALVAGE=PRICE); claw back beyond 1.5× contract
+  const cap=K.SALES_CAP*K.CONTRACT_DEMAND;
+  if((ledger.produced||0)>cap){ const excess=(ledger.produced-cap)*K.PRICE; charge+=excess; ledger.revenue-=excess;
+    lines.push('No credit >'+K.SALES_CAP+'× ('+Math.round(ledger.produced-cap)+' kGal)'); }
+  // bypass-weir spill fines + strike
+  if(px.spillToday>0.5){ const f=Math.round(K.SPILL_FINE*px.spillToday); charge+=f; ledger.fines=(ledger.fines||0)+f;
+    lines.push('Spill '+Math.round(px.spillToday)+' kGal −$'+f); }
+  if(px.spillToday>K.SPILL_STRIKE){ S.strikes++; ledger.struck=true; lines.push('⚠ Untreated discharge — permit breach (STRIKE)'); }
+  // silent-compliance fines + strike
+  const vf=Math.min(K.VIOL_CAP, Math.round(K.VIOL_FINE*px.violMin));
+  if(vf>0){ charge+=vf; ledger.fines=(ledger.fines||0)+vf; lines.push('Compliance '+Math.round(px.violMin)+' viol-min −$'+vf); }
+  if(px.violMin>K.VIOL_STRIKE){ S.strikes++; ledger.struck=true; lines.push('⚠ Notice of Violation (STRIKE)'); }
+  // forecast tomorrow's weather (banner the evening before, so prep is always possible)
+  px.forecast = px.storms.indexOf(S.day+1)>=0;
+  if(px.forecast) lines.push('⛈ FORECAST: STORM TOMORROW — pre-drain the basin overnight & service the screens/clarifier/filters tonight');
+  // reset daily accumulators
+  px.spillToday=0; px.deliveredToday=0; px.inflowToday=0; px.violMin=0; px.labToday=null; px.peakBasin=px.basin;
+  if(lines.length) alert('🧾 '+lines.join(' · '), px.forecast?'warn':'info');
+  return -charge;
+}
+
+/* =============================== UI HOOKS =============================== */
+function WTR_machinePanel(m){
+  const px=S.px; if(!px) return ''; let html='';
+  if(m.id==='screens'||m.id==='lowlift'||m.id==='highlift'){
+    const pct=Math.round(100*px.basin/C.BASIN_CAP);
+    const col=pct>90?'var(--red)':pct>82?'var(--amber)':pct<C.BASIN_LOW*100?'var(--amber)':'var(--green)';
+    const note=px.forecast?'⛈ Storm forecast tomorrow — pre-drain overnight; the drained water sells.'
+      :(pct>82?'Basin high — a surge now spills over the weir ($'+C.SPILL_FINE+'/kGal + strike at '+C.SPILL_STRIKE+').'
+      :(pct<C.BASIN_LOW*100?'Basin low — pumps are short-cycling and eating their windings (THERM).'
+      :'Basin in the safe band. The river never stops — keep treatment above inflow.'));
+    const cw=Math.round(100*px.clearwell/C.CLEARWELL_CAP);
+    html+='<div class="cond"><h4>Equalization Basin'+(px.stormToday?' — ⛈ STORM DAY':'')+'</h4>'+
+      '<div class="chan"><span class="nm">Basin — raw (overflow = spill)</span>'+
+      '<span class="bar"><i style="width:'+pct+'%;background:'+col+'"></i></span>'+
+      '<span class="pf">'+pct+'%</span></div>'+
+      '<div class="chan"><span class="nm">Clearwell — treated (ships from here)</span>'+
+      '<span class="bar"><i style="width:'+cw+'%;background:'+(cw<12?'var(--red)':cw<30?'var(--amber)':'var(--blue)')+'"></i></span>'+
+      '<span class="pf">'+cw+'%</span></div>'+
+      '<div class="hidden-note">'+note+' The clearwell buffers the town through a short treatment stop — a dry clearwell short-ships.</div></div>';
+  }
+  if(m.ch.some(c=>c.compliance)){
+    const known=px.labToday!=null;
+    const vm=known?Math.round(px.labToday):null;
+    const col=!known?'#2b3a4a':(vm>60?'var(--red)':vm>25?'var(--amber)':'var(--green)');
+    html+='<div class="cond"><h4>Compliance</h4>'+
+      '<div class="chan"><span class="nm">Violation minutes today'+(known?'':' (silent — take a lab sample)')+'</span>'+
+      '<span class="bar"><i style="width:'+(known?Math.min(100,vm):0)+'%;background:'+col+'"></i></span>'+
+      '<span class="pf">'+(known?vm:'??')+'</span></div>'+
+      '<div class="hidden-note">Calibration drift silently breaches the permit — no downtime, no scrap, just $'+C.VIOL_FINE+'/viol-min (strike at '+C.VIOL_STRIKE+'). A 📡 sensor reveals this part\'s drift; a Lab sample reveals today\'s running total.</div></div>';
+  }
+  return html;
+}
+function WTR_machineActions(m,ctx){
+  const {act,PV}=ctx; const px=S.px; if(!px||m.id!=='contact') return '';
+  const done=px.labToday!=null;
+  return act(done?'🧪 Lab sample taken':'🧪 Lab sample', done?'done':('$'+C.LAB_COST),
+    'Grab-sample the finished water to reveal today\'s running compliance violation-minutes.'+
+    PV(done?'today\'s total is shown on the compliance panels':'reveals the silent number once for today','dim'),
+    'actWTRLab', m.id, done?'':'primary');
+}
+window.actWTRLab=function(id){ if(!S||!S.px) return;
+  if(S.px.labToday!=null){ if(typeof toast==='function') toast('Already sampled today'); return; }
+  if(typeof canPay==='function' && !canPay(C.LAB_COST)){ if(typeof toast==='function') toast('Need $'+C.LAB_COST); return; }
+  S.cash-=C.LAB_COST; if(S.stats) S.stats.insp=(S.stats.insp||0)+C.LAB_COST;
+  S.px.labToday=S.px.violMin;
+  if(typeof toast==='function') toast('🧪 Lab: '+Math.round(S.px.violMin)+' violation-minutes so far today');
+  if(typeof GameEvents!=='undefined') GameEvents.emit('orderPlaced',{id:id,type:'lab',cost:C.LAB_COST});
+  if(typeof updateHUD==='function') updateHUD(); if(typeof openSheet==='function') openSheet('contact'); };
+
+const WTR_TUT=[
+  '<b>The river does not stop.</b> Raw water arrives at the <b>equalization basin</b> whether or not your plant runs — you open at 50%. Unlike a brewery\'s buffer, this one is a <b>bomb</b>: let it overflow the bypass weir and you pay $'+WTR_C.SPILL_FINE+'/kGal spilled (and a permit strike). Keep treatment above inflow.',
+  '<b>Storms are scheduled exams.</b> Three storm days hit this season, each <b>forecast the evening before</b> — inflow surges to '+WTR_C.STORM_PEAK+'×, and storm turbidity ages the <b>screens, clarifier & filters</b> 2–4× faster. <b>Pre-drain</b> the basin overnight and service the front-of-train <i>before</i> the storm, never during.',
+  '<b>Downtime is wear.</b> Starve the basin and the low-lift & high-lift pumps <b>short-cycle</b> — every stop/start (a <b>THERM</b> channel) shreds the motor windings. Too-high spills; too-low kills pumps. Hold the band ~15–85%.',
+  '<b>The permit never sleeps.</b> Five <b>calibration</b> channels (dosing, turbidity, UV, residual) silently breach compliance as they drift — no downtime, no scrap, just <b>fines</b> ($'+WTR_C.VIOL_FINE+'/violation-minute, strike at '+WTR_C.VIOL_STRIKE+'). It is invisible: fit <b>📡 sensors</b> on those five first, and take a <b>🧪 Lab sample</b> to read the running total.',
+  '<b>Price is flat — money dies in fines & power.</b> Water always ships at $'+WTR_C.PRICE.toFixed(2)+'/kGal (up to '+WTR_C.SALES_CAP+'× the contract — a clean plant turns a storm into its best day). There is no premium to chase; every DRIFT/LEAK point just inflates the pump-heavy power bill. Read <b>Fines</b> and <b>Energy</b> on the settle sheet like a brewery reads quality.'
+];
+function WTR_help(){
+  return '<h2>Blackweir Municipal Waterworks</h2>'+
+    '<div class="sub">A loss-defense game on a flat $'+C.PRICE.toFixed(2)+'/kGal. The river never stops and the permit never sleeps — money dies in fines and the power bill, never the price.</div>'+
+    '<ul>'+
+    '<li><b>The basin is a bomb.</b> Inflow arrives regardless (diurnal curve, '+C.STORM_PEAK+'× on storm days). Overflow the bypass weir → $'+C.SPILL_FINE+'/kGal spilled + a strike at '+C.SPILL_STRIKE+' kGal. Keep the basin in the ~15–85% band by keeping treatment above inflow.</li>'+
+    '<li><b>Storms are forecast a day ahead.</b> Three per season. Pre-drain overnight (the drained water sells) and service the FOUL-heavy screens/clarifier/filters <i>before</i> the storm — storm turbidity wears them 2–4× faster.</li>'+
+    '<li><b>THERM = downtime is wear.</b> A starved basin short-cycles the pumps and eats their windings; the UV ballast cycles when the lamps stop. Operating decisions, not just maintenance, age the iron.</li>'+
+    '<li><b>Silent compliance.</b> Five calibration channels breach the permit as they drift — invisible, no scrap, just $'+C.VIOL_FINE+'/violation-minute (strike at '+C.VIOL_STRIKE+'). Sensor those five first; take the $'+C.LAB_COST+' 🧪 lab sample in heavy weeks; re-zero drift with cheap targeted fixes during the overnight trough.</li>'+
+    '<li><b>The air bus cleans.</b> The blower backwashes the filters and airlifts the clarifier — neglect it and someone else\'s fouling accelerates. Crew &amp; $'+C.SENSOR_COST+' sensors as usual; upgrade the filters or screens for the week-6 storm.</li>'+
+    '</ul>';
+}
+
+/* =============================== 3D: overhead coloured bus runs =============================== */
+if(typeof PLANT_PIPES!=='undefined'){
+  PLANT_PIPES.waterworks=function(){
+    const SPEC={ power:{src:'substn', y:5.5, col:0xffd23a}, air:{src:'blower', y:5.95, col:0x38c0d0}, chem:{src:'chemskid', y:6.4, col:0x9a6adf} };
+    const byId={}; for(const d of WTR_DEFS) byId[d.id]=d;
+    const seg=(mat,ax,ay,az,bx,by,bz)=>{ const dx=bx-ax,dy=by-ay,dz=bz-az; const L=Math.hypot(dx,dy,dz); if(L<0.01) return;
+      const m=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,L,10),mat);
+      m.position.set((ax+bx)/2,(ay+by)/2,(az+bz)/2);
+      m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), new THREE.Vector3(dx,dy,dz).normalize());
+      scene.add(m);
+      const j=new THREE.Mesh(new THREE.SphereGeometry(0.09,8,6),mat); j.position.set(bx,by,bz); scene.add(j); };
+    for(const bus in SPEC){ const sp=SPEC[bus], s=byId[sp.src]; if(!s) continue;
+      const consumers=WTR_DEFS.filter(d=>d.buses&&d.buses.indexOf(bus)>=0); if(!consumers.length) continue;
+      const mat=stdMat(sp.col,0.45,0.5,{emissive:sp.col,emissiveIntensity:0.22});
+      const mz=s.pos[1];
+      const xs=consumers.map(d=>d.pos[0]).concat([s.pos[0]]);
+      seg(mat, s.pos[0],(s.h||2)+0.2,s.pos[1], s.pos[0],sp.y,s.pos[1]);
+      seg(mat, Math.min(...xs),sp.y,mz, Math.max(...xs),sp.y,mz);
+      for(const d of consumers){ const R=M3D[d.id], ty=(R&&R.topY)||2.2;
+        seg(mat, d.pos[0],sp.y,mz, d.pos[0],sp.y,d.pos[1]);
+        seg(mat, d.pos[0],sp.y,d.pos[1], d.pos[0],ty+0.3,d.pos[1]); }
+    }
+  };
+}
+
+/* =============================== REGISTER THE PLANT =============================== */
+PLANTS.waterworks = { id:'waterworks', name:'Blackweir Municipal Waterworks',
+  tagline:'12 machines · power, air & chem buses · the river never stops and the permit never sleeps.',
+  premium:true, machines:12, sign:'BLACKWEIR MUNICIPAL WATER AUTHORITY', unit:'kGal',
+  C:WTR_C, DEFS:WTR_DEFS, CHAIN:WTR_CHAIN, HALL:WTR_HALL,
+  solveBuses:WTR_solveBuses, solveFlow:WTR_solveFlow, initFlow:WTR_initFlow,
+  busFactor:WTR_busFactor, settleHook:WTR_settleHook,
+  machinePanel:WTR_machinePanel, machineActions:WTR_machineActions,
+  tut:WTR_TUT, help:WTR_help };
+
+/* =============================== REFERENCE POLICIES =============================== */
+const WTR_ALL=['substn','blower','chemskid','screens','lowlift','flashmix','flocc','clarifier','filters','uv','contact','highlift'];
+const WTR_LINE=['screens','lowlift','flashmix','flocc','clarifier','filters','uv','contact','highlift'];
+const WTR_FRONT=['screens','clarifier','filters'];        // FOUL-heavy, storm-sensitive front-of-train
+window.__policySets.waterworks={
+  'run-to-failure': ()=>()=>null,
+  'inspect-only': ()=>(day,tick,S,MACH)=>{ if(tick!==5) return;
+    for(const id of WTR_LINE){ if(!MACH[id].broken && !MACH[id].ch.some(c=>c.reveal!=null)){ actInspect(id); break; } } },
+  'blind-calendar': ()=>{ const rot=[['substn','filters'],['blower','clarifier'],['chemskid','uv'],['screens','lowlift'],['flashmix','flocc'],['contact','highlift']];
+    return (day,tick,S,MACH)=>{ if(tick!==5) return; (rot[(day-1)%rot.length]||[]).forEach(id=>{ if(!MACH[id].broken) actRepair(id); }); }; },
+  'predictive+auto+crew': ()=>{ const plan=['substn','blower','chemskid','filters','uv','highlift','lowlift','clarifier','screens','contact','flocc','flashmix']; let i=0; const li={};
+    return (day,tick,S,MACH)=>{
+      if(tick!==5) return;
+      if(day===1){ actHire();
+        // sensors first on the five silent compliance channels (highest-value $180 in the plant),
+        // then the FOUL front-of-train and the pump windings.
+        WTR_COMPLY.concat([['filters','media'],['clarifier','launder'],['screens','ragging'],['lowlift','windings'],['highlift','windings']])
+          .forEach(a=>actSensor(a[0],a[1]));
+        // stock spares on the critical serial machines so a breakdown skips the 3h part wait
+        for(const id of ['filters','uv','highlift','lowlift','clarifier','substn']){ if(MACH[id]) actStock(id); }
+      }
+      // re-stock a spare after one is consumed
+      if(tick===5){ for(const id of WTR_LINE.concat(['substn','blower'])){ const m=MACH[id];
+        if(m && !m.stocked && !m.broken && m.crit>=4 && S.cash>3000) actStock(id); } }
+      // daily lab sample once the plant is running (reveals the silent violation total)
+      if(day>=2 && typeof actWTRLab==='function') actWTRLab('contact');
+      // automate the fleet (cuts wear + re-reveals condition each morning)
+      if(i<plan.length && S.cash>C.AUTOMATE_COST+2200){ const id=plan[i++]; if(MACH[id]&&!MACH[id].automated&&!MACH[id].broken) actAutomate(id); }
+      // pre-storm reflex: the day before a storm, hammer the FOUL front-of-train to like-new
+      const stormTomorrow = S.px && S.px.storms.indexOf(day+1)>=0;
+      if(stormTomorrow){ for(const id of WTR_FRONT){ const m=MACH[id]; if(m.broken) continue;
+        for(const c of m.ch){ if(c.type==='FOUL'){ const rv=c.reveal!=null?c.reveal:c.w; if(rv>0.15) actFix(id,c.id); } } } }
+      // targeted fixes on revealed wear > 0.4; compliance drift gets a lower threshold (a NOV is a strike)
+      const cand=[]; for(const id of WTR_ALL){ const m=MACH[id]; if(m.broken) continue;
+        for(const c of m.ch){ if(c.reveal==null) continue; const th=c.compliance?0.28:0.4; if(c.reveal>th) cand.push([c.reveal/th,id,c.id]); } }
+      cand.sort((a,b)=>b[0]-a[0]);
+      const used=new Set(); let n=0;
+      for(const [w,id,cid] of cand){ if(n>=6) break; if(used.has(id)) continue; used.add(id); actFix(id,cid); n++; }
+      // keep a couple of un-sensored, un-automated machines fresh
+      let re=0; for(const id of WTR_LINE){ const m=MACH[id];
+        if(m.broken||m.automated||used.has(id)||m.ch.some(c=>c.sensor)) continue;
+        if(day-(li[id]||0)>=3 && re<2){ actInspect(id); li[id]=day; re++; } }
+      // late-season surge capacity on the front-of-train / bottleneck for the finale storm
+      if(day>=16 && MACH[S.bottleneck] && MACH[S.bottleneck].up<1.5 && S.cash>C.UPGRADE_COST+3000) actUpgrade(S.bottleneck);
+    }; },
+};
 
 </script>
 </body>

@@ -535,7 +535,7 @@ function newGame(seed, plantId){
     airP:C.P_NOM, moisture:0, airFactor:1, T:0, bottleneck:'oven',
     speed:1, sel:null, tutStep:0, walk:null, msgs:[] };
   applyWeek(1);
-  if(CURPLANT==='brewery' && typeof initBrewFlow==='function') initBrewFlow();  // seed the batch pipeline
+  const _ip=PLANTS[CURPLANT]; if(_ip && _ip.initFlow) _ip.initFlow();  // plant hook: seed custom flow state (batch pipeline, heat, basins…)
   buildFloor(); selectNone(); updateHUD(); renderTech(); tutorialStep();
 }
 
@@ -563,6 +563,7 @@ function effRate(m){
     if(c.type==='DRAG')  r*=(1-g*c.w);
     if(c.type==='SEIZE') r*=(1-0.5*g*c.w);
     if(c.type==='FOUL')  r*=(1-g*c.w);           // fouling/scale chokes flow like drag (brewery)
+    if(c.type==='THERM') r*=(1-0.6*g*c.w);       // thermal stress: cracked refractory bleeds heat/rate (foundry)
   }
   return Math.max(0,r);
 }
@@ -573,10 +574,11 @@ function effPower(m){
   return p;
 }
 // how a utility bus gates a machine's rate. Bakery: the single air bus on
-// pneumatic machines (unchanged). Brewery: the product of the machine's required
-// buses (steam/glycol/air), solved by g8's brewBusFactor.
+// pneumatic machines (unchanged). Premium plants register their own busFactor
+// hook on their PLANTS entry (the brewery multiplies steam/glycol/air factors).
 function busFactor(m){
-  if(CURPLANT==='brewery' && typeof brewBusFactor==='function') return brewBusFactor(m);
+  const p=PLANTS[CURPLANT];
+  if(p && p.busFactor) return p.busFactor(m);
   return m.pneumatic? S.airFactor : 1;
 }
 // F7/F8 throughput
@@ -596,6 +598,13 @@ function solveThroughput(){
 // F1 wear
 function advanceWear(){
   for(const id in MACH){ const m=MACH[id];
+    // THERM (thermal-cycling) channels take their hit when the machine transitions
+    // running<->stopped — the stress lives in the temperature swing, not the load.
+    // Gated on C.THERM_CYCLE, so plants without it (bakery/brewery) are untouched.
+    if(C.THERM_CYCLE){ const runNow=!m.broken && m.rate>1;
+      if(m._run!==undefined && runNow!==m._run)
+        for(const c of m.ch) if(c.type==='THERM') c.w=clamp(c.w+C.THERM_CYCLE,0,1);
+      m._run=runNow; }
     if(m.broken){ continue; }
     const u=m.u*(m.nursed?0.6:1);   // nursed: run gently, wear ~1/3 (u^2 coupling)
     for(const c of m.ch){
@@ -684,6 +693,11 @@ function settleDay(){
   const ledger={ day:S.day, produced:Math.round(S.produced), shipped:Math.round(shipped),
     revenue, energy, wages:C.TECH_WAGE_DAY+apprWage, overhead:C.OVERHEAD_DAY, wipScrap, penalty, struck, net,
     quality:qFactor, contam:S.contamToday, down:(S.downMinToday/60) };
+  // plant hook: custom end-of-day economy terms (fines, spill strikes, re-melt
+  // bills…). Returns a cash adjustment; may mutate the ledger and S.strikes.
+  const _SP=PLANTS[CURPLANT];
+  if(_SP && _SP.settleHook){ const adj=_SP.settleHook(ledger)||0;
+    if(adj){ S.cash+=adj; ledger.net+=adj; } }
   // reset daily accumulators
   S.produced=0; S.energyToday=0; S.downMinToday=0; S.scrapWipMin=0; tech.minsToday=0; if(tech2) tech2.minsToday=0;
   S.qWeighted=0; S.qBase=0; S.contamToday=0;   // soil + contam flags persist across days (that's the point)
@@ -824,9 +838,12 @@ function finishJob(j,m,w){ w=w||tech;
 
 /* =============================== TICK LOOP =============================== */
 function stepTick(){
-  if(CURPLANT==='brewery' && typeof solveBrewBuses==='function') solveBrewBuses(); else solveAir();
-  // the brewery flows in batches through a buffer (g8); everything else is a straight pipe
-  if(CURPLANT==='brewery' && typeof solveBrewFlow==='function') solveBrewFlow(); else solveThroughput();
+  // plant hooks: a plant module may register custom utility-bus and flow solvers on
+  // its PLANTS entry (the brewery's batch pipeline does); default is the bakery's
+  // air bus + straight-pipe min-chain throughput.
+  const _P=PLANTS[CURPLANT]||{};
+  if(_P.solveBuses) _P.solveBuses(); else solveAir();
+  if(_P.solveFlow) _P.solveFlow(); else solveThroughput();
   advanceWear(); rollBreakdowns(); advanceTech();
   // condition sensors keep their channel continuously revealed (vs automation's
   // once-a-morning refresh). No-op on the bakery (no channel carries a sensor).
@@ -1136,6 +1153,9 @@ function openSheet(id){
       '<span class="pf">'+pct+'%</span></div>'+
       '<div class="hidden-note">Packaging ships from this tank — it smooths upstream hiccups. Dry buffer = starving line.</div></div>';
   }
+  // plant hook: extra status panels on a machine's sheet (heat bank, basin level…)
+  const _plt=(typeof PLANTS!=='undefined')?PLANTS[CURPLANT]:null;
+  if(_plt && _plt.machinePanel){ hyg += _plt.machinePanel(m)||''; }
   const disB = m.broken;
   // honest previews from observable numbers only (rate/cap shown in chips, revealed wear)
   const isBn=(id===S.bottleneck);
@@ -1169,6 +1189,10 @@ function openSheet(id){
   const A=(label,cost,desc,fn,type,cls)=> pend.has(type)
     ? offAct(label,Q,desc,'Already queued — you\'re on it. Check the job strip above.')
     : act(label,cost,desc,fn,id,cls);
+  // plant hook: extra action buttons for this machine (e.g. the foundry's
+  // hold-hot toggle). The module builds buttons with the passed helpers.
+  const extraBtns=(_plt && _plt.machineActions && near)
+    ? (_plt.machineActions(m,{act,A,PV,offAct,pend})||'') : '';
   const cipHrs=((C.CIP_MINS||50)/60).toFixed(1);
   const liveBatch = m.batch && m.batch.phase!=='idle';
   const cipBtn = (m.soil!=null && !m.broken)
@@ -1192,6 +1216,7 @@ function openSheet(id){
         ? offAct('🤖 Automate','<span style="color:var(--green)">✓ active</span>','Condition monitoring is running.','Already automated — wear is cut and condition re-reveals every morning')
         : A('🤖 Automate','$'+C.AUTOMATE_COST,'Condition-monitor + auto-drain, re-reveals daily.'+pvAuto,'actAutomate','automate',''))+
       cipBtn+
+      extraBtns+
       nurseBtn+
       A('🆕 Replace','$'+m.replaceCost,'Brand-new unit.'+pvRepl,'actReplace','replace','danger');
   } else {
@@ -1284,7 +1309,10 @@ function clamp(v,a,b){ return v<a?a:v>b?b:v; }
 
 /* =============================== REVIEW / END MODALS =============================== */
 function money(n){ const s=(n<0?'−$':'$')+Math.abs(Math.round(n)).toLocaleString(); return s; }
-function unit(){ return (typeof CURPLANT!=='undefined'&&CURPLANT==='brewery')?'cases':'loaves'; }
+function unit(){
+  const p=(typeof PLANTS!=='undefined')?PLANTS[CURPLANT]:null;
+  return (p&&p.unit)||'loaves';
+}
 function shiftLedgerRows(l){
   return '<table class="ledger">'+
     row('Revenue',l.revenue,1)+ row('Energy',-l.energy)+ row('Technician wage',-l.wages)+
@@ -1419,7 +1447,11 @@ const TUT_BREW=[
  '<b>Hygiene is the brewer\'s discipline.</b> Product-contact vessels build up <b>soil</b> as they run — it dulls quality (your price) and, left alone, risks a <b>contamination</b> that dumps the batch. Run a <span class="k">🧼 CIP</span> wash to reset it. Skip hygiene and it\'s contamination roulette.',
  '<b>Scale your crew.</b> On the bigger plant you can <b>hire a second technician</b> to run planned jobs in parallel, and fit <b>condition sensors</b> that keep a part\'s wear visible without repeat inspections.',
 ];
-function curTut(){ return (typeof CURPLANT!=='undefined'&&CURPLANT==='brewery')?TUT_BREW:TUT; }
+function curTut(){
+  const p=(typeof PLANTS!=='undefined')?PLANTS[CURPLANT]:null;
+  if(p&&p.tut) return p.tut;                 // plant modules may ship their own tour
+  return (typeof CURPLANT!=='undefined'&&CURPLANT==='brewery')?TUT_BREW:TUT;
+}
 // One docked carousel card for the whole tour: Back / Next step through the
 // slides, dots show position, Skip dismisses the lot. tutStep>=len means
 // "seen/skipped" (stays hidden for the rest of day 1).
@@ -1447,6 +1479,8 @@ $('tutback').onclick=()=>{ if(S.tutStep>0){ S.tutStep--; tutorialStep(); } };
 $('tutskip').onclick=tutDismiss;
 
 $('helpbtn').onclick=()=>{ setSpeed(0); const rev=$('modalcard');
+  const _hp=(typeof PLANTS!=='undefined')?PLANTS[CURPLANT]:null;
+  if(_hp&&_hp.help){ rev.innerHTML=_hp.help(); $('modal').classList.add('show'); return; }
   if(typeof CURPLANT!=='undefined' && CURPLANT==='brewery'){
     rev.innerHTML='<h2>How to play — Ironline Brewery</h2><div class="help-body">'+
      '<b>Goal:</b> survive <span class="k">'+C.N_WEEKS+' weekly contracts</span> ('+C.WEEK_LEN+' days each) and finish with <b>'+money(C.WIN_CASH)+'</b> cash. Quotas climb every week on the same aging 12-machine plant.'+
@@ -1629,6 +1663,9 @@ const OBST=[]; // {x,z,hw,hd} push-out AABBs
 function addObst(x,z,hw,hd){ OBST.push({x,z,hw,hd}); }
 let worldBuilt=false, _worldPlant=null;
 let WORLD_OBJS=[];   // everything ensureWorld() adds to the scene, so a plant switch can tear it all down
+// per-plant 3D registries: plant modules register their hall dressing, overhead
+// pipe-work, and per-machine builders here (machine ids are unique across plants).
+const PLANT_DRESS={}, PLANT_PIPES={}, PLANT_BUILDERS={};
 const M3D={};   // id → {grp, paint[], lamp, smokeAt, anim refs...}
 let LIMITSPR=null, SUN=null, HEMI=null, CH=null, PLLIGHT=null, BNLIGHT=null;
 const PUFFS=[]; // live particles
@@ -1728,7 +1765,8 @@ function ensureWorld(){
   }
   // ---- set dressing is per-plant: the bakery's flour silo / proofer / bread racks
   // have no business in a brewery, and the wall furniture is positioned per hall ----
-  if(BREW){ dressIronline(); } else {
+  const _dressFn=PLANT_DRESS[_worldPlant];
+  if(_dressFn){ _dressFn(); } else if(_worldPlant==='bakery') {
   // overhead compressed-air main + drops to the pneumatic machines (the cascade, made visible)
   const pipeM=stdMat(0x545f6a,0.5,0.6);
   function pipeSeg(ax,ay,az,bx,by,bz){ const dx=bx-ax,dy=by-ay,dz=bz-az;
@@ -1884,8 +1922,8 @@ function ensureWorld(){
   } // end bakery dressing
   // machines ---------------------------------------------------------------
   for(const d of DEFS) buildMachine(d);
-  // premium pack: coloured utility bus pipe-work over the line (steam/glycol/air)
-  if((typeof CURPLANT!=='undefined'?CURPLANT:'')==='brewery') buildBrewBuses();
+  // premium packs: coloured utility bus pipe-work over the line
+  const _pipeFn=PLANT_PIPES[_worldPlant]; if(_pipeFn) _pipeFn();
   // shared LIMIT badge
   LIMITSPR=makeTextSprite('◄ LIMIT','#ffb23e','rgba(20,14,4,.85)',30,8);
   LIMITSPR.visible=false; scene.add(LIMITSPR);
@@ -2028,6 +2066,8 @@ function dressIronline(){
     cyl(0.09,0.11,0.75,stdMat(0xd8a020,0.5,0.3),x,0.37,4.6,scene,10);
 }
 
+PLANT_DRESS.brewery=dressIronline; PLANT_PIPES.brewery=buildBrewBuses;
+
 /* =============================== MACHINES (3D) =============================== */
 function machineCommon(d,g){
   // dark plinth + label + status lamp
@@ -2151,6 +2191,11 @@ function buildMachine(d){
     R.anim.leakAt=new THREE.Vector3(-1.0,2.45,0);
     R.topY=2.5;
   }
+  // plant-registered builder (new packs register per-machine builders; ids are
+  // unique across plants). ctx hands over the paint/steel materials so grime,
+  // soil and contamination tints keep working on registered geometry.
+  const _PB=PLANT_BUILDERS[d.id];
+  if(_PB) _PB(d,g,R,{pM,steelM,darkM,chromeM});
   /* ---- Ironline Brewery machines (these ids only exist on the brewery) ---- */
   if(d.id==='boiler'){        // horizontal firetube boiler: drum, fire door, stack to the roof
     box(2.6,0.14,1.6,darkM,0,0.07,0,g);
@@ -2983,10 +3028,12 @@ window.__brewPolicies={
       for(const[w,id,cid]of cand){ if(n>=6)break; if(used.has(id))continue; used.add(id); actFix(id,cid); n++; }
       if(day>=18 && MACH[S.bottleneck] && MACH[S.bottleneck].up<1.5 && S.cash>C.UPGRADE_COST+3000) actUpgrade(S.bottleneck); }; },
 };
+// per-plant reference-policy registry: new plant modules add theirs
+window.__policySets={ bakery:window.__policies, brewery:window.__brewPolicies };
 window.__matrix=function(seeds, plant){
   seeds=seeds||[11,22,33,44,55,66,77,88,99,110];
   plant=plant||'bakery';
-  const pols = plant==='brewery' ? window.__brewPolicies : window.__policies;
+  const pols = window.__policySets[plant] || window.__policies;
   const med=a=>{ const s=[...a].sort((x,y)=>x-y); return s[Math.floor(s.length/2)]; };
   const out={};
   for(const name in pols){
@@ -2995,7 +3042,7 @@ window.__matrix=function(seeds, plant){
         emerg:Math.round(r.stats.emerg), planned:Math.round(r.stats.planned+r.stats.insp),
         contam:(r.stats.contam||0), down:+r.stats.downH.toFixed(1)}; });
     const ends=runs.map(r=>r.end);
-    const seasonDays = plant==='brewery'?30:20;
+    const seasonDays = (PLANTS[plant]&&PLANTS[plant].C&&PLANTS[plant].C.D_MAX)||20;
     out[name]={ wins:runs.filter(r=>r.won).length, finished:runs.filter(r=>r.days>=seasonDays).length,
       medDays:med(runs.map(r=>r.days)), med:med(ends),
       min:Math.min(...ends), max:Math.max(...ends),
@@ -3288,7 +3335,7 @@ function serializeState(){
   const s={};
   for(const k of ['cash','day','week','tick','strikes','contractLive','over','won','seed','stats',
     'produced','energyToday','downMinToday','scrapWipMin','qWeighted','qBase','contamToday','dayQuality',
-    'buffer','airP','moisture','airFactor','T','bottleneck','tutStep']) s[k]=S[k];
+    'buffer','px','airP','moisture','airFactor','T','bottleneck','tutStep']) s[k]=S[k];   // px = plant-extras bag (heat, basin…)
   const t={busy:tech.busy, phase:tech.phase, timer:tech.timer, total:tech.total,
     minsToday:tech.minsToday, atPrev:tech.atPrev, job:tech.job, queue:tech.queue};
   const ch=(typeof CH!=='undefined'&&CH)?{x:CH.p.x, z:CH.p.z, yaw:CH.yaw}:null;
@@ -3971,8 +4018,14 @@ function solveBrewFlow(){
 /* ---------- register the plant (replaces the coming-soon stub from g1) ---------- */
 PLANTS.brewery = { id:'brewery', name:'Ironline Brewery & Bottling Works',
   tagline:'12 machines · steam, glycol & air buses · fouling, calibration & live hygiene.',
-  premium:true, machines:12, sign:'IRONLINE BREWING CO.',
-  C:BREW_C, DEFS:BREW_DEFS, CHAIN:BREW_CHAIN, HALL:BREW_HALL };
+  premium:true, machines:12, sign:'IRONLINE BREWING CO.', unit:'cases',
+  C:BREW_C, DEFS:BREW_DEFS, CHAIN:BREW_CHAIN, HALL:BREW_HALL,
+  // engine hooks (g1 dispatches to these; plants without them get the bakery defaults)
+  solveBuses:solveBrewBuses, solveFlow:solveBrewFlow, initFlow:initBrewFlow, busFactor:brewBusFactor };
+
+/* PREMIUM PLANT — Vulcan Point Foundry (g9). Populated by the plant-pack build. */
+
+/* PREMIUM PLANT — Clearwater Waterworks (g10). Populated by the plant-pack build. */
 
 </script>
 </body>

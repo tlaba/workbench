@@ -3323,7 +3323,7 @@ function migrateSaves(){
 function serMachine(m){ return {
   up:m.up, u:m.u, automated:!!m.automated, broken:!!m.broken, brokenChan:m.brokenChan||null,
   downMins:m.downMins||0, awaitDelivery:m.awaitDelivery||0, stocked:!!m.stocked,
-  rushed:!!m.rushed, nursed:!!m.nursed, replaced:!!m.replaced, soil:m.soil, contam:m.contam,
+  rushed:!!m.rushed, nursed:!!m.nursed, replaced:!!m.replaced, soil:m.soil, contam:m.contam, _run:m._run,
   batch:m.batch?{phase:m.batch.phase, fill:m.batch.fill, t:m.batch.t}:undefined,
   ch:m.ch.map(c=>({w:c.w, reveal:c.reveal, revealHazard:c.revealHazard, sensor:!!c.sensor})) }; }
 function serWorker(w){ return w?{busy:w.busy, phase:w.phase, timer:w.timer, total:w.total,
@@ -3351,12 +3351,14 @@ function applySave(save){
     newGame(save.s.seed, save.plant);   // fresh world/machines/PRNG for the saved plant, then overlay:
     _seed = (save.prng>>>0) || _seed;
     for(const k in save.s) S[k]=save.s[k];
+    if(S.px && typeof S.px==='object'){ try{ S.px=JSON.parse(JSON.stringify(S.px)); }catch(e){} }  // isolate the plant-extras bag from the snapshot object
     S.speed=0; S.sel=null; S.walk=null; S.msgs=[];   // resume paused; drop transients
     for(const id in MACH){ const m=MACH[id], sm=save.mach&&save.mach[id]; if(!sm) continue;
       m.up=sm.up; m.u=sm.u; m.automated=sm.automated; m.broken=sm.broken; m.brokenChan=sm.brokenChan;
       m.downMins=sm.downMins; m.awaitDelivery=sm.awaitDelivery; m.stocked=sm.stocked;
       m.rushed=sm.rushed; m.nursed=sm.nursed; m.replaced=sm.replaced;
       if(sm.soil!=null){ m.soil=sm.soil; m.contam=!!sm.contam; }
+      if(sm._run!==undefined) m._run=sm._run;   // THERM transition tracker (foundry)
       if(sm.batch && m.batch) m.batch={phase:sm.batch.phase, fill:sm.batch.fill, t:sm.batch.t};
       m.ch.forEach((c,i)=>{ const sc=sm.ch[i]; if(sc){ c.w=sc.w; c.reveal=sc.reveal; c.revealHazard=sc.revealHazard; c.sensor=!!sc.sensor; } });
     }
@@ -4023,7 +4025,437 @@ PLANTS.brewery = { id:'brewery', name:'Ironline Brewery & Bottling Works',
   // engine hooks (g1 dispatches to these; plants without them get the bakery defaults)
   solveBuses:solveBrewBuses, solveFlow:solveBrewFlow, initFlow:initBrewFlow, busFactor:brewBusFactor };
 
-/* PREMIUM PLANT — Vulcan Point Foundry (g9). Populated by the plant-pack build. */
+/* =============================================================================
+   PREMIUM PLANT — Emberline Diecast & Alloy Works (g9).
+   A margin game on a FLAT $9 price. Its axis is THERMODYNAMIC INVENTORY:
+   molten metal is banked inventory (S.px.melt) with a superheat (S.px.heat) that
+   has a carrying cost (hold-hot fees), a catastrophic floor (freeze/remelt), a
+   supply role (no heat → no pour) and a per-pound cost multiplier (a fouled gas
+   skid melts the same metal for more dollars while the line looks fine). Quality
+   failures spend that SAME resource again via a rework spiral (defects melt twice),
+   so the plant's quality number and its capacity number are the same number.
+   First plant where DOWNTIME ITSELF is wear: THERM channels (engine-generic, gated
+   by C.THERM_CYCLE) take a hit on every running↔stopped transition of a hot machine
+   — including the uncommanded auto-idle when a full bank starves the melt furnace.
+   All bakery/brewery-safe: only 'foundry' reads any of this.
+   ============================================================================= */
+
+const FDY_C = {
+  TICKS_PER_DAY:480, WEEK_LEN:5, N_WEEKS:6, D_MAX:30, ALPHA:2.0, MU:3.0, KAPPA:6.0,
+  P_NOM:7.0, P_MIN:4.0, LAMBDA_LEAK:0.35, M0:0.05, M_SEAL:0.75, AIR_DRAW:32, COMP_CAP:40,
+  STARTING_CASH:17000, WIN_CASH:42000, PRICE:9.00, SALVAGE:2.20,
+  CONTRACT_DEMAND:380, CONTRACT_FLOOR:190, SHORT_SHIP_PENALTY:1000,
+  ENERGY_PRICE:0.22, TECH_WAGE_DAY:300, OVERHEAD_DAY:180,
+  TRAVEL_MIN:15, INSPECT_MIN:30,
+  EMERGENCY_PART_MULT:2.5, EMERGENCY_DELIVERY_MIN:180,
+  LABOR_REPAIR:220, LABOR_EMERGENCY_MULT:1.75, LABOR_FIX:70, FIX_TIME_FRAC:0.30, SERVICE_TIME_MULT:1.5,
+  CASCADE_DAMAGE:450, WIP_SCRAP_RATE:55,
+  UPGRADE_COST:2000, UPGRADE_TIER:1.4, AUTOMATE_COST:900,
+  REPAIR_FLOOR:0.08, FIX_FLOOR:0.04, OVERHAUL_FLOOR:0.11, SIGMA_INSPECT:0.05,
+  STRIKES_TO_LOSE:3, HEALTH_CONDEMN:0.15, WEAR_SCALE:0.36, HAZARD_SCALE:0.185,
+  FOUL_ACCEL:1.6,                 // regenerator/scale/dross foul faster the dirtier they are
+  THERM_CYCLE:0.055,              // per running↔stopped transition, per THERM channel (engine-generic)
+  THERM_FREEZE:0.06,             // extra refractory hit to both furnace linings on a freeze
+  HIRE_FEE:1800, APPRENTICE_WAGE_DAY:170, APPRENTICE_SLOW:1.4,
+  SENSOR_COST:180,
+  // ---- Heat Bank knobs (spec economy.keyCostKnobs) ----
+  MELT_CAP:900, HEEL_KEEP:150, POUR_MIN:0.35, FREEZE_HEAT:0.15,
+  HOLD_HOT_FEE:140, FREEZE_REMELT_FEE:500, REMELT_MULT:1.6,
+  MELT_KWH:2.4,                   // kWh booked per casting-equivalent melted (× price × (2−gasF))
+  RECALL_FEE:600,
+  // HYGIENE deliberately unset: the foundry has no soil/CIP axis (heat is its axis).
+};
+// Six weekly contracts on the same aging plant. Healthy net ceiling ≈1,250/day after
+// baseline defects + the morning heat ramp; week 5 brushes it, week 6 exceeds an
+// unupgraded line — the finale demands an upgraded diecast cell (or CNC) AND a defect
+// fraction held near the 3% baseline.
+FDY_C.WEEKS = [
+  { demand:380,  floor:190 },   // Wk1 — mid-heat opening
+  { demand:500,  floor:250 },   // Wk2
+  { demand:640,  floor:320 },   // Wk3 — hold-hot starts paying
+  { demand:780,  floor:390 },   // Wk4
+  { demand:920,  floor:460 },   // Wk5 — brushing the ceiling
+  { demand:1050, floor:525 },   // Wk6 — needs added capacity
+];
+
+/* ---- machine defs: 3 channels each. Calibration channels use the engine-silent
+   type 'DCAL' (drift-calibration) so the shared CAL-scrap path stays byte-identical
+   for the bakery/brewery; the foundry owns its defect math end-to-end in solveFlow.
+   THERM channels take their wear on stop/start (engine, gated by C.THERM_CYCLE). ---- */
+const FDY_DEFS = [
+  // ---- utilities (produce buses) ----
+  { id:'gasskid', name:'Gas Train & Regen Burner Skid', code:'GAS-100', pos:[-14,8], hw:1.6, hd:1.2, face:-1, rot:0,
+    base:60, energy:4, risk:0.07, crit:5, insp:60, utility:true, replaceCost:3400, color:'#d8641e',
+    ch:[ {id:'regen',  nm:'Regenerator media',   type:'FOUL', k:0.00021, w:0.26, part:150},
+         {id:'blower', nm:'Combustion blower',   type:'SEIZE',k:0.00015, w:0.22, part:320},
+         {id:'header', nm:'Gas header joints',   type:'LEAK', k:0.00014, w:0.18, part:60} ]},
+  { id:'hpu', name:'Central Hydraulic Power Unit', code:'HPU-200', pos:[-2,8], hw:1.5, hd:1.2, face:-1, rot:0,
+    base:55, energy:8, risk:0.07, crit:5, insp:60, utility:true, replaceCost:3600, color:'#3a7a4a',
+    ch:[ {id:'filter', nm:'Return-line filter',  type:'FOUL', k:0.00019, w:0.24, part:90},
+         {id:'pump',   nm:'Axial piston pump',   type:'SEIZE',k:0.00016, w:0.22, part:340},
+         {id:'hoses',  nm:'HP hoses & seals',    type:'LEAK', k:0.00015, w:0.20, part:70} ]},
+  { id:'tower', name:'Cooling Tower & Circ Pumps', code:'CTW-300', pos:[12,8], hw:1.5, hd:1.3, face:-1, rot:0,
+    base:55, energy:6, risk:0.07, crit:5, insp:55, utility:true, replaceCost:3000, color:'#3a7a8a',
+    ch:[ {id:'fill',  nm:'Tower fill scale',     type:'FOUL', k:0.00020, w:0.24, part:110},
+         {id:'circ',  nm:'Circulation pump',     type:'SEIZE',k:0.00016, w:0.24, part:320},
+         {id:'main',  nm:'Buried water main',    type:'LEAK', k:0.00013, w:0.18, part:45} ]},
+  // ---- value chain ----
+  { id:'charger', name:'Ingot & Scrap Charger', code:'CHG-350', pos:[-18,-6], hw:1.3, hd:1.2, face:1, rot:0,
+    base:300, energy:3, risk:0.06, crit:4, insp:45, replaceCost:2400, color:'#8a7a4a',
+    ch:[ {id:'hoist', nm:'Skip hoist drive',     type:'SEIZE',k:0.00014, w:0.20, part:160},
+         {id:'track', nm:'Skip track rollers',   type:'DRAG', k:0.00012, w:0.18, part:60},
+         {id:'weigh', nm:'Charge weigh cell',    type:'DCAL', k:0.00016, w:0.16, part:80} ]},
+  { id:'melt', name:'Tower Melt Furnace', code:'MLT-400', pos:[-13.5,-6], hw:1.6, hd:1.5, face:1, rot:0,
+    base:190, energy:4, risk:0.08, crit:5, insp:70, buses:['gas'], replaceCost:4600, color:'#8a3a2a',
+    ch:[ {id:'lining',     nm:'Refractory lining',  type:'THERM',k:0.00011, w:0.20, part:220},
+         {id:'dross',      nm:'Dross & oxide',      type:'FOUL', k:0.00020, w:0.24, part:140},
+         {id:'burnertune', nm:'Burner tuning',      type:'DRIFT',k:0.00013, w:0.18, part:120} ]},
+  { id:'hold', name:'Holding Furnace & Launder', code:'HLD-450', pos:[-9,-6], hw:1.35, hd:1.35, face:1, rot:0,
+    base:240, energy:10, risk:0.07, crit:5, insp:60, buses:['gas'], replaceCost:3800, color:'#a05038',
+    ch:[ {id:'crucible', nm:'Crucible refractory', type:'THERM',k:0.00011, w:0.18, part:200},
+         {id:'lidseal',  nm:'Lid & launder seals', type:'LEAK', k:0.00015, w:0.20, part:90},
+         {id:'pourcal',  nm:'Pour-temp control',   type:'DCAL', k:0.00016, w:0.16, part:85} ]},
+  { id:'dca', name:'Diecast Cell A (1,600 t)', code:'DCA-500', pos:[-4,-7.5], hw:1.9, hd:1.15, face:1, rot:0,
+    base:92, energy:6, risk:0.09, crit:5, insp:55, buses:['hyd','water'], replaceCost:3200, color:'#6a7a9a',
+    ch:[ {id:'die',     nm:'Die block (heat-checking)', type:'THERM',k:0.00012, w:0.22, part:300},
+         {id:'shot',    nm:'Shot sleeve & plunger',     type:'SEIZE',k:0.00016, w:0.24, part:180},
+         {id:'shotcal', nm:'Shot-profile calibration',  type:'DCAL', k:0.00018, w:0.18, part:75} ]},
+  { id:'dcb', name:'Diecast Cell B (1,600 t)', code:'DCB-510', pos:[-4,-4], hw:1.9, hd:1.15, face:1, rot:0,
+    base:92, energy:6, risk:0.09, crit:5, insp:55, buses:['hyd','water'], replaceCost:3200, color:'#5a6a9a',
+    ch:[ {id:'die',     nm:'Die block (heat-checking)', type:'THERM',k:0.00012, w:0.18, part:300},
+         {id:'shot',    nm:'Shot sleeve & plunger',     type:'SEIZE',k:0.00016, w:0.20, part:180},
+         {id:'shotcal', nm:'Shot-profile calibration',  type:'DCAL', k:0.00018, w:0.14, part:75} ]},
+  { id:'trim', name:'Trim Press', code:'TRM-600', pos:[1,-6], hw:1.3, hd:1.2, face:1, rot:0,
+    base:210, energy:4, risk:0.06, crit:3, insp:45, buses:['hyd'], replaceCost:2400, color:'#7a6f8a',
+    ch:[ {id:'toggle', nm:'Toggle linkage',      type:'SEIZE',k:0.00014, w:0.20, part:130},
+         {id:'blades', nm:'Trim blades',         type:'DRAG', k:0.00012, w:0.22, part:60},
+         {id:'align',  nm:'Die-set alignment',   type:'DCAL', k:0.00013, w:0.16, part:55} ]},
+  { id:'hto', name:'T6 Heat-Treat Oven & Quench', code:'HTO-700', pos:[6,-6], hw:1.6, hd:1.3, face:1, rot:0,
+    base:200, energy:16, risk:0.07, crit:5, insp:60, buses:['gas','water'], replaceCost:3600, color:'#9a7a4a',
+    ch:[ {id:'muffle',  nm:'Muffle refractory',  type:'THERM',k:0.00011, w:0.18, part:170},
+         {id:'fan',     nm:'Recirculation fan',  type:'DRIFT',k:0.00012, w:0.20, part:120},
+         {id:'soakcal', nm:'Soak-temp profile',  type:'DCAL', k:0.00016, w:0.16, part:85} ]},
+  { id:'cnc', name:'CNC Machining Center', code:'CNC-800', pos:[11,-6], hw:1.35, hd:1.25, face:1, rot:0,
+    base:172, energy:5, risk:0.07, crit:4, insp:55, buses:['water'], replaceCost:3400, color:'#6a6f7a',
+    ch:[ {id:'spindle', nm:'Spindle bearing',    type:'SEIZE',k:0.00016, w:0.22, part:280},
+         {id:'atc',     nm:'Tool changer',       type:'DRAG', k:0.00012, w:0.20, part:120},
+         {id:'offset',  nm:'Tool offset wear',   type:'DCAL', k:0.00015, w:0.16, part:70} ]},
+  { id:'xrq', name:'X-ray & Gauge Gate', code:'XRQ-900', pos:[16,-6], hw:1.35, hd:1.25, face:1, rot:0,
+    base:260, energy:5, risk:0.06, crit:4, insp:55, replaceCost:2800, color:'#8a8f5a',
+    ch:[ {id:'detcal', nm:'Detector calibration',type:'DCAL', k:0.00017, w:0.16, part:120},
+         {id:'conv',   nm:'Indexing conveyor',   type:'DRAG', k:0.00011, w:0.18, part:70},
+         {id:'tube',   nm:'X-ray tube power',    type:'DRIFT',k:0.00011, w:0.16, part:90} ]},
+];
+// Balance pass (brewery-style): slow the per-channel wear rate and start healthier so
+// predictive + automation + a hired crew keep 12 machines alive across six weeks while
+// neglect and blind calendar servicing fall behind.
+for(const _d of FDY_DEFS) for(const _c of _d.ch){ _c.k*=0.55; _c.w*=0.45; }
+// 3D shape hints for the generic world builder (g3).
+const _FDY_TANKS={ tower:3.0, melt:3.2, hold:2.2 };
+for(const _d of FDY_DEFS){
+  if(_FDY_TANKS[_d.id]){ _d.shape='tank'; _d.h=_FDY_TANKS[_d.id]; }
+  else { _d.shape='box'; _d.h=(_d.id==='charger'?2.0:_d.id==='trim'?2.4:_d.id==='xrq'?2.2:_d.id==='cnc'?2.0:(_d.id==='dca'||_d.id==='dcb')?1.7:1.6); }
+}
+const FDY_CHAIN = ['charger','melt','hold','dca','dcb','trim','hto','cnc','xrq'];
+const FDY_HALL  = { w:42, d:24, h:7.5 };
+
+/* =============================== BUSES (gas, hyd, water) =============================== */
+function FDY_busFrom(m, wts){ if(!m||m.broken) return 0; let f=1;
+  for(const c of m.ch){ const k=wts[c.type]; if(k) f*=(1-k*c.w); } return clamp(f,0,1); }
+function FDY_solveBuses(){
+  S.gasF   = FDY_busFrom(MACH.gasskid, {FOUL:0.7, SEIZE:0.6, LEAK:0.4});
+  S.hydF   = FDY_busFrom(MACH.hpu,     {SEIZE:0.6, FOUL:0.5, LEAK:0.5});
+  S.waterF = FDY_busFrom(MACH.tower,   {FOUL:0.6, SEIZE:0.6, LEAK:0.4});
+  S.moisture = 0;                 // HUD reuses this slot; no moisture axis here
+}
+function FDY_busFactor(m){
+  if(!m.buses) return 1; let f=1;
+  for(const b of m.buses) f *= (b==='gas'?(S.gasF==null?1:S.gasF)
+                             : b==='hyd'?(S.hydF==null?1:S.hydF)
+                             : b==='water'?(S.waterF==null?1:S.waterF) : 1);
+  return f;
+}
+
+/* =============================== HEAT BANK + REWORK SPIRAL =============================== */
+// Day 1 opens mid-heat: bank hot (0.80), ~400 units molten, so shipping starts at
+// minute one and the player inherits a furnace that is already expensive to stop.
+function FDY_initFlow(){
+  S.px = { melt:400, heat:0.80,
+    escapedToday:0, meltedToday:0, reclaimToday:0,
+    meltEnergy:0, remeltEnergy:0, remeltFee:0, pendingSows:0,
+    holdHot:false, frozen:false, reheatLock:false, autoidle:false, freezeCount:0,
+    dNow:0.03, cNow:1, escNow:0 };
+}
+function FDY_capRate(m){ return m.broken?0 : m.effRate*FDY_busFactor(m)*(m.nursed?0.55:1); }
+function FDY_solveFlow(){
+  const px=S.px, K=C;
+  for(const id in MACH){ const m=MACH[id]; m.effRate=effRate(m); m.rate=FDY_capRate(m); }
+  const gasF=S.gasF==null?1:S.gasF;
+  const melt=MACH.melt, hold=MACH.hold, charger=MACH.charger, cells=[MACH.dca,MACH.dcb];
+  const trim=MACH.trim, hto=MACH.hto, cnc=MACH.cnc, xrq=MACH.xrq;
+  // ---- morning re-melt of sows frozen from a GO COLD night (1.6× energy) ----
+  if(px.pendingSows>0){
+    const add=Math.min(px.pendingSows, Math.max(0,K.MELT_CAP-px.melt));
+    px.melt+=add;
+    px.remeltEnergy += add*K.MELT_KWH*K.ENERGY_PRICE*K.REMELT_MULT;
+    px.pendingSows-=add;
+  }
+  // ---- auto-idle hysteresis: a full bank idles metal INPUT (uncommanded hot stop),
+  // but the burners keep the bank hot — heat is decoupled from melting so a full hot
+  // bank still pours and drains (else a cold morning would deadlock into a freeze) ----
+  if(px.melt>=K.MELT_CAP) px.autoidle=true;
+  else if(px.melt < K.MELT_CAP-80) px.autoidle=false;
+  // ---- heat dynamics: burner-driven. Gas flowing + melt furnace up → superheat
+  // climbs whether or not metal is being added; only cold/dead burners decay it ----
+  const gasOK = !melt.broken && gasF>0.01;
+  if(gasOK){ px.heat += 0.015*gasF*(1-px.heat); }
+  else {
+    let dec=0.0035;
+    if(hold.broken) dec=0.006;
+    const lid=hold.ch.find(c=>c.id==='lidseal'); dec += 0.004*(lid?lid.w:0);   // a LEAK that costs heat
+    px.heat-=dec;
+  }
+  px.heat=clamp(px.heat,0,1);
+  // ---- metal input: melt only while gas is up AND the bank has room ----
+  const meltRuns = gasOK && !px.autoidle;
+  let meltIn=0;
+  if(meltRuns){
+    meltIn=Math.min(charger.rate, melt.rate)/60;
+    meltIn=Math.min(meltIn, Math.max(0, K.MELT_CAP-px.melt));
+    if(meltIn<0) meltIn=0;
+    px.melt+=meltIn;
+    px.meltedToday+=meltIn;
+    px.meltEnergy += meltIn*K.MELT_KWH*K.ENERGY_PRICE*(2-gasF)*(px.reheatLock?2:1);
+  }
+  // ---- freeze catastrophe ----
+  if(px.heat<K.FREEZE_HEAT && !px.frozen){
+    px.frozen=true; px.reheatLock=true; px.freezeCount++;
+    px.remeltFee += K.FREEZE_REMELT_FEE;
+    for(const c of melt.ch) if(c.type==='THERM') c.w=clamp(c.w+K.THERM_FREEZE,0,1);
+    for(const c of hold.ch) if(c.type==='THERM') c.w=clamp(c.w+K.THERM_FREEZE,0,1);
+    alert('❄ HEAT BANK FROZEN — pour locked. −$'+K.FREEZE_REMELT_FEE+' remelt + refractory damage; doubled gas until it recovers.','bad');
+  }
+  if(px.frozen && px.heat>=0.5) px.frozen=false;
+  if(px.reheatLock && px.heat>=0.5) px.reheatLock=false;
+  const canPour = px.heat>=K.POUR_MIN && !px.frozen;
+  // ---- serial downstream capacity (after the cells) ----
+  const downCap=Math.min(trim.rate,hto.rate,cnc.rate,xrq.rate);   // units/hr
+  const holdCap=hold.broken?0:hold.rate/60;                        // per-tick feed to both cells
+  // ---- cells draw from the bank, gated by heat / hold / downstream / bank ----
+  let cellCaps=[], totalCellCap=0;
+  for(const cell of cells){ const cap=(cell.broken||!canPour)?0:cell.rate/60; cellCaps.push(cap); totalCellCap+=cap; }
+  let feed=Math.min(totalCellCap, holdCap, px.melt, downCap/60); if(feed<0) feed=0;
+  let poured=0;
+  for(let i=0;i<cells.length;i++){ const f= totalCellCap>0? feed*(cellCaps[i]/totalCellCap):0;
+    cells[i]._pour=f*60; poured+=f; }
+  px.melt-=poured;
+  const P=poured*60;                                               // gross castings/hr
+  // ---- rework spiral: defect fraction d, gate catch rate c ----
+  const calSpec=[['charger','weigh'],['hold','pourcal'],['dca','shotcal'],['dcb','shotcal'],['hto','soakcal'],['cnc','offset']];
+  let cs=0,cn=0; for(const [mi,ci] of calSpec){ const c=MACH[mi].ch.find(x=>x.id===ci); if(c){ cs+=c.w; cn++; } }
+  const meanCal=cn?cs/cn:0;
+  let ts=0,tn=0; for(let i=0;i<cells.length;i++){ if(cellCaps[i]>0){ const c=cells[i].ch.find(x=>x.type==='THERM'); if(c){ ts+=c.w; tn++; } } }
+  const meanDie=tn?ts/tn:0;
+  const d=clamp(0.03+0.45*meanCal+0.20*meanDie, 0, 0.55);
+  const det=xrq.ch.find(c=>c.id==='detcal'); const cc=clamp(1-0.85*(det?det.w:0),0,1);
+  const caughtHr=P*d*cc;
+  const shippedHr=P*(1-d*cc);
+  const reclaim=(caughtHr*0.85)/60;                                // 85% of caught metal returns to the bank…
+  px.melt=Math.min(K.MELT_CAP, px.melt+reclaim);
+  px.reclaimToday+=reclaim;
+  px.meltEnergy += reclaim*K.MELT_KWH*K.ENERGY_PRICE*(2-gasF);      // …and pays gas to melt the SAME pound again
+  px.escapedToday += (P*d*(1-cc))/60;
+  px.dNow=d; px.cNow=cc; px.escNow=P*d*(1-cc);
+  // ---- throughput + bottleneck ----
+  const prevBn=S.bottleneck; S.T=shippedHr;
+  let bn=null, worst=Infinity;
+  if(!canPour){ bn='hold'; }
+  else if(px.melt<1 && meltIn*60 < P-1){
+    for(const id of ['charger','melt']){ const m=MACH[id]; if(m.rate<worst){ worst=m.rate; bn=id; } }
+    if(!bn) bn='melt';
+  } else {
+    for(const id of ['dca','dcb','trim','hto','cnc','xrq']){ const m=MACH[id];
+      const r=(id==='dca'||id==='dcb')?(m._pour||m.rate):m.rate; if(r<worst){ worst=r; bn=id; } }
+  }
+  if(!bn) bn='cnc';
+  S.bottleneck=bn;
+  if(bn!==prevBn) GameEvents.emit('bottleneckChanged',{from:prevBn,to:bn});
+  // ---- per-machine utilization (wear driver) + displayed/animated rate ----
+  for(const id in MACH){ const m=MACH[id];
+    if(m.utility){ m.u=0.8; continue; }
+    if(id==='melt'){ m.rate=meltRuns?meltIn*60:0; m.u=meltRuns?clamp(m.rate/Math.max(1,m.effRate),0.1,1):0; continue; }
+    if(id==='charger'){ m.rate=meltRuns?meltIn*60:0; m.u=meltRuns?clamp(m.rate/Math.max(1,m.effRate),0.1,1):0.1; continue; }
+    if(id==='hold'){ m.rate=canPour?poured*60:0; m.u=canPour?clamp(m.rate/Math.max(1,m.effRate),0.1,1):0.15; continue; }
+    if(id==='dca'||id==='dcb'){ const pr=m._pour||0; m.rate=pr; m.u=clamp(pr/Math.max(1,m.effRate),0,1); continue; }
+    m.rate=P; m.u=clamp(P/Math.max(1,m.effRate),0,1);              // trim/hto/cnc/xrq run at the gross line rate
+  }
+}
+
+/* =============================== SETTLE (Energy / Re-melt / Hold-hot / Warranty) =============================== */
+function FDY_settleHook(ledger){
+  const px=S.px; if(!px) return 0; const K=C;
+  let charge=0; const lines=[];
+  const meltE=Math.round(px.meltEnergy);
+  if(meltE>0){ ledger.energy+=meltE; charge+=px.meltEnergy; lines.push('Energy (melt/gas) −$'+meltE); }
+  const remeltE=Math.round(px.remeltEnergy);
+  if(remeltE>0){ ledger.remelt=remeltE; charge+=px.remeltEnergy; lines.push('Re-melt sows −$'+remeltE); }
+  if(px.remeltFee>0){ ledger.freeze=px.remeltFee; charge+=px.remeltFee; lines.push('Freeze remelt fee −$'+Math.round(px.remeltFee)); }
+  let holdFee=0;
+  if(px.holdHot){ holdFee=K.HOLD_HOT_FEE; charge+=holdFee; ledger.holdhot=holdFee; lines.push('Hold-hot overnight −$'+holdFee); }
+  // Warranty on escaped defects above 2% of the day's production; ≥5% → recall + strike.
+  const prod=Math.max(1, ledger.produced||0), esc=px.escapedToday, allow=0.02*prod;
+  if(esc>allow){ const fine=Math.round(4*(esc-allow)); charge+=fine; ledger.warranty=fine; lines.push('Warranty fines −$'+fine); }
+  if(esc/prod>=0.05){ charge+=K.RECALL_FEE; S.strikes++; ledger.struck=true; ledger.recall=K.RECALL_FEE;
+    lines.push('RECALL + contract strike −$'+K.RECALL_FEE); }
+  // ---- carry heat to tomorrow: HOLD-HOT vs GO COLD ----
+  if(px.holdHot){ px.heat=0.80; }
+  else { const sows=Math.max(0, px.melt-K.HEEL_KEEP); px.pendingSows=sows; px.melt=K.HEEL_KEEP; px.heat=0.20; }
+  px.frozen=false; px.reheatLock=false; px.autoidle=false;
+  px.meltEnergy=0; px.remeltEnergy=0; px.remeltFee=0; px.meltedToday=0; px.escapedToday=0; px.reclaimToday=0;
+  if(lines.length) alert('🧾 Settle: '+lines.join(' · '),'info');
+  return -charge;
+}
+
+/* =============================== UI HOOKS =============================== */
+function FDY_machinePanel(m){
+  const px=S.px; if(!px) return ''; let html='';
+  if(m.id==='melt'||m.id==='hold'||m.id==='dca'||m.id==='dcb'){
+    const meltPct=Math.round(100*px.melt/C.MELT_CAP), heatPct=Math.round(px.heat*100);
+    const hcol=px.frozen?'var(--red)':(px.heat<C.POUR_MIN?'var(--amber)':'var(--green)');
+    const note=px.frozen?'Bank frozen — pour locked until superheat recovers to 50%.'
+      :(px.heat<C.POUR_MIN?'Below pour temperature — cells cannot pour until the bank re-heats.'
+      :(px.holdHot?('Hold-hot is ON tonight (−$'+C.HOLD_HOT_FEE+'): tomorrow opens hot, bank intact.')
+      :('Going cold tonight: metal above the '+C.HEEL_KEEP+'-unit heel freezes to sows and re-melts at '+C.REMELT_MULT+'× energy tomorrow.')));
+    html+='<div class="cond"><h4>Heat Bank'+(px.frozen?' — ❄ FROZEN':'')+'</h4>'+
+      '<div class="chan"><span class="nm">Molten metal banked</span>'+
+      '<span class="bar"><i style="width:'+meltPct+'%;background:var(--blue)"></i></span>'+
+      '<span class="pf">'+Math.round(px.melt)+'</span></div>'+
+      '<div class="chan"><span class="nm">Superheat</span>'+
+      '<span class="bar"><i style="width:'+heatPct+'%;background:'+hcol+'"></i></span>'+
+      '<span class="pf">'+heatPct+'%</span></div>'+
+      '<div class="hidden-note">'+note+'</div></div>';
+  }
+  if(m.id==='xrq'){
+    const dPct=Math.round(px.dNow*100), cPct=Math.round(px.cNow*100), esc=Math.round(px.escNow);
+    const dcol=px.dNow>0.12?'var(--red)':px.dNow>0.06?'var(--amber)':'var(--green)';
+    html+='<div class="cond"><h4>Rework Gate</h4>'+
+      '<div class="chan"><span class="nm">Defect fraction (line)</span>'+
+      '<span class="bar"><i style="width:'+Math.min(100,dPct*3)+'%;background:'+dcol+'"></i></span>'+
+      '<span class="pf">'+dPct+'%</span></div>'+
+      '<div class="chan"><span class="nm">Gate catch rate</span>'+
+      '<span class="bar"><i style="width:'+cPct+'%;background:'+(cPct<80?'var(--red)':'var(--green)')+'"></i></span>'+
+      '<span class="pf">'+cPct+'%</span></div>'+
+      '<div class="hidden-note">Caught castings are re-melted (metal back, gas paid twice, pour capacity spent). Escapes ('+esc+'/hr) ship — warranty fines above 2%, recall + strike at 5%. Protect the detector calibration above all.</div></div>';
+  }
+  return html;
+}
+function FDY_machineActions(m,ctx){
+  const {act,PV}=ctx; const px=S.px; if(!px||m.id!=='hold') return '';
+  const on=px.holdHot;
+  return act(on?'🔥 Hold-hot: ON tonight':'🧊 Hold-hot: OFF (go cold)', on?('$'+C.HOLD_HOT_FEE+'/night'):'free',
+    (on?'Tomorrow opens hot (superheat 80%, bank intact). ':'Metal above the heel freezes to sows and re-melts at '+C.REMELT_MULT+'× tomorrow, with ~70 dead pour minutes. ')+
+    PV(on?'▼ −$'+C.HOLD_HOT_FEE+' tonight · no morning re-melt or ramp':'no fee tonight · paid back as a Re-melt line + dead minutes', on?'warn':'dim'),
+    'actFDYHoldHot', m.id, on?'primary':'');
+}
+window.actFDYHoldHot=function(id){ if(!S||!S.px) return; S.px.holdHot=!S.px.holdHot;
+  if(typeof toast==='function') toast(S.px.holdHot?('🔥 Hold-hot ON tonight (−$'+C.HOLD_HOT_FEE+')'):'🧊 Going cold tonight');
+  if(typeof GameEvents!=='undefined') GameEvents.emit('nursed',{id:'hold',on:S.px.holdHot});   // piggyback autosave
+  if(typeof updateHUD==='function') updateHUD(); if(typeof openSheet==='function') openSheet('hold'); };
+
+const FDY_TUT=[
+  '<b>Walk the gas main.</b> One orange pipe leaves <b>GAS-100</b> and splits three ways to the melt furnace, holding furnace and heat-treat oven. One skid, three glowing symptoms — keep it predictively healthy: it is the bank\'s heartbeat <i>and</i> your $/lb multiplier.',
+  '<b>You opened mid-heat.</b> The holding furnace already holds ~400 units of molten metal at superheat 0.80. That metal is money you already paid to melt — <b>keep it moving</b>. Pour needs superheat ≥ 35%; below 15% the bank <b>freezes</b> (−$500 + refractory damage).',
+  '<b>Downtime is now wear.</b> Every hot machine\'s <b>THERM</b> channel (die block, refractory linings, oven muffle) takes a hit on every stop/start — even the uncommanded auto-idle when a full bank starves the melt furnace. Nurse a sick die to the free overnight ramp instead of panic-stopping it hot.',
+  '<b>Rework melts twice.</b> The X-ray gate rejects a defect; 85% of its metal loops back to the bank and burns gas to melt again while it eats pour capacity. Defect fraction rises with six silent <b>calibration</b> channels and die heat-checking — fit sensors on them; a blind gate ships defects into <b>warranty fines and strikes</b>.',
+  '<b>The settle sheet is the score.</b> Read <b>Energy / Re-melt / Hold-hot / Warranty</b> like a brewery reads quality. From week 3 the $'+FDY_C.HOLD_HOT_FEE+' hold-hot night beats the morning re-melt + ~70 dead pour minutes. Flat $'+FDY_C.PRICE.toFixed(0)+'/casting — revenue is boring by design; the game lives on the cost side.'
+];
+function FDY_help(){
+  return '<h2>Emberline Diecast & Alloy Works</h2>'+
+    '<div class="sub">A margin game on a flat $'+C.PRICE.toFixed(2)+'/casting. Heat is banked inventory with a carrying cost; quality failures spend that same heat again.</div>'+
+    '<ul>'+
+    '<li><b>The Heat Bank.</b> The melt furnace fills S.melt (cap '+C.MELT_CAP+') and superheat; cells pour only while superheat ≥ '+Math.round(C.POUR_MIN*100)+'%. A fouled gas skid cools the bank <i>and</i> melts every pound for more dollars (energy = kWh × price × (2 − gasF)). Below '+Math.round(C.FREEZE_HEAT*100)+'% the bank freezes: $'+C.FREEZE_REMELT_FEE+' remelt, doubled gas, and a refractory hit to both furnaces.</li>'+
+    '<li><b>THERM = downtime is wear.</b> Refractory linings, die blocks and the oven muffle take a wear hit on every running↔stopped transition — including a full bank auto-idling the furnace. Batch hot-side repairs into the cold morning ramp; nurse a sick die to the overnight cycle.</li>'+
+    '<li><b>The Rework Spiral.</b> Defect fraction climbs with six silent calibration channels and die heat-checking. Caught defects re-melt (gas + capacity); escapes ship — $4/unit warranty above 2%, and a $'+C.RECALL_FEE+' recall + strike at 5%. The gate\'s detector cal hides every other cal — protect it first.</li>'+
+    '<li><b>Hold-hot vs go cold.</b> $'+C.HOLD_HOT_FEE+'/night keeps tomorrow hot; going cold freezes the heel into sows that re-melt at '+C.REMELT_MULT+'× with dead pour minutes. From week 3 the ledger teaches which is cheaper.</li>'+
+    '<li><b>Crew &amp; sensors.</b> Hire an apprentice for parallel planned work; fit $'+C.SENSOR_COST+' condition sensors on the calibration channels (their whole danger is invisibility). Upgrade the CNC or a diecast cell for the week-6 quota.</li>'+
+    '</ul>';
+}
+
+/* =============================== 3D: overhead coloured bus runs =============================== */
+if(typeof PLANT_PIPES!=='undefined'){
+  PLANT_PIPES.foundry=function(){
+    const SPEC={ gas:{src:'gasskid', y:6.1, col:0xff7a3a}, hyd:{src:'hpu', y:6.55, col:0x3ad06a}, water:{src:'tower', y:7.0, col:0x38c0d0} };
+    const byId={}; for(const d of FDY_DEFS) byId[d.id]=d;
+    const seg=(mat,ax,ay,az,bx,by,bz)=>{ const dx=bx-ax,dy=by-ay,dz=bz-az; const L=Math.hypot(dx,dy,dz); if(L<0.01) return;
+      const m=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,L,10),mat);
+      m.position.set((ax+bx)/2,(ay+by)/2,(az+bz)/2);
+      m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), new THREE.Vector3(dx,dy,dz).normalize());
+      scene.add(m);
+      const j=new THREE.Mesh(new THREE.SphereGeometry(0.09,8,6),mat); j.position.set(bx,by,bz); scene.add(j); };
+    for(const bus in SPEC){ const sp=SPEC[bus], s=byId[sp.src]; if(!s) continue;
+      const consumers=FDY_DEFS.filter(d=>d.buses&&d.buses.indexOf(bus)>=0); if(!consumers.length) continue;
+      const mat=stdMat(sp.col,0.45,0.5,{emissive:sp.col,emissiveIntensity:0.22});
+      const mz=s.pos[1];
+      const xs=consumers.map(d=>d.pos[0]).concat([s.pos[0]]);
+      seg(mat, s.pos[0],(s.h||2)+0.2,s.pos[1], s.pos[0],sp.y,s.pos[1]);
+      seg(mat, Math.min(...xs),sp.y,mz, Math.max(...xs),sp.y,mz);
+      for(const d of consumers){ const R=M3D[d.id], ty=(R&&R.topY)||2.2;
+        seg(mat, d.pos[0],sp.y,mz, d.pos[0],sp.y,d.pos[1]);
+        seg(mat, d.pos[0],sp.y,d.pos[1], d.pos[0],ty+0.3,d.pos[1]); }
+    }
+  };
+}
+
+/* =============================== REGISTER THE PLANT =============================== */
+PLANTS.foundry = { id:'foundry', name:'Emberline Diecast & Alloy Works',
+  tagline:'12 machines · gas, hydraulic & water buses · a heat bank you must never freeze and a rework spiral that melts metal twice.',
+  premium:true, machines:12, sign:'EMBERLINE ALLOY CO.', unit:'castings',
+  C:FDY_C, DEFS:FDY_DEFS, CHAIN:FDY_CHAIN, HALL:FDY_HALL,
+  solveBuses:FDY_solveBuses, solveFlow:FDY_solveFlow, initFlow:FDY_initFlow,
+  busFactor:FDY_busFactor, settleHook:FDY_settleHook,
+  machinePanel:FDY_machinePanel, machineActions:FDY_machineActions,
+  tut:FDY_TUT, help:FDY_help };
+
+/* =============================== REFERENCE POLICIES =============================== */
+const FDY_ALL=['gasskid','hpu','tower','charger','melt','hold','dca','dcb','trim','hto','cnc','xrq'];
+const FDY_LINE=['charger','melt','hold','dca','dcb','trim','hto','cnc','xrq'];
+window.__policySets.foundry={
+  'run-to-failure': ()=>()=>null,
+  'inspect-only': ()=>(day,tick,S,MACH)=>{ if(tick!==5) return;
+    for(const id of FDY_LINE){ if(!MACH[id].broken && !MACH[id].ch.some(c=>c.reveal!=null)){ actInspect(id); break; } } },
+  'blind-calendar': ()=>{ const rot=[['gasskid','melt'],['hpu','dca'],['tower','dcb'],['charger','hold'],['trim','hto'],['cnc','xrq']];
+    return (day,tick,S,MACH)=>{ if(tick!==5) return; (rot[(day-1)%rot.length]||[]).forEach(id=>{ if(!MACH[id].broken) actRepair(id); }); }; },
+  'predictive+auto+crew': ()=>{ const plan=['gasskid','hpu','tower','melt','hold','cnc','hto','dca','dcb','trim','xrq','charger']; let i=0; const li={};
+    return (day,tick,S,MACH)=>{
+      // nightly hold-hot reflex: buy the hot night once weekly quotas climb (week 3+)
+      if(S.px) S.px.holdHot = (S.week>=3);
+      if(tick!==5) return;
+      if(day===1){ actHire();
+        // sensors first on the invisible channels: the six defect cals + the gate,
+        // plus the gas regenerator (the silent $/lb multiplier), the melt lining and both dies.
+        [['charger','weigh'],['hold','pourcal'],['dca','shotcal'],['dcb','shotcal'],['hto','soakcal'],
+         ['cnc','offset'],['xrq','detcal'],['gasskid','regen'],['melt','lining'],['dca','die'],['dcb','die']]
+          .forEach(a=>actSensor(a[0],a[1]));
+      }
+      // automate the fleet (also cuts wear and re-reveals condition each morning)
+      if(i<plan.length && S.cash>C.AUTOMATE_COST+2500){ const id=plan[i++]; if(MACH[id]&&!MACH[id].automated&&!MACH[id].broken) actAutomate(id); }
+      // targeted fixes on revealed wear > 0.4, staggering the two dies so the pair never feeds d at once
+      const cand=[]; for(const id of FDY_ALL){ const m=MACH[id]; if(m.broken) continue;
+        for(const c of m.ch){ if(c.reveal==null) continue; if(c.reveal>0.4) cand.push([c.reveal,id,c.id,c.type]); } }
+      cand.sort((a,b)=>b[0]-a[0]);
+      const used=new Set(); let n=0, dieDone=false;
+      for(const [w,id,cid,ty] of cand){ if(n>=6) break; if(used.has(id)) continue;
+        if(ty==='THERM' && (id==='dca'||id==='dcb')){ if(dieDone) continue; dieDone=true; }
+        used.add(id); actFix(id,cid); n++; }
+      // inspect a couple of stale, un-sensored, un-automated machines to keep condition fresh
+      let re=0; for(const id of FDY_LINE){ const m=MACH[id];
+        if(m.broken||m.automated||used.has(id)) continue;
+        if(m.ch.some(c=>c.sensor)) continue;
+        if(day-(li[id]||0)>=3 && re<2){ actInspect(id); li[id]=day; re++; } }
+      // late-season capacity on the true bottleneck (usually the CNC or a cell)
+      if(day>=17 && MACH[S.bottleneck] && MACH[S.bottleneck].up<1.5 && S.cash>C.UPGRADE_COST+3000) actUpgrade(S.bottleneck);
+    }; },
+};
 
 /* PREMIUM PLANT — Clearwater Waterworks (g10). Populated by the plant-pack build. */
 

@@ -1053,14 +1053,25 @@ function chanColor(w){ return w<0.4?'#3ad17a':w<0.7?'#ffb23e':'#ff5a5a'; }
 /* ---- shift planner: dense read of the floor, built only from what the player
    can legitimately see (observable rates, REVEALED wear, ambient moisture) ---- */
 function plannerHTML(){
-  const bn=S.bottleneck, bm=MACH[bn];
-  let h='<div class="pl-row"><span class="pl-k">◄ Limit</span><b class="pl-link pl-warn" onclick="openSheet(\''+bn+'\')">'+bm.code+'</b> · '+Math.round(S.T)+'/hr</div>';
+  // the bottleneck id can be stale/plant-agnostic (premium plants set it in their
+  // own solveFlow, and it seeds to a bakery id); fall back to the live min-rate
+  // chain machine so the row is always valid — a bad id here used to throw every
+  // frame and freeze the whole game (the RAF loop never rescheduled).
+  let bn=S.bottleneck;
+  if(!MACH[bn]){ let mn=Infinity; for(const id of CHAIN){ const m=MACH[id]; if(m&&m.rate<mn){mn=m.rate;bn=id;} } }
+  const bm=MACH[bn];
+  let h = bm
+    ? '<div class="pl-row"><span class="pl-k">◄ Limit</span><b class="pl-link pl-warn" onclick="openSheet(\''+bn+'\')">'+bm.code+'</b> · '+Math.round(S.T)+'/hr</div>'
+    : '<div class="pl-row"><span class="pl-k">◄ Limit</span><span class="pl-dim">—</span></div>';
   const est=Math.round(S.produced + S.T*((C.TICKS_PER_DAY-S.tick)/60));
   const eCls=est>=C.CONTRACT_DEMAND?'pl-good':est>=C.CONTRACT_FLOOR?'pl-warn':'pl-bad';
   h+='<div class="pl-row"><span class="pl-k">Est. today</span><b class="'+eCls+'">~'+est+'</b> / '+C.CONTRACT_DEMAND+' <span class="pl-dim">(floor '+C.CONTRACT_FLOOR+')</span></div>';
-  const ids=CHAIN.concat(['compressor']);
+  // the value chain plus this plant's utility/bus machines — derived from the live
+  // MACH set, never a hardcoded id (the bakery has 'compressor'; the brewery keys
+  // its compressor 'aircomp'; the foundry/waterworks have no compressor at all).
+  const ids=CHAIN.concat(Object.keys(MACH).filter(id=>MACH[id].utility && CHAIN.indexOf(id)<0));
   const risks=[], unknown=[];
-  for(const id of ids){ const m=MACH[id]; let mx=0, any=false;
+  for(const id of ids){ const m=MACH[id]; if(!m) continue; let mx=0, any=false;
     for(const c of m.ch){ if(c.reveal!=null){ any=true; if(c.reveal>mx) mx=c.reveal; } }
     if(m.broken) continue;
     if(!any) unknown.push(m.code);
@@ -2887,14 +2898,19 @@ function sync3D(dt,t){
 let acc=0,last=performance.now();
 const TPS={0:0,1:12,2:24,4:48}; // sim minutes per real second by speed
 function frame(now){
-  let dt=(now-last)/1000; last=now; if(dt>0.25)dt=0.25;
-  if(!S.over && S.speed>0){ acc+=dt*TPS[S.speed];
-    let guard=0; while(acc>=1 && guard++<200){ stepTick(); acc-=1; if(S.over)break; } }
-  updateChar(dt); updateCam(dt);
-  sync3D(dt,now/1000);
-  juiceFrame(dt,now/1000);
-  renderTech();
-  if(renderer){ resize3d(); renderer.render(scene,camera); }
+  // the whole frame is guarded so a throw in any per-frame step (sim, HUD render,
+  // shift planner…) can never kill the RAF loop and freeze the game — we log it
+  // and keep animating. requestAnimationFrame is rescheduled unconditionally.
+  try{
+    let dt=(now-last)/1000; last=now; if(dt>0.25)dt=0.25;
+    if(!S.over && S.speed>0){ acc+=dt*TPS[S.speed];
+      let guard=0; while(acc>=1 && guard++<200){ stepTick(); acc-=1; if(S.over)break; } }
+    updateChar(dt); updateCam(dt);
+    sync3D(dt,now/1000);
+    juiceFrame(dt,now/1000);
+    renderTech();
+    if(renderer){ resize3d(); renderer.render(scene,camera); }
+  }catch(e){ if(typeof console!=='undefined') console.error('frame error',e); }
   requestAnimationFrame(frame);
 }
 function setSpeed(s){ if(s>0) S._lastSpd=s; S.speed=s;

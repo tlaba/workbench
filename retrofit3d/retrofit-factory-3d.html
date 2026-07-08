@@ -4523,9 +4523,36 @@ if(typeof PLANT_BUILDERS!=='undefined'){
     const dome=new THREE.Mesh(new THREE.SphereGeometry(r,26,12,0,Math.PI*2,0,Math.PI*0.5),pM());
     dome.position.y=0.4+H; dome.castShadow=true; g.add(dome);
     cyl(0.35,0.35,0.3,darkM,0,0.4+H+0.35,0,g,16);                        // roof ring
-    // bolted charge door (front, +z)
-    const door=cyl(0.5,0.5,0.14,darkM,0,2.1,r*0.96,g,18); door.rotation.x=Math.PI/2;
-    for(let i=0;i<8;i++){ const a=i*Math.PI/4; cyl(0.04,0.04,0.06,chromeM,Math.cos(a)*0.42,2.1+Math.sin(a)*0.42,r*1.02,g,6).rotation.x=Math.PI/2; } // bolts
+    // see-through SIGHT GLASS (front, +z) — sits between binding bands (0.7/1.4/2.1/2.8)
+    // at y=1.75 so no band cuts across it, and protrudes past the shell so the flames
+    // inside are not occluded by the opaque wall.
+    const sy=1.75, sz=r-0.05;
+    // mounting collar — an OPEN-ENDED tube (no caps) that recedes into the wall and
+    // houses the flames; a capped cylinder here would occlude the whole opening.
+    const collar=new THREE.Mesh(new THREE.CylinderGeometry(0.45,0.45,0.34,20,1,true),darkM);
+    collar.rotation.x=Math.PI/2; collar.position.set(0,sy,sz); g.add(collar);
+    const bezel=new THREE.Mesh(new THREE.TorusGeometry(0.44,0.05,8,22),steelM); bezel.position.set(0,sy,sz+0.28); g.add(bezel);
+    // glowing refractory interior (ember-lit, not black — so the whole disc reads hot)
+    const back=new THREE.Mesh(new THREE.CircleGeometry(0.42,24),
+      new THREE.MeshStandardMaterial({color:0x2a0a02, emissive:0xff3a08, emissiveIntensity:0.7}));
+    back.position.set(0,sy,sz+0.05); g.add(back);
+    // burning flames behind the glass — the banked furnace is never cold during a
+    // shift (the Heat Bank must never freeze), so these stay lit rather than track
+    // run-state; kept OUT of R.anim.glows (which darkens to 0.08 when idle). A fuller
+    // cluster (5 tongues, tallest at centre) fills the disc so it clearly reads as fire.
+    const flDef=[[-0.24,0.30,FDX_ORANGE,1.7],[-0.12,0.50,0xffb020,2.2],[0,0.70,0xffd050,2.6],[0.12,0.48,0xffb020,2.2],[0.24,0.32,FDX_ORANGE,1.7]];
+    for(const [fx,fh,em,ei] of flDef){
+      const fl=new THREE.Mesh(new THREE.ConeGeometry(0.10, fh, 12),
+        new THREE.MeshStandardMaterial({color:0x501400, emissive:em, emissiveIntensity:ei}));
+      fl.position.set(fx, sy-0.30+fh*0.5, sz+0.12); g.add(fl); }
+    const fpl=new THREE.PointLight(0xff7a1e,1.4,3.4,2); fpl.position.set(0,sy,sz+0.16); g.add(fpl);
+    // the actual see-through glass cap — nearly clear, faintly smoked amber, NOT a
+    // mirror (metalness 0) so the flames behind read through instead of a grey sheen.
+    const glass=new THREE.Mesh(new THREE.CircleGeometry(0.42,24),
+      new THREE.MeshStandardMaterial({color:0xd8b890, transparent:true, opacity:0.16, roughness:0.22, metalness:0.0,
+        emissive:0xff6a1e, emissiveIntensity:0.25, depthWrite:false, side:THREE.DoubleSide}));
+    glass.position.set(0,sy,sz+0.31); g.add(glass);
+    for(let i=0;i<8;i++){ const a=i*Math.PI/4; cyl(0.035,0.035,0.05,chromeM,Math.cos(a)*0.44, sy+Math.sin(a)*0.44, sz+0.24, g,6).rotation.x=Math.PI/2; } // bezel bolts
     // tap spout low on the side (+x) with GLOWING orifice
     const spout=box(0.7,0.34,0.34,darkM,r*0.9,0.85,0,g); spout.rotation.z=-0.25;
     const glow=FDX_glowDisc(g,0.14,r*1.25,0.72,0,Math.PI/2,FDX_ORANGE,1.5);

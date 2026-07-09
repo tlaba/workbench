@@ -2,8 +2,23 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"/>
 <title>Retrofit Factory 3D — Old Bakery Plant</title>
+<meta name="description" content="A calm industrial-maintenance strategy game — keep an aging plant alive. A fault is data, not code."/>
+<!-- PWA / installable app (also the web layer the Android TWA wraps) -->
+<meta name="theme-color" content="#0e1217"/>
+<link rel="manifest" href="manifest.webmanifest"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Retrofit Factory"/>
+<link rel="apple-touch-icon" href="icons/icon-192.png"/>
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png"/>
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png"/>
+<script>
+if('serviceWorker' in navigator){ addEventListener('load',function(){
+  navigator.serviceWorker.register('sw.js').catch(function(e){ console.warn('SW register failed',e); }); }); }
+</script>
 <style>
 :root{
   --bg:#0e1217; --panel:#161d26; --panel2:#1e2836; --edge:#2b3a4a; --ink:#dfe8f0;

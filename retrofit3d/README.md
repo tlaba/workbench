@@ -13,6 +13,12 @@ load` read through one chokepoint (`effParam()`), not from scripted events.
 https://tlaba.github.io/workbench/retrofit3d/retrofit-factory-3d.html
 (auto-deploys from `main` via GitHub Pages)
 
+**📲 Install it / ship it to Android:** the game is a full **PWA** — a web manifest, app
+icons, and a service worker that caches the whole self-contained HTML for **offline
+play**. "Add to Home screen" on mobile, or wrap it as a Play-Store Android app with a
+**Trusted Web Activity** (no game code rewritten; web updates reach the app
+automatically). Build + publish steps: [`TWA-ANDROID.md`](./TWA-ANDROID.md).
+
 | File | What it is |
 |---|---|
 | [`retrofit-factory-3d.html`](./retrofit-factory-3d.html) | **Playable browser prototype.** Single self-contained HTML — no build, no deps (three.js inlined). A real-time 3D factory hall you walk around as the technician, six animated machines, the full tuned economy running a deterministic seeded simulation. |

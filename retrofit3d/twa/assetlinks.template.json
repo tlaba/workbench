@@ -1,0 +1,13 @@
+[
+  {
+    "_comment": "Digital Asset Links — proves the Android app and the website own each other, which is what lets the TWA run FULL-SCREEN with no browser URL bar. HOST THIS FILE AT THE ORIGIN ROOT: https://tlaba.github.io/.well-known/assetlinks.json  (NOT under /workbench/ — Chrome only checks the origin root). On GitHub Pages that means committing it to your USER-SITE repo `tlaba.github.io` at path `.well-known/assetlinks.json`. Replace the package_name and paste the SHA-256 fingerprint(s) Bubblewrap prints after `bubblewrap build`. If you use Play App Signing, add BOTH your upload-key fingerprint and the Play app-signing-key fingerprint.",
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.github.tlaba.retrofit",
+      "sha256_cert_fingerprints": [
+        "REPLACE_WITH_YOUR_APP_SIGNING_SHA256_FINGERPRINT"
+      ]
+    }
+  }
+]

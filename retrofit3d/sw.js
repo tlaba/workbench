@@ -3,7 +3,7 @@
    app precaches on install and runs fully offline. Strategy: network-first (so a
    new deploy is picked up when online) with a cache fallback (so it works with no
    connection). Bump CACHE on each release to evict the old shell. */
-const CACHE = 'rf3d-v1';
+const CACHE = 'rf3d-v2';
 const SHELL = [
   'retrofit-factory-3d.html',
   'manifest.webmanifest',

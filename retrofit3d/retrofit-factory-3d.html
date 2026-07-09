@@ -4309,16 +4309,21 @@ function dressIronline(){
     reel.position.set(0,1.4,0.15); g.add(reel);
     const h=cyl(0.035,0.035,1.2,stdMat(0x8a2020,0.7,0.1),0,0.65,0.22,g,6); h.rotation.x=0.12;
     scene.add(g); })();
-  // ---- trench floor-drain channel down the wet aisle (breweries hose everything down) ----
-  (function(){ const cz=-2.7, x0=-14, x1=15, wid=0.5;
+  // ---- trench floor-drain channel down the wet aisle (breweries hose everything down).
+  // The run ROUTES AROUND fermenter B's plinth (a gap at its footprint, x≈-3.35..-0.65)
+  // with clean end kerbs, instead of passing under the tank. ----
+  (function(){ const cz=-2.7, x0=-14, x1=15, wid=0.5, gA=-3.35, gB=-0.65;  // [gA,gB] = fermb plinth gap
     const recessM=stdMat(0x0d1013,0.5,0.55);                            // dark recessed channel
     const gratM=stdMat(0x2b333b,0.55,0.55);                            // dark steel grating
     const kerbM=stdMat(0x8d979f,0.6,0.4);                             // stainless kerb frames
-    const rec=box(x1-x0,0.04,wid,recessM,(x0+x1)/2,0.02,cz,scene,true); // sunken recess plane
-    for(const sz of [-wid/2-0.03,wid/2+0.03]) box(x1-x0,0.1,0.05,kerbM,(x0+x1)/2,0.05,cz+sz,scene,true); // kerb rails
-    for(let x=x0+0.4;x<x1;x+=0.42) box(0.06,0.05,wid,gratM,x,0.05,cz,scene,true);   // transverse grating bars
-    // catch-basin sumps with a domed strainer along the run
-    for(const dx of [-9,-1,7,13]){
+    const seg=(a,b)=>{ if(b-a<0.1) return;
+      box(b-a,0.04,wid,recessM,(a+b)/2,0.02,cz,scene,true);            // sunken recess plane
+      for(const sz of [-wid/2-0.03,wid/2+0.03]) box(b-a,0.1,0.05,kerbM,(a+b)/2,0.05,cz+sz,scene,true); }; // kerb rails
+    seg(x0,gA); seg(gB,x1);
+    for(const ex of [gA,gB]) box(0.08,0.1,wid+0.2,kerbM,ex,0.05,cz,scene,true);     // clean end caps where the run meets the tank
+    for(let x=x0+0.4;x<x1;x+=0.42){ if(x>gA&&x<gB) continue; box(0.06,0.05,wid,gratM,x,0.05,cz,scene,true); } // grating bars (skip the gap)
+    // catch-basin sumps with a domed strainer along the run (kept clear of the tank)
+    for(const dx of [-9,-4,7,13]){
       const dr=new THREE.Mesh(new THREE.CircleGeometry(0.4,18),stdMat(0x090b0d,0.35,0.6)); dr.rotation.x=-Math.PI/2; dr.position.set(dx,0.035,cz); scene.add(dr);
       const ring=new THREE.Mesh(new THREE.TorusGeometry(0.4,0.03,6,18),kerbM); ring.rotation.x=Math.PI/2; ring.position.set(dx,0.04,cz); scene.add(ring);
       // wet-floor sheen puddle around each sump (glossy dark decal)
@@ -4326,7 +4331,7 @@ function dressIronline(){
       pud.rotation.x=-Math.PI/2; pud.position.set(dx+MR()*0.4-0.2,0.006,cz+0.5+MR()*0.3); scene.add(pud); }
   })();
   // scattered wet-floor sheen decals through the process aisle
-  for(const [sx,sz,sr] of [[-6,-3.6,0.9],[1,-3.8,1.1],[8,-3.5,0.8],[-2,-1.9,0.7]]){
+  for(const [sx,sz,sr] of [[-6,-3.6,0.9],[1,-3.8,1.1],[8,-3.5,0.8],[-4.8,-1.9,0.7]]){
     const p=new THREE.Mesh(new THREE.CircleGeometry(sr,18),stdMat(0x101620,0.05,0.2,{transparent:true,opacity:0.42}));
     p.rotation.x=-Math.PI/2; p.position.set(sx,0.005,sz); scene.add(p); }
   // office, MCC, workbench, lab sink — same furniture, repositioned for this shell

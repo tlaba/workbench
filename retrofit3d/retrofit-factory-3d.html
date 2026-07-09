@@ -1537,6 +1537,36 @@ window.__gl=!!renderer;
 scene=new THREE.Scene();
 scene.background=new THREE.Color(0x07090d);
 scene.fog=new THREE.Fog(0x0a0d12, 30, 70);
+// ---- image-based lighting: a procedural indoor environment so every metal
+// surface actually reflects the room (stainless/copper read as real metal, not
+// matte plastic). Built once via PMREM; scene.environment feeds all standard
+// materials automatically. Background stays the moody dark — this is reflections
+// + fill only, not a visible skybox. ----
+function _buildEnvMap(){
+  if(!renderer) return null;
+  const cv=document.createElement('canvas'); cv.width=512; cv.height=256;
+  const g=cv.getContext('2d');
+  const grd=g.createLinearGradient(0,0,0,256);
+  grd.addColorStop(0.00,'#20242c');   // high ceiling, dim
+  grd.addColorStop(0.32,'#3b414a');   // upper wall
+  grd.addColorStop(0.54,'#4c545c');   // wall band — brightest diffuse
+  grd.addColorStop(0.74,'#2a2f36');
+  grd.addColorStop(1.00,'#0b0d11');   // floor, dark
+  g.fillStyle=grd; g.fillRect(0,0,512,256);
+  g.fillStyle='#fff4e0';                                   // ceiling light strips -> crisp metal highlights
+  for(const x of [64,186,314,442]) g.fillRect(x,24,54,11);
+  g.fillStyle='rgba(202,226,255,0.85)';                    // cool skylight patches
+  for(const x of [132,360]) g.fillRect(x,8,64,8);
+  g.fillStyle='rgba(255,208,150,0.5)';                     // warm bay-lamp glow
+  for(const x of [36,250,470]) g.fillRect(x,118,44,28);
+  const tex=new THREE.CanvasTexture(cv);
+  tex.mapping=THREE.EquirectangularReflectionMapping;
+  const pmrem=new THREE.PMREMGenerator(renderer);
+  const env=pmrem.fromEquirectangular(tex).texture;
+  pmrem.dispose(); tex.dispose();
+  return env;
+}
+if(renderer){ scene.environment=_buildEnvMap(); }
 camera=new THREE.PerspectiveCamera(52,1,0.1,140);
 let _cw=0,_ch=0;
 function resize3d(){ if(!renderer)return; const w=stage.clientWidth,h=stage.clientHeight;
@@ -2760,6 +2790,13 @@ function buildMachine(d){
     const scr=new THREE.Mesh(new THREE.PlaneGeometry(0.4,0.29),
       new THREE.MeshStandardMaterial({map:screenTex,emissive:0xffffff,emissiveMap:screenTex,emissiveIntensity:0.55,roughness:0.4}));
     scr.position.set(d.hw*0.45,1.12,d.hd+0.02); g.add(scr);
+  }
+  // brewery vessels are stainless — give their paintable bodies a brushed-metal
+  // finish so the IBL reflections read as real steel, not eggshell paint. Scoped
+  // to the brewery (other plants keep their painted look); soil/health tints still
+  // ride on these same materials, so grime & wear shading are unaffected.
+  if(typeof CURPLANT!=='undefined' && CURPLANT==='brewery'){
+    for(const m of paint){ if(m.metalness<0.5) m.metalness=0.5; if(m.roughness>0.4) m.roughness=0.4; m.envMapIntensity=1.25; }
   }
   const com=machineCommon(d,g);
   com.label.position.set(0,R.topY+0.55,0);

@@ -52,11 +52,40 @@ cloud button just says "not configured" and the game stays local-only.
      }));
      ```
 5. **Allowlist the game's URL.** In **Authentication → URL Configuration**, add
-   `https://tlaba.github.io` (and `http://localhost` if you test locally) to the
-   redirect allowlist. The code flow doesn't redirect, but Supabase still checks
-   the site URL.
+   the game's full URL to **Redirect URLs**
+   (`https://tlaba.github.io/workbench/retrofit3d/retrofit-factory-3d.html`, or a
+   wildcard like `https://tlaba.github.io/**`, plus `http://localhost:*` for local
+   tests). Google sign-in redirects back to this URL, so it must be allowlisted.
 
 That's it — the 👤 button will now offer email sign-in, and your run syncs.
+
+## Sign in with Google (recommended, and the right fit for the Android app)
+
+Email codes need SMTP; **Google sign-in doesn't**, and it's what players expect on
+Android. The game auto-shows a **"Continue with Google"** button *only when the
+provider is enabled* (it reads Supabase's `/auth/v1/settings`), so there's nothing
+to toggle in the game — just enable it in Supabase:
+
+1. **Create a Google OAuth client.** In the [Google Cloud console](https://console.cloud.google.com)
+   → **APIs & Services → Credentials → Create credentials → OAuth client ID →
+   Web application**. Configure the consent screen if prompted. Set the
+   **Authorized redirect URI** to your Supabase callback:
+   `https://YOUR-PROJECT.supabase.co/auth/v1/callback`.
+2. **Enable the provider in Supabase.** **Authentication → Sign In / Providers →
+   Google** → paste the **Client ID** and **Client Secret**, toggle it on, save.
+   (You can turn email off here if you want Google-only.)
+3. **Confirm the redirect allowlist** from step 5 above includes the game URL.
+
+Done — the account panel now shows **Continue with Google**. The flow is a normal
+web redirect (Google → Supabase → back to the game with a session), which runs in
+real Chrome, so **it works both in the browser and in the Android TWA** — an
+embedded WebView would be blocked by Google, but a TWA is Chrome, so it's fine. No
+native Google SDK needed.
+
+*How it works:* the game hits `/auth/v1/authorize?provider=google&redirect_to=<the
+game URL>`; Supabase bounces to Google and back with the tokens in the URL hash;
+on load the game reads them, establishes the session (same `rf3d_session` used by
+the email flow), and reconciles your cloud save. No SDK, no extra bundle.
 
 ## How it works (for the curious)
 

@@ -12373,6 +12373,45 @@ async function cloudVerifyCode(email, code){
   }catch(e){ return false; }
 }
 
+/* ---------- auth: Google OAuth (redirect flow) ----------
+   Supabase's /authorize endpoint (implicit flow — no PKCE/SDK) bounces to Google
+   and back with the tokens in the URL hash. This runs in real Chrome, so it works
+   in the browser AND in the Android TWA (unlike an embedded WebView, which Google
+   blocks). Enable the Google provider + allowlist this URL in the Supabase dash —
+   see CLOUD-SAVES.md. We only offer the button when the provider is actually on. */
+let _authCfg=null;
+async function _getAuthCfg(){ if(_authCfg) return _authCfg;
+  try{ const r=await fetch(SB_URL+'/auth/v1/settings',{headers:{apikey:SB_KEY}});
+    _authCfg = r.ok ? await r.json() : {}; }catch(e){ _authCfg={}; }
+  return _authCfg; }
+function _providerEnabled(cfg,name){ return !!(cfg && cfg.external && cfg.external[name]); }
+function cloudOAuthSignIn(provider){
+  if(!CLOUD_ON) return;
+  const redirect = location.origin + location.pathname + location.search;   // come back to this exact page
+  location.href = SB_URL + '/auth/v1/authorize?provider=' + encodeURIComponent(provider||'google')
+    + '&redirect_to=' + encodeURIComponent(redirect);
+}
+async function _fetchUser(access_token){
+  try{ const r=await fetch(SB_URL+'/auth/v1/user',{headers:{apikey:SB_KEY, Authorization:'Bearer '+access_token}});
+    if(!r.ok) return null; const u=await r.json(); return (u&&u.id)?{id:u.id, email:u.email}:null; }catch(e){ return null; }
+}
+// On load: if we returned from an OAuth redirect, capture the session from the hash.
+async function cloudHandleOAuthRedirect(){
+  if(!CLOUD_ON) return false;
+  const h=location.hash||''; if(h.indexOf('access_token=')<0) return false;
+  const p=new URLSearchParams(h.replace(/^#/,''));
+  const at=p.get('access_token'), rt=p.get('refresh_token'); if(!at) return false;
+  try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){ try{location.hash='';}catch(_){}}  // don't leave tokens in the URL/history
+  const user=await _fetchUser(at); if(!user) return false;
+  _saveSess({ access_token:at, refresh_token:rt,
+    expires_at: Math.floor(Date.now()/1000)+parseInt(p.get('expires_in')||'3600',10), user:user });
+  applyAcctBtn();
+  try{ await cloudReconcile(); }catch(e){}
+  if(typeof toast==='function') toast('☁ Signed in as '+(user.email||'your account'));
+  if(typeof $==='function' && $('modal')) closeReview();
+  return true;
+}
+
 /* ---------- cloud saves (one row per user per plant, protected by RLS) ---------- */
 function _cloudPlant(snap){ return (snap&&snap.plant)||(typeof curPlant==='function'?curPlant():'bakery'); }
 async function cloudPull(plant){
@@ -12485,12 +12524,19 @@ function openAccount(){
     $('acct-out').onclick=()=>{ cloudSignOut(); toast('Signed out'); openAccount(); };
     return;
   }
-  // signed-out: request a code
-  acctModal('<div class="sub">Sign in with your email to save progress to the cloud and continue on any device. We\'ll send a one-time code.</div>'
+  // signed-out: Google (if enabled) + email one-time code
+  acctModal('<div class="sub">Sign in to save your run to the cloud and continue on any device.</div>'
+    +'<div id="acct-oauth"></div>'
+    +'<div class="sub">Or get a one-time code by email:</div>'
     +'<input id="acct-email" class="acct-in" type="email" inputmode="email" placeholder="you@example.com" value="'+(_acctEmail||'')+'">'
     +'<button class="btn go" id="acct-send">Send code</button>'
     +'<div id="acct-msg" class="sub"></div>'
     +'<button class="btn" onclick="closeReview()">Cancel</button>');
+  _getAuthCfg().then(cfg=>{ const w=$('acct-oauth'); if(w && _providerEnabled(cfg,'google')){
+    w.innerHTML='<button class="btn go" id="acct-google" style="background:#fff;color:#1f1f1f">'
+      +'<span style="font-weight:700">G</span>&nbsp;&nbsp;Continue with Google</button>'
+      +'<div class="sub" style="text-align:center;color:var(--dim);margin:4px 0">— or —</div>';
+    const gb=$('acct-google'); if(gb) gb.onclick=()=>cloudOAuthSignIn('google'); } });
   $('acct-send').onclick=async()=>{
     const em=($('acct-email').value||'').trim(); if(!/.+@.+\..+/.test(em)){ $('acct-msg').textContent='Enter a valid email.'; return; }
     _acctEmail=em; $('acct-send').textContent='Sending…';
@@ -12542,7 +12588,17 @@ function openRedeem(plant){
     else{ $('rk-go').textContent='Redeem'; $('rk-msg').textContent=res.msg||'Could not redeem.'; }
   };
 }
-(function wireAcct(){ const b=$('acctbtn'); if(b){ b.onclick=openAccount; applyAcctBtn(); } })();
+(function wireAcct(){ const b=$('acctbtn'); if(b){ b.onclick=openAccount; applyAcctBtn(); }
+  if(!CLOUD_ON || HEADLESS) return;
+  const h=location.hash||'';
+  if(h.indexOf('access_token=')>=0){
+    // returned from a successful OAuth redirect — finish sign-in once boot settles
+    setTimeout(()=>{ try{ cloudHandleOAuthRedirect(); }catch(e){} }, 450);
+  } else if(h.indexOf('error=')>=0 && h.indexOf('error_description=')>=0){
+    try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
+    setTimeout(()=>{ if(typeof toast==='function') toast('Sign-in was cancelled'); }, 600);
+  }
+})();
 
 /* =============================================================================
    PREMIUM PLANT — Ironline Brewery & Bottling Works (g8).

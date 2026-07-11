@@ -12324,8 +12324,8 @@ if(typeof queueMicrotask==='function') queueMicrotask(boot); else setTimeout(boo
    localStorage key 'rf3d_sb' to {"url":"...","key":"..."} for dev/testing).
    ============================================================================= */
 
-const _SB_BAKED_URL='';   /* ← your Supabase project URL, e.g. https://abcd.supabase.co */
-const _SB_BAKED_KEY='';   /* ← your Supabase anon (publishable) key */
+const _SB_BAKED_URL='https://pdgymqzkmkuhpmrjshwf.supabase.co';   /* Supabase project URL */
+const _SB_BAKED_KEY='sb_publishable_vMjsWbMMFlD4XUn3l_062g_jsmgeP3P';   /* publishable (anon) key — safe to ship; RLS protects data */
 const _SBO=(()=>{ try{ return JSON.parse(localStorage.getItem('rf3d_sb')||'null'); }catch(e){ return null; } })();
 const SB_URL=(_SB_BAKED_URL||(_SBO&&_SBO.url)||'').replace(/\/+$/,'');
 const SB_KEY=_SB_BAKED_KEY||(_SBO&&_SBO.key)||'';

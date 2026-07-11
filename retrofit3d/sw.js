@@ -3,7 +3,7 @@
    app precaches on install and runs fully offline. Strategy: network-first (so a
    new deploy is picked up when online) with a cache fallback (so it works with no
    connection). Bump CACHE on each release to evict the old shell. */
-const CACHE = 'rf3d-v2';
+const CACHE = 'rf3d-v3';
 const SHELL = [
   'retrofit-factory-3d.html',
   'manifest.webmanifest',
@@ -28,6 +28,11 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET') return;
+  // Only ever handle our OWN origin. Cross-origin calls (the Supabase Auth/REST
+  // API — sign-in, settings, cloud saves) must pass straight through to the
+  // network; intercepting them and falling back to the cached HTML would break
+  // cloud sign-in in the installed PWA/TWA.
+  if (new URL(req.url).origin !== self.location.origin) return;
   e.respondWith(
     fetch(req)
       .then((res) => {

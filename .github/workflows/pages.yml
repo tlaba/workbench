@@ -31,7 +31,16 @@ jobs:
           mkdir _site
           cp troubleshooter/hydraulic-press-troubleshooter.html _site/index.html
           mkdir -p _site/retrofit3d
+          # Full PWA payload — the app HTML plus everything it fetches at runtime.
+          # Copying only the HTML leaves manifest.webmanifest + sw.js 404ing, so the
+          # browser can't install it as an app (WebAPK / Android TWA) and "Add to
+          # Home screen" degrades to a plain shortcut that opens in a browser tab.
+          # icons/ and props/ (GLTF hero assets) must ship too or the game 404s them.
           cp retrofit3d/retrofit-factory-3d.html _site/retrofit3d/
+          cp retrofit3d/manifest.webmanifest     _site/retrofit3d/
+          cp retrofit3d/sw.js                     _site/retrofit3d/
+          cp -r retrofit3d/icons                  _site/retrofit3d/
+          cp -r retrofit3d/props                  _site/retrofit3d/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

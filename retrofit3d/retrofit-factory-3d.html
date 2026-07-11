@@ -27,6 +27,9 @@ if('serviceWorker' in navigator && location.protocol!=='file:'){ addEventListene
   --cyan:#38d6cf; --gold:#e8c15a;
   --mono:'SFMono-Regular',ui-monospace,Consolas,Menlo,monospace;
   --sans:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  /* device safe-area insets (notch / status bar / home indicator); 0 on desktop */
+  --sat:env(safe-area-inset-top,0px); --sar:env(safe-area-inset-right,0px);
+  --sab:env(safe-area-inset-bottom,0px); --sal:env(safe-area-inset-left,0px);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--sans);
@@ -35,7 +38,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 
 /* ---- top HUD ---- */
 #hud{display:flex;align-items:center;gap:2px;background:rgba(16,22,30,.92);border-bottom:1px solid var(--edge);
-  padding:7px 8px;flex-wrap:wrap;z-index:10}
+  padding:calc(7px + var(--sat)) calc(8px + var(--sar)) 7px calc(8px + var(--sal));flex-wrap:wrap;z-index:10}
 .stat{flex:1;min-width:0;text-align:center;padding:1px 2px}
 .stat b{display:block;font-family:var(--mono);font-size:15px;font-weight:700;line-height:1.1}
 .stat span{font-size:8.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.4px}
@@ -65,12 +68,12 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 .alert.info{background:#12233a;border-color:#2c5a8a;color:#bcd8f5}
 .alert.good{background:#12351f;border-color:#2c7a48;color:#bff0cf}
 @keyframes slidein{from{transform:translateY(-8px);opacity:0}}
-#toast{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:var(--panel2);
+#toast{position:absolute;bottom:calc(12px + var(--sab));left:50%;transform:translateX(-50%);background:var(--panel2);
   border:1px solid var(--edge);border-radius:8px;padding:8px 14px;font-size:12px;z-index:8;
   box-shadow:0 6px 20px #0009;opacity:0;transition:opacity .2s;pointer-events:none;max-width:90%;text-align:center}
 
 /* tech status chip */
-#techchip{position:absolute;right:8px;bottom:8px;background:rgba(30,40,54,.92);border:1px solid var(--edge);
+#techchip{position:absolute;right:calc(8px + var(--sar));bottom:calc(8px + var(--sab));background:rgba(30,40,54,.92);border:1px solid var(--edge);
   border-radius:8px;padding:6px 9px;font-size:10px;z-index:6;max-width:56%;line-height:1.35}
 #techchip b{color:var(--cyan)}
 #techbar{height:3px;background:#0a0e13;border-radius:2px;margin-top:4px;overflow:hidden;display:none}
@@ -82,7 +85,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
   padding:5px 8px;font-size:10.5px;font-weight:700;cursor:pointer}
 
 /* virtual joystick */
-#joy{position:absolute;left:14px;bottom:14px;width:116px;height:116px;border-radius:50%;
+#joy{position:absolute;left:calc(14px + var(--sal));bottom:calc(14px + var(--sab));width:116px;height:116px;border-radius:50%;
   background:rgba(22,29,38,.45);border:1px solid rgba(73,106,138,.55);z-index:7;touch-action:none}
 #jnub{position:absolute;left:50%;top:50%;width:48px;height:48px;border-radius:50%;
   background:rgba(73,166,255,.30);border:1px solid rgba(73,166,255,.8);transform:translate(-50%,-50%);pointer-events:none}
@@ -126,7 +129,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 /* ---- bottom action sheet ---- */
 #sheet{position:absolute;left:0;right:0;bottom:0;width:min(100%,560px);margin:0 auto;background:var(--panel);border-top:1px solid var(--edge);
   border-radius:14px 14px 0 0;transform:translateY(102%);transition:transform .22s cubic-bezier(.3,.7,.3,1);
-  z-index:20;max-height:60%;overflow:auto;box-shadow:0 -8px 30px #000a}
+  z-index:20;max-height:60%;overflow:auto;box-shadow:0 -8px 30px #000a;padding-bottom:var(--sab)}
 #sheet.open{transform:translateY(0)}
 .sheet-head{display:flex;align-items:center;gap:8px;padding:12px 14px 6px}
 .sheet-head .mi{width:34px;height:34px;border-radius:8px;flex:0 0 auto}
@@ -230,8 +233,14 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 
 /* ---- plant select (title screen / plant switcher) ---- */
 #plantpick{position:absolute;inset:0;background:linear-gradient(160deg,#0b0f14,#131b26);display:none;
-  flex-direction:column;align-items:center;justify-content:center;z-index:40;padding:22px 16px;overflow-y:auto}
+  flex-direction:column;align-items:center;z-index:40;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:calc(22px + var(--sat)) calc(16px + var(--sar)) calc(22px + var(--sab)) calc(16px + var(--sal))}
 #plantpick.show{display:flex}
+/* single centering wrapper: margin:auto centers the group when it fits, and collapses
+   to 0 when the content is taller than the screen so the top stays reachable by
+   scrolling. (justify-content:center would push the overflowing top above the scroll
+   origin — unreachable, which is the "can't scroll to the top" bug on phones.) */
+.pp-inner{margin:auto 0;display:flex;flex-direction:column;align-items:center;width:100%}
 .pp-title{font-size:22px;font-weight:800;letter-spacing:.3px;margin-bottom:3px;text-align:center}
 .pp-title .b{color:var(--blue)}
 .pp-sub{color:var(--dim);font-size:12.5px;margin-bottom:18px;text-align:center;max-width:520px}
@@ -393,10 +402,12 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
   <div id="sheet"></div>
 
   <div id="plantpick">
-    <div class="pp-title">🏭 <span class="b">Retrofit Factory</span></div>
-    <div class="pp-sub">Choose a plant to run. Each plant keeps its own saved shift.</div>
-    <div class="pp-cards" id="ppcards"></div>
-    <button class="pp-close" id="ppclose" style="display:none">✕ Back to the floor</button>
+    <div class="pp-inner">
+      <div class="pp-title">🏭 <span class="b">Retrofit Factory</span></div>
+      <div class="pp-sub">Choose a plant to run. Each plant keeps its own saved shift.</div>
+      <div class="pp-cards" id="ppcards"></div>
+      <button class="pp-close" id="ppclose" style="display:none">✕ Back to the floor</button>
+    </div>
   </div>
 
   <div id="modal"><div class="card" id="modalcard"></div></div>

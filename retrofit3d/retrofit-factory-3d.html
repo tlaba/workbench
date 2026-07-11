@@ -16,8 +16,9 @@
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png"/>
 <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png"/>
 <script>
-if('serviceWorker' in navigator){ addEventListener('load',function(){
-  navigator.serviceWorker.register('sw.js').catch(function(e){ console.warn('SW register failed',e); }); }); }
+if('serviceWorker' in navigator && location.protocol!=='file:'){ addEventListener('load',function(){
+  fetch('sw.js',{method:'HEAD'}).then(function(r){ if(r.ok) return navigator.serviceWorker.register('sw.js'); })
+    .catch(function(){ /* sw.js not served beside this copy of the page — run without offline support */ }); }); }
 </script>
 <style>
 :root{
@@ -246,6 +247,8 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 .pp-tag{font-size:12px;color:var(--dim);line-height:1.4;margin-bottom:8px}
 .pp-meta{font-size:10.5px;color:var(--dim);font-family:var(--mono);margin-bottom:12px}
 .pp-resume{font-size:11.5px;color:var(--green);margin-bottom:10px;line-height:1.35}
+.pp-foot{grid-column:1/-1;font-size:11.5px;color:var(--dim);line-height:1.5;padding:2px 6px 0;max-width:760px}
+.pp-foot b{color:var(--ink)}
 .pp-actions{margin-top:auto;display:flex;flex-direction:column;gap:8px}
 .pp-btn{width:100%;background:var(--panel2);border:1px solid var(--edge);color:var(--ink);
   border-radius:9px;padding:11px;font-size:13px;font-weight:700;cursor:pointer}
@@ -325,13 +328,13 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
     <div id="vig"></div>
     <div id="glfail">This device could not create a WebGL 3D context.<br/>The simulation still runs, but nothing can be displayed.</div>
     <div id="alerts"></div>
-    <button id="helpbtn">?</button>
-    <button id="planbtn" title="Shift planner">📋</button>
-    <button id="mutebtn" title="Sound on/off">🔊</button>
-    <button id="fxbtn" title="Reduced effects">✦</button>
-    <button id="notifybtn" title="Notify me when the tab is in the background">🔔</button>
-    <button id="acctbtn" title="Sign in to save progress to the cloud">👤</button>
-    <button id="homebtn" title="Choose plant">🏭</button>
+    <button id="helpbtn" title="Help" aria-label="Help">?</button>
+    <button id="planbtn" title="Shift planner" aria-label="Shift planner">📋</button>
+    <button id="mutebtn" title="Sound on/off" aria-label="Sound on or off">🔊</button>
+    <button id="fxbtn" title="Reduced effects" aria-label="Toggle reduced visual effects">✦</button>
+    <button id="notifybtn" title="Notify me when the tab is in the background" aria-label="Background notifications">🔔</button>
+    <button id="acctbtn" title="Sign in to save progress to the cloud" aria-label="Cloud saves account">👤</button>
+    <button id="homebtn" title="Choose plant" aria-label="Choose plant">🏭</button>
     <div id="planner"><div class="pl-head">📋 SHIFT PLANNER<button class="x" id="planx">×</button></div><div class="pl-body"></div></div>
     <div id="techchip">🔧 <b id="techstate">Idle</b><div id="techqueue"></div><div id="techbar"><div id="techfill"></div></div><div id="crewline"></div></div>
     <div id="joy"><div id="jnub"></div></div>
@@ -6838,6 +6841,9 @@ function beginWork(j,m,w){ w=w||tech;
   renderTech();
 }
 function finishJob(j,m,w){ w=w||tech;
+  // capture capacity before the job's effects land so the completion message can
+  // answer "what did this buy me?" (effRate is a pure read — no sim impact)
+  const _capB=Math.round(effRate(m));
   if(j.type==='inspect'){
     for(const c of m.ch){ c.reveal=clamp(c.w+gauss()*C.SIGMA_INSPECT,0,1);
       const H=1-c.w; c.revealHazard=(m.lambda0*Math.exp(C.KAPPA*(1-machHealth(m)))*C.TICKS_PER_DAY); }
@@ -6871,6 +6877,14 @@ function finishJob(j,m,w){ w=w||tech;
   } else if(j.type==='cip'){
     m.soil=0; m.contam=false;
     alert('🧼 '+m.code+' cleaned (CIP) — hygiene reset, contamination cleared.','good'); chirp('good');
+  }
+  // decision-result feedback: show what the work actually recovered, in the one
+  // number the player plans with (machine capacity /hr). Utility machines don't
+  // gate on their own rate, so skip them; alert() is a no-op headless.
+  if(!m.utility && j.type!=='inspect' && j.type!=='cip'){
+    const _capA=Math.round(effRate(m));
+    if(Math.abs(_capA-_capB)>=2)
+      alert('📈 '+m.code+' capacity: '+_capB+' → '+_capA+'/hr','info');
   }
   w.atPrev=j.mid; startNext(w);
   if(S.sel===j.mid) openSheet(j.mid);
@@ -7101,13 +7115,29 @@ function plannerHTML(){
   // frame and freeze the whole game (the RAF loop never rescheduled).
   let bn=S.bottleneck;
   if(!MACH[bn]){ let mn=Infinity; for(const id of CHAIN){ const m=MACH[id]; if(m&&m.rate<mn){mn=m.rate;bn=id;} } }
+  // pre-shift the line hasn't run yet (S.T=0), which used to forecast ~0 and made
+  // the planner useless for planning. Compute a READ-ONLY baseline from current
+  // wear instead: min over the chain of each machine's effective capacity. Pure
+  // reads (effRate/busFactor mutate nothing), so the sim stream is untouched.
+  let T=S.T, baseline=false;
+  if(T<1){ let mn=Infinity, mnId=bn;
+    for(const id of CHAIN){ const m=MACH[id]; if(!m) continue;
+      const r=effRate(m)*busFactor(m)*(m.broken?0:1)*(m.nursed?0.55:1);
+      if(r<mn){ mn=r; mnId=id; } }
+    if(isFinite(mn)){ T=mn; bn=mnId; baseline=true; } }
   const bm=MACH[bn];
   let h = bm
-    ? '<div class="pl-row"><span class="pl-k">◄ Limit</span><b class="pl-link pl-warn" onclick="openSheet(\''+bn+'\')">'+bm.code+'</b> · '+Math.round(S.T)+'/hr</div>'
+    ? '<div class="pl-row"><span class="pl-k">◄ Limit</span><b class="pl-link pl-warn" onclick="openSheet(\''+bn+'\')">'+bm.code+'</b> · '+(baseline?'~':'')+Math.round(T)+'/hr'+(baseline?' <span class="pl-dim">(baseline)</span>':'')+'</div>'
     : '<div class="pl-row"><span class="pl-k">◄ Limit</span><span class="pl-dim">—</span></div>';
-  const est=Math.round(S.produced + S.T*((C.TICKS_PER_DAY-S.tick)/60));
+  // target vs minimum are DIFFERENT numbers with different consequences — label
+  // them separately so "missed target" isn't confused with "strike".
+  h+='<div class="pl-row"><span class="pl-k">🎯 Contract</span>Target <b>'+C.CONTRACT_DEMAND+'</b> · minimum <b>'+C.CONTRACT_FLOOR+'</b> <span class="pl-dim">(below min = strike)</span></div>';
+  const est=Math.round(S.produced + T*((C.TICKS_PER_DAY-S.tick)/60));
   const eCls=est>=C.CONTRACT_DEMAND?'pl-good':est>=C.CONTRACT_FLOOR?'pl-warn':'pl-bad';
-  h+='<div class="pl-row"><span class="pl-k">Est. today</span><b class="'+eCls+'">~'+est+'</b> / '+C.CONTRACT_DEMAND+' <span class="pl-dim">(floor '+C.CONTRACT_FLOOR+')</span></div>';
+  const eNote = est>=C.CONTRACT_DEMAND ? 'on target'
+    : est>=C.CONTRACT_FLOOR ? ('short '+(C.CONTRACT_DEMAND-est)+' — clears minimum, no strike')
+    : ('below minimum — STRIKE risk');
+  h+='<div class="pl-row"><span class="pl-k">Forecast</span><b class="'+eCls+'">~'+est+'</b> / '+C.CONTRACT_DEMAND+' <span class="'+(eCls==='pl-good'?'pl-dim':eCls)+'">'+eNote+'</span></div>';
   // the value chain plus this plant's utility/bus machines — derived from the live
   // MACH set, never a hardcoded id (the bakery has 'compressor'; the brewery keys
   // its compressor 'aircomp'; the foundry/waterworks have no compressor at all).
@@ -7389,10 +7419,27 @@ function showReview(l){
   if(HEADLESS) return;
   const dw=((l.day-1)%C.WEEK_LEN)+1;
   const rev=$('modalcard');
+  // say the quota outcome in one plain sentence — "missed the target" and "took a
+  // strike" are different things, and the report should never leave that ambiguous
+  const outcome = l.shipped>=C.CONTRACT_DEMAND
+    ? '<div class="sub" style="color:var(--green)">✓ Contract target met.</div>'
+    : l.shipped>=C.CONTRACT_FLOOR
+      ? '<div class="sub" style="color:var(--amber)">Target missed by '+(C.CONTRACT_DEMAND-l.shipped)+', but the minimum ('+C.CONTRACT_FLOOR+') was fulfilled — <b>no strike</b>. Wear is still compounding: the quota rises next week.</div>'
+      : '<div class="sub" style="color:var(--red)">⚠ Below the minimum ('+C.CONTRACT_FLOOR+') — <b>STRIKE</b>.</div>';
+  // biggest capacity loss on the floor right now + a nudge (observable numbers only)
+  let hint='';
+  (function(){ let worst=null, wl=0;
+    for(const id of CHAIN){ const m=MACH[id]; if(!m) continue;
+      const cap=m.base*m.up, eff=effRate(m)*(m.broken?0:1);
+      const loss=cap>0?1-eff/cap:0; if(loss>wl){ wl=loss; worst=m; } }
+    if(worst && wl>0.10) hint='<div class="sub">🔍 Biggest capacity loss: <b>'+worst.code+'</b> is running ~'+Math.round(wl*100)+'% under its healthy rate'
+      +(worst.ch.some(c=>c.reveal!=null)?' — a 🔩 targeted fix would recover it.':' — inspect it to see why.')+'</div>'; })();
   rev.innerHTML='<h2>Week '+S.week+' · Day '+dw+' — Shift report</h2>'+
     '<div class="sub">Shipped '+l.shipped+' / '+C.CONTRACT_DEMAND+' '+unit()+(l.produced>l.shipped?(' (+'+(l.produced-l.shipped)+' salvage)'):'')+' · '+l.down.toFixed(1)+'h downtime'+
       (C.HYGIENE?(' · quality <b>'+Math.round((l.quality!=null?l.quality:1)*100)+'%</b> of price'+(l.contam?(' · <span style="color:var(--red)">☣ '+l.contam+' contamination'+(l.contam>1?'s':'')+'</span>'):'')):'')+'</div>'+
+    outcome+
     shiftLedgerRows(l)+
+    hint+
     (S.strikes>0?'<div class="sub" style="color:var(--red)">Strikes: '+S.strikes+'/3 — 3 short-ship days this week cancels the contract.</div>':'')+
     '<button class="btn go" onclick="closeReview()">▶ Plan Day '+(dw+1)+' of Week '+S.week+'</button>';
   $('modal').classList.add('show');
@@ -7490,7 +7537,7 @@ const TUT=[
  '<b>Welcome to the Old Bakery Plant.</b> You are the maintenance technician. Survive <b>'+C.N_WEEKS+' weekly contracts</b> — the quota rises each week, but it is always the same aging plant. <b>Walk</b> with the joystick or <span class="k">WASD</span>, drag to look around, tap the floor to walk there. <b>Time is paused</b> until you press <span class="k">▶</span> — look around first.',
  '<b>The oven is your bottleneck</b> — the amber <b>◄ LIMIT</b> tag floats over it. Throughput = the slowest machine. Walk up to a machine and tap the <span class="k">⚙ Open panel</span> prompt (or press <span class="k">E</span>).',
  '<b>Wear is invisible until you look.</b> <span class="k">🔍 Inspect</span> ($25–60, no downtime) reveals which part is failing — then order a <span class="k">🔩 targeted fix</span> on just that part: cheaper and faster than a full service.',
- '<b>The compressor (front-left) is a trap.</b> Its moisture 💧 silently speeds up seal wear on the Mixer, Slicer AND Packager — one root cause, three symptoms. Visit it early.',
+ '<b>One last lesson from old hands:</b> utility equipment feeds <i>several</i> machines at once — so when different machines start sharing the same symptom, stop treating the symptoms and ask what they share. The 📋 planner collects the clues; inspections confirm them.',
 ];
 // Premium pack gets its own tour (bigger plant, new failure modes). Numbers are
 // literals here because BREW_C isn't defined yet when this module loads.
@@ -12179,7 +12226,24 @@ function applyNotifyBtn(){ const b=$('notifybtn'); if(b) b.classList.toggle('on'
     if(OPTS.notify){ OPTS.notify=false; saveOpts(); applyNotifyBtn(); toast('🔔 Alerts off'); return; }
     if(Notification.permission==='denied'){ toast('🔔 Blocked — enable notifications in your browser settings'); return; }
     if(Notification.permission==='granted'){ OPTS.notify=true; saveOpts(); applyNotifyBtn(); toast('🔔 Alerts on while tabbed away'); return; }
-    // permission not yet decided — ask (must be from this user gesture)
+    // permission not yet decided — explain what this is for BEFORE the browser's
+    // own permission prompt appears (never cold-prompt the user)
+    const rev=$('modalcard');
+    if(rev){
+      if(typeof setSpeed==='function') setSpeed(0);
+      rev.innerHTML='<h2>🔔 Background alerts</h2>'
+        +'<div class="sub">The sim keeps running while the tab is in the background. Turn this on and the game sends an OS notification when a <b>machine breaks down</b> or a <b>day/week completes</b> — so you can tab away and get pinged. Nothing else, ever.</div>'
+        +'<div class="sub">Your browser will ask for permission next.</div>'
+        +'<button class="btn go" id="ntf-go">Enable alerts</button>'
+        +'<button class="btn" onclick="closeReview()">Not now</button>';
+      $('modal').classList.add('show');
+      const go=$('ntf-go'); if(go) go.onclick=()=>{ closeReview();
+        try{ Notification.requestPermission().then(p=>{
+          if(p==='granted'){ OPTS.notify=true; saveOpts(); applyNotifyBtn(); toast('🔔 Alerts on while tabbed away'); }
+          else toast('🔔 Permission needed for alerts'); }); }
+        catch(e){ toast('🔔 Could not enable alerts'); } };
+      return;
+    }
     try{ Notification.requestPermission().then(p=>{
       if(p==='granted'){ OPTS.notify=true; saveOpts(); applyNotifyBtn(); toast('🔔 Alerts on while tabbed away'); }
       else toast('🔔 Permission needed for alerts'); }); }
@@ -12239,8 +12303,9 @@ function renderPlantCards(){
   for(const id in PLANTS){ const p=PLANTS[id];
     const playable=plantPlayable(p), owned=plantOwned(id);
     const dim = !playable || !owned;
-    const badge = p.free ? '<div class="pp-badge free">Free</div>'
-                : '<div class="pp-badge premium">Premium pack</div>';
+    const _preview = (typeof STORE_LIVE!=='undefined' && !STORE_LIVE);
+    const badge = p.free ? '<div class="pp-badge free">Free — start here</div>'
+                : '<div class="pp-badge premium">Premium'+(_preview?' · free preview':' pack')+'</div>';
     const meta = playable ? (p.machines+' machines · '+plantSeason(p)) : 'Coming soon';
     let resume='', actions='';
     if(!playable){
@@ -12265,6 +12330,10 @@ function renderPlantCards(){
       +'<div class="pp-meta">'+meta+'</div>'+resume
       +'<div class="pp-actions">'+actions+'</div></div>';
   }
+  // say what "premium" actually means, so the packs read as a product, not a beta
+  html+='<div class="pp-foot">Premium plants are bigger challenges on the same engine — 12 machines over a 6-week season, '
+    +'three colour-coded utility buses, a hireable apprentice, condition sensors and a signature economy of their own. '
+    +((typeof STORE_LIVE!=='undefined'&&!STORE_LIVE)?'They\'re open as a <b>free preview</b> while the store is being built.':'Unlock with a pack key.')+'</div>';
   box.innerHTML=html;
   box.querySelectorAll('.pp-btn[data-plant]').forEach(b=>b.onclick=()=>{
     if(b.dataset.act==='redeem'){ if(typeof openRedeem==='function') openRedeem(b.dataset.plant); }
@@ -12449,6 +12518,11 @@ function cloudSyncClear(plant){ if(CLOUD_ON&&cloudSignedIn()) cloudDelete(plant)
    dev bypass). When no Supabase is configured the packs stay open as a preview
    (there's no store to gate against); once you wire up a project + sell keys,
    the gate goes live. Owned packs are cached locally so they work offline. */
+// Flip to true when pack keys actually go on sale. Until then premium plants stay
+// open as a free preview even with Supabase configured — the gate arming itself
+// just because cloud saves went live locked players out of a store that doesn't
+// exist yet.
+const STORE_LIVE=false;
 function devUnlocked(){ try{ return !!localStorage.getItem('rf3d_dev_unlock'); }catch(e){ return false; } }
 let _ent=null;
 function _loadEnt(){ if(_ent) return _ent; try{ _ent=new Set(JSON.parse(localStorage.getItem('rf3d_ent')||'[]')); }catch(e){ _ent=new Set(); } return _ent; }
@@ -12458,7 +12532,7 @@ function packUnlocked(plant){
   const p=(typeof PLANTS!=='undefined')?PLANTS[plant]:null;
   if(!p || p.free) return true;      // free plants are always open
   if(devUnlocked()) return true;     // local dev / self-host bypass
-  if(!CLOUD_ON) return true;         // no store wired up → premium preview stays playable
+  if(!CLOUD_ON || !STORE_LIVE) return true;  // no live store → premium preview stays playable
   return hasEntitlement(plant);      // gated: the account must own this pack
 }
 async function cloudFetchEntitlements(){

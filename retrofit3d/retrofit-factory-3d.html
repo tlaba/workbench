@@ -285,7 +285,8 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 .fm-m.util .fm-dot{border-radius:3px}
 .fm-m.warn .fm-dot{background:var(--amber)}
 .fm-m.bad .fm-dot{background:var(--red);animation:fmPulse 1s infinite}
-.fm-m .fm-c{font-family:var(--mono);font-size:9px;color:var(--dim);background:rgba(10,14,20,.78);border-radius:4px;padding:0 3px;white-space:nowrap}
+.fm-m .fm-c{font-family:var(--mono);font-size:9px;color:var(--dim);background:rgba(10,14,20,.78);border-radius:4px;padding:0 3px;white-space:nowrap;max-width:132px;overflow:hidden;text-overflow:ellipsis}
+.fm-n{opacity:.75;font-family:var(--sans)}
 .fm-m.limit .fm-c{color:var(--amber);font-weight:700}
 .fm-m.target .fm-dot{outline:2px dashed var(--cyan);outline-offset:2px}
 .fm-m:hover .fm-c{color:var(--ink)}
@@ -309,6 +310,9 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
   .acts{gap:7px;padding:8px 10px 16px}
   .act{padding:9px 8px}
   .act .t{font-size:12.5px} .act .d{font-size:9.5px}
+  .fm-m{padding:7px}
+  .fm-dot{width:16px;height:16px}
+  .fm-m .fm-c{font-size:10px;max-width:118px}
   #joy{width:126px;height:126px}
   #jnub{width:54px;height:54px}
   #ichip{padding:12px 20px;bottom:152px}
@@ -6772,7 +6776,9 @@ function settleDay(){
   const _SP=PLANTS[CURPLANT];
   if(_SP && _SP.settleHook){ const adj=_SP.settleHook(ledger)||0;
     if(adj){ S.cash+=adj; ledger.net+=adj; } }
-  // reset daily accumulators
+  // reset daily accumulators (prodPrev feeds the planner's "yesterday's pace"
+  // baseline — a derived display value, never read back by the sim)
+  S.prodPrev=Math.round(ledger.produced||S.produced);
   S.produced=0; S.energyToday=0; S.downMinToday=0; S.scrapWipMin=0; tech.minsToday=0; if(tech2) tech2.minsToday=0;
   S.qWeighted=0; S.qBase=0; S.contamToday=0;   // soil + contam flags persist across days (that's the point)
   if(S.strikes>=C.STRIKES_TO_LOSE && S.contractLive){ S.contractLive=false; }
@@ -7148,15 +7154,24 @@ function plannerHTML(){
   // the planner useless for planning. Compute a READ-ONLY baseline from current
   // wear instead: min over the chain of each machine's effective capacity. Pure
   // reads (effRate/busFactor mutate nothing), so the sim stream is untouched.
-  let T=S.T, baseline=false;
-  if(T<1){ let mn=Infinity, mnId=bn;
+  let T=S.T, baseline=false, mode='live';
+  if(T<1){
+    // min-chain capacity: right for straight-pipe plants, an UPPER BOUND for
+    // batch/basin plants (fermentation timing etc. can deliver less)
+    let mn=Infinity, mnId=bn;
     for(const id of CHAIN){ const m=MACH[id]; if(!m) continue;
       const r=effRate(m)*busFactor(m)*(m.broken?0:1)*(m.nursed?0.55:1);
       if(r<mn){ mn=r; mnId=id; } }
-    if(isFinite(mn)){ T=mn; bn=mnId; baseline=true; } }
+    if(isFinite(mn)){ T=mn; bn=mnId; baseline=true; mode='cap'; }
+    // once a day has been played, yesterday's ACTUAL pace beats a theoretical
+    // capacity number — especially on batch plants where capacity overstates
+    if(S.prodPrev>0){ T=S.prodPrev/(C.TICKS_PER_DAY/60); baseline=true; mode='hist'; }
+    const _p=(typeof PLANTS!=='undefined')?PLANTS[CURPLANT]:null;
+    if(mode==='cap' && !(_p&&_p.solveFlow)) mode='base';   // straight-pipe: capacity IS the honest baseline
+  }
   const bm=MACH[bn];
   let h = bm
-    ? '<div class="pl-row"><span class="pl-k">◄ Limit</span><b class="pl-link pl-warn" onclick="openSheet(\''+bn+'\')">'+bm.code+'</b> · '+(baseline?'~':'')+Math.round(T)+'/hr'+(baseline?' <span class="pl-dim">(baseline)</span>':'')+'</div>'
+    ? '<div class="pl-row"><span class="pl-k">◄ Limit</span><b class="pl-link pl-warn" onclick="openSheet(\''+bn+'\')">'+bm.code+'</b> · '+(baseline?'~':'')+Math.round(mode==='hist'?(effRate(bm)*busFactor(bm)):T)+'/hr'+(baseline?' <span class="pl-dim">(baseline)</span>':'')+'</div>'
     : '<div class="pl-row"><span class="pl-k">◄ Limit</span><span class="pl-dim">—</span></div>';
   // target vs minimum are DIFFERENT numbers with different consequences — label
   // them separately so "missed target" isn't confused with "strike".
@@ -7166,7 +7181,15 @@ function plannerHTML(){
   const eNote = est>=C.CONTRACT_DEMAND ? 'on target'
     : est>=C.CONTRACT_FLOOR ? ('short '+(C.CONTRACT_DEMAND-est)+' — clears minimum, no strike')
     : ('below minimum — STRIKE risk');
-  h+='<div class="pl-row"><span class="pl-k">Forecast</span><b class="'+eCls+'">~'+est+'</b> / '+C.CONTRACT_DEMAND+' <span class="'+(eCls==='pl-good'?'pl-dim':eCls)+'">'+eNote+'</span></div>';
+  if(mode==='cap'){
+    // batch plant, nothing played yet: an optimistic bound must SAY it's a bound
+    h+='<div class="pl-row"><span class="pl-k">Forecast</span><b class="pl-warn">up to ~'+est+'</b> / '+C.CONTRACT_DEMAND
+      +' <span class="pl-dim">line capacity — batch timing can deliver less</span></div>';
+  } else {
+    h+='<div class="pl-row"><span class="pl-k">Forecast</span><b class="'+eCls+'">~'+est+'</b> / '+C.CONTRACT_DEMAND
+      +' <span class="'+(eCls==='pl-good'?'pl-dim':eCls)+'">'+eNote+'</span>'
+      +(mode==='hist'?' <span class="pl-dim">(yesterday\'s pace)</span>':'')+'</div>';
+  }
   // the value chain plus this plant's utility/bus machines — derived from the live
   // MACH set, never a hardcoded id (the bakery has 'compressor'; the brewery keys
   // its compressor 'aircomp'; the foundry/waterworks have no compressor at all).
@@ -7211,7 +7234,7 @@ function fmapRender(){
     if(tech.busy && tech.job && tech.job.mid===id) cls+=' target';
     h+='<button class="'+cls+'" data-m="'+id+'" aria-label="Walk to '+m.code+'"'
       +' style="left:'+((m.pos[0]+W/2)/W*100).toFixed(2)+'%;top:'+((m.pos[1]+D/2)/D*100).toFixed(2)+'%">'
-      +'<div class="fm-dot"></div><div class="fm-c">'+(id===S.bottleneck?'◄ ':'')+m.code+'</div></button>';
+      +'<div class="fm-dot"></div><div class="fm-c">'+(id===S.bottleneck?'◄ ':'')+m.code+(m.name?'<span class="fm-n"> — '+m.name+'</span>':'')+'</div></button>';
   }
   // rebuild the machine nodes only when their state actually changed (rebuilding
   // every tick would replace elements mid-tap); the tech dot moves every refresh
@@ -7510,8 +7533,15 @@ function showReview(l){
     for(const id of CHAIN){ const m=MACH[id]; if(!m) continue;
       const cap=m.base*m.up, eff=effRate(m)*(m.broken?0:1);
       const loss=cap>0?1-eff/cap:0; if(loss>wl){ wl=loss; worst=m; } }
-    if(worst && wl>0.10) hint='<div class="sub">🔍 Biggest capacity loss: <b>'+worst.code+'</b> is running ~'+Math.round(wl*100)+'% under its healthy rate'
-      +(worst.ch.some(c=>c.reveal!=null)?' — a 🔩 targeted fix would recover it.':' — inspect it to see why.')+'</div>'; })();
+    if(!worst || wl<=0.10) return;
+    // name the cause when the player has earned that knowledge (revealed wear);
+    // otherwise recommend the investigation, never the hidden answer
+    let wc=null, ww=0; for(const c of worst.ch){ if(c.reveal!=null && c.reveal>ww){ ww=c.reveal; wc=c; } }
+    const cause = worst.broken ? 'it is <b>DOWN</b> — get the repair moving'
+      : (wc && ww>0.45) ? 'worn <b>'+wc.nm+'</b> (~'+Math.round(ww*100)+'%) is the likely cause — a 🔩 targeted fix would recover it'
+      : worst.ch.some(c=>c.reveal!=null) ? 'the last inspection doesn\'t explain it — re-inspect, wear has moved since'
+      : 'inspect it tomorrow to see why';
+    hint='<div class="sub">🔍 Biggest capacity loss: <b>'+worst.code+'</b> ('+worst.name+') is ~'+Math.round(wl*100)+'% under its healthy rate — '+cause+'.</div>'; })();
   rev.innerHTML='<h2>Week '+S.week+' · Day '+dw+' — Shift report</h2>'+
     '<div class="sub">Shipped '+l.shipped+' / '+C.CONTRACT_DEMAND+' '+unit()+(l.produced>l.shipped?(' (+'+(l.produced-l.shipped)+' salvage)'):'')+' · '+l.down.toFixed(1)+'h downtime'+
       (C.HYGIENE?(' · quality <b>'+Math.round((l.quality!=null?l.quality:1)*100)+'%</b> of price'+(l.contam?(' · <span style="color:var(--red)">☣ '+l.contam+' contamination'+(l.contam>1?'s':'')+'</span>'):'')):'')+'</div>'+
@@ -7546,7 +7576,11 @@ function showWeek(l, prevWeek){
   notify('📈 Week '+prevWeek+' cleared — contract renewed', 'Week '+wk+' wants '+terms.demand+'/day. Back to the plant.', 'week');
 }
 function row(label,val,pos){ return '<tr><td>'+label+'</td><td class="'+(val>=0?'pos':'neg')+'">'+money(val)+'</td></tr>'; }
-function closeReview(){ $('modal').classList.remove('show'); updateHUD(); }
+function closeReview(){ $('modal').classList.remove('show'); updateHUD();
+  // a fresh, still-paused morning behind this modal: show the pre-shift banner so
+  // "paused" never reads as "stalled" (it used to appear on day 1 only)
+  if(S && !S.over && S.tick===0 && S.speed===0 && typeof enterPreshift==='function') enterPreshift();
+}
 function endGame(l,lose){
   S.over=true; setSpeed(0);
   if(!lose) S.won=S.cash>=C.WIN_CASH;
@@ -11778,7 +11812,7 @@ function setSpeed(s){ if(s>0) S._lastSpd=s; S.speed=s;
 function enterPreshift(){ if(HEADLESS) return;
   setSpeed(0);
   const txt=$('preshifttext'); if(txt) txt.innerHTML='🕕 <b>Pre-shift</b> — time is paused. Walk the floor, open panels, check the 📋 planner.';
-  const btn=$('startshift'); if(btn) btn.textContent='▶ Start Day 1';
+  const btn=$('startshift'); if(btn) btn.textContent='▶ Start Day '+((S&&S.day)||1);
   const ps=$('preshift'); if(ps) ps.style.display='flex'; }
 $('startshift').onclick=()=>{ initAudio(); setSpeed(S._lastSpd||1); };
 document.querySelectorAll('.spd').forEach(b=>b.onclick=()=>{ initAudio();
@@ -12212,7 +12246,7 @@ function serializeState(){
   const s={};
   for(const k of ['cash','day','week','tick','strikes','contractLive','over','won','seed','stats',
     'produced','energyToday','downMinToday','scrapWipMin','qWeighted','qBase','contamToday','dayQuality',
-    'buffer','px','airP','moisture','airFactor','T','bottleneck','tutStep']) s[k]=S[k];   // px = plant-extras bag (heat, basin…)
+    'buffer','px','airP','moisture','airFactor','T','bottleneck','tutStep','prodPrev']) s[k]=S[k];   // px = plant-extras bag (heat, basin…)
   const t={busy:tech.busy, phase:tech.phase, timer:tech.timer, total:tech.total,
     minsToday:tech.minsToday, atPrev:tech.atPrev, job:tech.job, queue:tech.queue};
   const ch=(typeof CH!=='undefined'&&CH)?{x:CH.p.x, z:CH.p.z, yaw:CH.yaw}:null;
@@ -12433,6 +12467,11 @@ function startPlant(id, mode){
   if(HEADLESS) return;
   if(!plantOwned(id)){ enterPlantPick(false); if(typeof openRedeem==='function') openRedeem(id); return; }
   $('plantpick').classList.remove('show');
+  // switching plants: drop cached panel content + close the map so nothing from
+  // the previous plant can flash before the first refresh
+  (function(){ const pl=$('planner'); if(pl) pl._h=null;
+    const ff=$('fmfloor'); if(ff) ff._h=null;
+    if(typeof fmapClose==='function') fmapClose(); })();
   if(mode==='continue'){
     const sv=readSave(id);
     if(sv && applySave(sv)){ enterResume(); return; }

@@ -96,9 +96,9 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
   border:1px solid var(--edge);color:var(--dim);border-radius:50%;width:30px;height:30px;font-weight:700}
 #planbtn{position:absolute;right:10px;top:46px;z-index:6;background:rgba(30,40,54,.85);
   border:1px solid var(--edge);color:var(--ink);border-radius:8px;width:30px;height:30px;font-size:14px}
-#mutebtn,#fxbtn,#notifybtn,#acctbtn,#homebtn{position:absolute;right:10px;z-index:6;background:rgba(30,40,54,.85);
+#mutebtn,#fxbtn,#notifybtn,#acctbtn,#homebtn,#mapbtn{position:absolute;right:10px;z-index:6;background:rgba(30,40,54,.85);
   border:1px solid var(--edge);color:var(--dim);border-radius:8px;width:30px;height:30px;font-size:13px}
-#mutebtn{top:82px} #fxbtn{top:118px} #notifybtn{top:154px} #acctbtn{top:190px} #homebtn{top:226px}
+#mutebtn{top:82px} #fxbtn{top:118px} #notifybtn{top:154px} #acctbtn{top:190px} #homebtn{top:226px} #mapbtn{top:262px}
 #mutebtn.off{color:var(--red);border-color:#7a2c2c}
 #fxbtn.on{color:var(--amber);border-color:#7a5a2c}
 #notifybtn.on{color:var(--blue);border-color:#2c5a7a}
@@ -268,13 +268,40 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 @keyframes startpulse{0%,100%{box-shadow:0 0 0 0 rgba(58,209,122,.5)}60%{box-shadow:0 0 0 9px rgba(58,209,122,0)}}
 
 /* ---- touch layout: phones & coarse pointers ---- */
+
+/* ---- factory map: click-to-travel schematic ---- */
+#fmap{position:absolute;inset:0;margin:auto;height:fit-content;z-index:9;display:none;
+  background:rgba(14,21,30,.97);border:1px solid var(--edge);border-radius:12px;padding:10px 12px 10px;
+  box-shadow:0 10px 34px #000c;width:min(92vw,640px)}
+#fmap.open{display:block}
+.fm-head{display:flex;align-items:center;font-size:10px;color:var(--dim);letter-spacing:.6px;font-weight:700;padding:0 1px 7px}
+.fm-head .x{margin-left:auto;background:none;border:none;color:var(--dim);font-size:16px;cursor:pointer}
+#fmfloor{position:relative;background:#10161d;border:1px solid #26313d;border-radius:8px;width:100%;overflow:hidden}
+#fmfloor::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,rgba(73,106,138,.07) 1px,transparent 1px) 0 0/24px 24px,
+             linear-gradient(rgba(73,106,138,.07) 1px,transparent 1px) 0 0/24px 24px}
+.fm-m{position:absolute;transform:translate(-50%,-50%);text-align:center;cursor:pointer;z-index:2;border:none;background:none;padding:2px}
+.fm-dot{width:12px;height:12px;border-radius:50%;margin:0 auto 2px;background:var(--green);border:2px solid #16202b;box-shadow:0 0 0 1px #000a}
+.fm-m.util .fm-dot{border-radius:3px}
+.fm-m.warn .fm-dot{background:var(--amber)}
+.fm-m.bad .fm-dot{background:var(--red);animation:fmPulse 1s infinite}
+.fm-m .fm-c{font-family:var(--mono);font-size:9px;color:var(--dim);background:rgba(10,14,20,.78);border-radius:4px;padding:0 3px;white-space:nowrap}
+.fm-m.limit .fm-c{color:var(--amber);font-weight:700}
+.fm-m.target .fm-dot{outline:2px dashed var(--cyan);outline-offset:2px}
+.fm-m:hover .fm-c{color:var(--ink)}
+.fm-tech{position:absolute;transform:translate(-50%,-50%);width:11px;height:11px;border-radius:50%;
+  background:var(--cyan);border:2px solid #fff;z-index:3;box-shadow:0 0 9px var(--cyan);pointer-events:none}
+.fm-leg{font-size:9.5px;color:var(--dim);margin-top:7px;line-height:1.6}
+.fm-leg i{font-style:normal}
+@keyframes fmPulse{50%{box-shadow:0 0 0 6px rgba(255,90,90,.25)}}
+
 @media (max-width:520px), (pointer:coarse){
   .spd{width:44px;height:38px;font-size:13px;border-radius:8px}
   #daybar{gap:5px;padding:5px 6px}
   #clock{min-width:62px;font-size:10.5px}
   .stat b{font-size:13.5px} .stat span{font-size:8px}
-  #helpbtn,#planbtn,#mutebtn,#fxbtn,#notifybtn,#acctbtn{width:40px;height:40px;font-size:15px}
-  #planbtn{top:56px} #mutebtn{top:102px} #fxbtn{top:148px} #notifybtn{top:194px} #acctbtn{top:240px}
+  #helpbtn,#planbtn,#mutebtn,#fxbtn,#notifybtn,#acctbtn,#homebtn,#mapbtn{width:40px;height:40px;font-size:15px}
+  #planbtn{top:56px} #mutebtn{top:102px} #fxbtn{top:148px} #notifybtn{top:194px} #acctbtn{top:240px} #homebtn{top:286px} #mapbtn{top:332px}
   #planner{right:54px;top:56px}
   .sheet-close{font-size:26px;padding:6px 12px;margin:-6px -6px 0 0}
   .fixbtn{padding:7px 10px;font-size:10.5px}
@@ -335,6 +362,8 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
     <button id="notifybtn" title="Notify me when the tab is in the background" aria-label="Background notifications">🔔</button>
     <button id="acctbtn" title="Sign in to save progress to the cloud" aria-label="Cloud saves account">👤</button>
     <button id="homebtn" title="Choose plant" aria-label="Choose plant">🏭</button>
+    <button id="mapbtn" title="Factory map (M)" aria-label="Factory map">🗺</button>
+    <div id="fmap" role="dialog" aria-label="Factory map"><div class="fm-head">🗺 FACTORY MAP — tap a machine to walk there<button class="x" id="fmapx" aria-label="Close map">×</button></div><div id="fmfloor"></div><div class="fm-leg">🟢 healthy · 🟡 known risk · 🔴 down (pulsing) · ◄ amber code = bottleneck · ⬛ square = utility · dashed = current job · <i style="color:var(--cyan)">●</i> you &nbsp;·&nbsp; keyboard <b>M</b></div></div>
     <div id="planner"><div class="pl-head">📋 SHIFT PLANNER<button class="x" id="planx">×</button></div><div class="pl-body"></div></div>
     <div id="techchip">🔧 <b id="techstate">Idle</b><div id="techqueue"></div><div id="techbar"><div id="techfill"></div></div><div id="crewline"></div></div>
     <div id="joy"><div id="jnub"></div></div>
@@ -7164,6 +7193,55 @@ function plannerHTML(){
 }
 $('planbtn').onclick=()=>{ $('planner').classList.toggle('open'); };
 $('planx').onclick=()=>{ $('planner').classList.remove('open'); };
+
+/* ---- factory map: an overhead click-to-travel schematic. Machines are placed
+   from their live MACH positions (any plant, any hall size); status mirrors the
+   floor (broken = red pulse, revealed risk = amber, bottleneck = ◄); clicking a
+   machine walks the technician there and opens its panel on arrival (walkTo
+   handles the hands-full case). Refreshes ~1.4x/s only while open. ---- */
+function fmapRender(){
+  const fl=$('fmfloor'); if(!fl || typeof MACH==='undefined' || !MACH || typeof HALL==='undefined') return;
+  const W=HALL.w, D=HALL.d; fl.style.aspectRatio=W+' / '+D;
+  let h='';
+  for(const id in MACH){ const m=MACH[id];
+    let mx=0; for(const c of m.ch){ if(c.reveal!=null && c.reveal>mx) mx=c.reveal; }
+    let cls='fm-m'+(m.utility?' util':'');
+    if(m.broken) cls+=' bad'; else if(mx>0.45) cls+=' warn';
+    if(id===S.bottleneck) cls+=' limit';
+    if(tech.busy && tech.job && tech.job.mid===id) cls+=' target';
+    h+='<button class="'+cls+'" data-m="'+id+'" aria-label="Walk to '+m.code+'"'
+      +' style="left:'+((m.pos[0]+W/2)/W*100).toFixed(2)+'%;top:'+((m.pos[1]+D/2)/D*100).toFixed(2)+'%">'
+      +'<div class="fm-dot"></div><div class="fm-c">'+(id===S.bottleneck?'◄ ':'')+m.code+'</div></button>';
+  }
+  // rebuild the machine nodes only when their state actually changed (rebuilding
+  // every tick would replace elements mid-tap); the tech dot moves every refresh
+  if(fl._h!==h){ fl._h=h; fl.innerHTML=h+'<div class="fm-tech" style="display:none"></div>';
+    fl.querySelectorAll('.fm-m').forEach(el=>{ el.onclick=()=>{ fmapClose();
+      if(typeof walkTo==='function') walkTo(el.dataset.m, true); }; }); }
+  const td=fl.querySelector('.fm-tech');
+  if(td && typeof CH!=='undefined' && CH && CH.p){ td.style.display='block';
+    td.style.left=((CH.p.x+W/2)/W*100).toFixed(2)+'%'; td.style.top=((CH.p.z+D/2)/D*100).toFixed(2)+'%'; }
+}
+let _fmapIv=null;
+function fmapOpen(){ if(HEADLESS) return; const f=$('fmap'); if(!f) return;
+  fmapRender(); f.classList.add('open');
+  if(_fmapIv) clearInterval(_fmapIv);
+  _fmapIv=setInterval(()=>{ const ff=$('fmap');
+    if(ff && ff.classList.contains('open')) fmapRender(); else fmapClose(); }, 700);
+}
+function fmapClose(){ const f=$('fmap'); if(f) f.classList.remove('open');
+  if(_fmapIv){ clearInterval(_fmapIv); _fmapIv=null; } }
+function fmapToggle(){ const f=$('fmap');
+  if(f && f.classList.contains('open')) fmapClose(); else fmapOpen(); }
+(function wireFmap(){
+  const b=$('mapbtn'); if(b) b.onclick=fmapToggle;
+  const x=$('fmapx'); if(x) x.onclick=fmapClose;
+  window.addEventListener('keydown',e=>{
+    if(e.code!=='KeyM' || e.repeat) return;
+    const t=e.target; if(t && (t.tagName==='INPUT'||t.tagName==='TEXTAREA')) return;
+    fmapToggle();
+  });
+})();
 function openSheet(id){
   if(HEADLESS) return;
   S.sel=id; const m=MACH[id]; const sh=$('sheet');
@@ -7600,6 +7678,7 @@ $('helpbtn').onclick=()=>{ setSpeed(0); const rev=$('modalcard');
    '<b>Goal:</b> survive <span class="k">'+C.N_WEEKS+' weekly contracts</span> ('+C.WEEK_LEN+' days each) and finish with <b>'+money(C.WIN_CASH)+'</b> cash. Each week the daily quota climbs — but you keep the same plant, so its wear carries forward. Three short-ship days <i>in a week</i> cancels that contract.'+
    '<ul>'+
    '<li><b>You are the technician.</b> Walk: joystick / <span class="k">WASD</span> / tap the floor. Look: drag. Zoom: pinch or scroll. Interact: walk up to a machine and tap <span class="k">⚙ Open panel</span> (or <span class="k">E</span>).</li>'+
+   '<li><b>🗺 Factory map</b> (<span class="k">M</span> or the 🗺 button): the whole floor at a glance — green healthy, amber known risk, red down, ◄ the bottleneck. Tap any machine to walk there and open its panel.</li>'+
    '<li><b>Wear is hidden.</b> <span class="k">Inspect</span> to reveal per-part condition (no downtime).</li>'+
    '<li><b>Repair</b> takes a machine down now to avoid a costly breakdown later. A breakdown bills <b>2.5× parts + double labor + $400 damage</b> (a stocked spare skips the parts premium and the 3h wait).</li>'+
    '<li><b>🔩 Targeted fix:</b> once a part\'s wear is revealed, fix just that part — $'+C.LABOR_FIX+' labor + the part, ~40% of the downtime. Automated machines re-reveal condition every morning.</li>'+

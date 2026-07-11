@@ -12518,6 +12518,7 @@ function openAccount(){
   if(cloudSignedIn()){
     acctModal('<div class="sub">Signed in as <b>'+cloudEmail()+'</b>. Your run syncs to the cloud and follows you across devices.</div>'
       +'<button class="btn go" id="acct-sync">☁ Sync now</button>'
+      +'<button class="btn" onclick="closeReview()">Done</button>'
       +'<button class="btn" id="acct-out">Sign out</button>');
     $('acct-sync').onclick=async()=>{ $('acct-sync').textContent='Syncing…'; const ok=await cloudPush(serializeState());
       $('acct-sync').textContent = ok?'✓ Synced':'Sync failed — retry'; };

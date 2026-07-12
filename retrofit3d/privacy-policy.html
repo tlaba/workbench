@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — Retrofit Factory 3D</title>
+<style>
+  :root{--bg:#ffffff;--ink:#1d2630;--dim:#5b6875;--edge:#e3e8ee;--accent:#1668c4;--card:#f5f7fa}
+  @media (prefers-color-scheme: dark){
+    :root{--bg:#0e1217;--ink:#dfe8f0;--dim:#8598ac;--edge:#2b3a4a;--accent:#49a6ff;--card:#161d26}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;line-height:1.65;font-size:16.5px}
+  main{max-width:720px;margin:0 auto;padding:40px 22px 80px}
+  h1{font-size:1.8rem;line-height:1.2;margin:0 0 4px}
+  .date{color:var(--dim);font-size:.92rem;margin:0 0 26px}
+  h2{font-size:1.15rem;margin:34px 0 10px}
+  p,li{color:var(--ink)}
+  ul{padding-left:22px}
+  .tldr{background:var(--card);border:1px solid var(--edge);border-radius:12px;padding:16px 18px;margin:0 0 8px}
+  .tldr b{color:var(--accent)}
+  a{color:var(--accent)}
+  code{background:var(--card);border:1px solid var(--edge);border-radius:5px;padding:1px 6px;font-size:.9em}
+</style>
+</head>
+<body>
+<main>
+  <h1>Privacy Policy — Retrofit Factory 3D</h1>
+  <p class="date">Effective date: July 12, 2026</p>
+
+  <div class="tldr"><b>Short version:</b> the game works fully offline, your progress lives on
+  your device, and the only personal data we ever store is your email address — and only if you
+  choose to turn on cloud saves. No ads, no analytics, no tracking, ever.</div>
+
+  <h2>What this policy covers</h2>
+  <p>This policy covers the Retrofit Factory 3D Android app and the web version it wraps
+  (hosted at <code>tlaba.github.io/workbench/retrofit3d/</code>). Retrofit Factory 3D is made by an
+  independent developer ("Retrofit 3D").</p>
+
+  <h2>Data we store on your device</h2>
+  <p>Your game progress is saved on your device, in the browser's local storage. It stays there.
+  It is not sent anywhere unless you turn on cloud saves. If you uninstall the app or clear its
+  data, this local save is deleted.</p>
+
+  <h2>Optional cloud saves</h2>
+  <p>Cloud saves are off by default. The game is fully playable without them.</p>
+  <p>If you choose to sign in — with a one-time email code or with Google sign-in — we store the
+  following on Supabase, a hosted database provider:</p>
+  <ul>
+    <li>Your email address</li>
+    <li>A user ID</li>
+    <li>Your game-save data</li>
+    <li>If you redeem a pack key: which content packs your account owns</li>
+  </ul>
+  <p><b>Why:</b> so your progress can follow you across devices and survive a reinstall.
+  That is the only reason.</p>
+  <p><b>How it's protected:</b> data travels over HTTPS. The database uses row-level security,
+  which means only the signed-in player can access their own rows.</p>
+
+  <h2>What we do NOT collect</h2>
+  <ul>
+    <li>No ads</li>
+    <li>No analytics</li>
+    <li>No tracking SDKs</li>
+    <li>No location, contacts, photos, or device identifiers</li>
+    <li>No selling or sharing of your data</li>
+    <li>No use of your data for advertising</li>
+  </ul>
+  <p>If you never sign in, we hold no account data about you at all.</p>
+
+  <h2>Notifications</h2>
+  <p>The game can show optional notifications, like "machine breakdown" or "day complete."
+  These are generated locally on your device. There is no push server, and nothing is sent off
+  your device to make them work. You can turn them off in your device's notification settings.</p>
+
+  <h2>Children</h2>
+  <p>Retrofit Factory 3D is not directed at children under 13. If you believe a child under 13
+  has created a cloud-save account, email us and we will delete it.</p>
+
+  <h2>Data deletion and your choices</h2>
+  <ul>
+    <li><b>Local data:</b> clear the app's data or uninstall the app. Your on-device save is gone.</li>
+    <li><b>Cloud data:</b> email us at <a href="mailto:legops@gmail.com">legops@gmail.com</a> and ask
+      us to delete your account. We will delete your account and all associated data (email address,
+      user ID, game saves, pack entitlements) within 30 days. Details:
+      <a href="account-deletion.html">account deletion</a>.</li>
+    <li>You can also simply stop using cloud saves at any time and keep playing offline.</li>
+  </ul>
+
+  <h2>Third-party infrastructure</h2>
+  <p>We use three outside services, only for the purposes described here:</p>
+  <ul>
+    <li><b>GitHub Pages</b> hosts the game's files. Like any web host, it may transiently process
+      standard hosting logs, which can include IP addresses.</li>
+    <li><b>Supabase</b> stores cloud-save data (only if you sign in). As an infrastructure
+      provider, it may also transiently process standard hosting logs, including IP addresses.</li>
+    <li><b>Google sign-in</b> is one of the two optional ways to sign in. Google handles the
+      sign-in step under its own privacy policy; we receive your email address from it.</li>
+  </ul>
+  <p>We do not receive or keep these hosting logs ourselves, and we do not use any of these
+  services to track you.</p>
+
+  <h2>Changes to this policy</h2>
+  <p>If we change this policy, we will update it at this same location and change the effective
+  date at the top. If a change meaningfully affects how cloud-save data is handled, we will say
+  so clearly.</p>
+
+  <h2>Contact</h2>
+  <p>Questions, deletion requests, or anything else about your data:<br>
+  <b>Email:</b> <a href="mailto:legops@gmail.com">legops@gmail.com</a></p>
+</main>
+</body>
+</html>

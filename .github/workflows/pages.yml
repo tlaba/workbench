@@ -41,6 +41,10 @@ jobs:
           cp retrofit3d/sw.js                     _site/retrofit3d/
           cp -r retrofit3d/icons                  _site/retrofit3d/
           cp -r retrofit3d/props                  _site/retrofit3d/
+          # Play Store compliance pages (privacy policy + account-deletion URL
+          # are declared in the Play Console and must resolve on the live site)
+          cp retrofit3d/privacy-policy.html       _site/retrofit3d/
+          cp retrofit3d/account-deletion.html     _site/retrofit3d/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -289,18 +289,29 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 #fmfloor::before{content:'';position:absolute;inset:0;
   background:linear-gradient(90deg,rgba(73,106,138,.07) 1px,transparent 1px) 0 0/24px 24px,
              linear-gradient(rgba(73,106,138,.07) 1px,transparent 1px) 0 0/24px 24px}
-.fm-m{position:absolute;transform:translate(-50%,-50%);text-align:center;cursor:pointer;z-index:2;border:none;background:none;padding:2px}
-.fm-dot{width:12px;height:12px;border-radius:50%;margin:0 auto 2px;background:var(--green);border:2px solid #16202b;box-shadow:0 0 0 1px #000a}
-.fm-m.util .fm-dot{border-radius:3px}
-.fm-m.warn .fm-dot{background:var(--amber)}
-.fm-m.bad .fm-dot{background:var(--red);animation:fmPulse 1s infinite}
-.fm-m .fm-c{font-family:var(--mono);font-size:9px;color:var(--dim);background:rgba(10,14,20,.78);border-radius:4px;padding:0 3px;white-space:nowrap;max-width:132px;overflow:hidden;text-overflow:ellipsis}
-.fm-n{opacity:.75;font-family:var(--sans)}
-.fm-m.limit .fm-c{color:var(--amber);font-weight:700}
-.fm-m.target .fm-dot{outline:2px dashed var(--cyan);outline-offset:2px}
-.fm-m:hover .fm-c{color:var(--ink)}
-.fm-tech{position:absolute;transform:translate(-50%,-50%);width:11px;height:11px;border-radius:50%;
-  background:var(--cyan);border:2px solid #fff;z-index:3;box-shadow:0 0 9px var(--cyan);pointer-events:none}
+.fm-svg{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
+.fm-belt{fill:none;stroke:#33475d;stroke-width:5;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.fm-ulink{stroke:#46617a;stroke-width:2;stroke-dasharray:3 4;vector-effect:non-scaling-stroke;opacity:.65}
+.fm-m{position:absolute;transform:translate(-50%,-50%);box-sizing:border-box;z-index:2;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;padding:1px 3px;overflow:hidden;
+  min-width:30px;min-height:19px;border-radius:7px;
+  background:#13351f;border:1.5px solid #2c7a48;box-shadow:0 3px 9px #0006;transition:filter .1s}
+.fm-m:hover,.fm-m:focus-visible{z-index:5}
+.fm-m.util{background:#2a2f14;border-color:#6e7a2c}
+.fm-m.warn{background:#3a2c12;border-color:#7a5a2c}
+.fm-m.bad{background:#3a1414;border-color:#7a2c2c;animation:fmPulse 1s infinite}
+.fm-m.limit{outline:2px solid var(--cyan);outline-offset:2px}
+.fm-m.target{box-shadow:0 0 0 2px var(--cyan),0 3px 9px #0006}
+.fm-m:hover,.fm-m:focus-visible{filter:brightness(1.18);outline:none}
+.fm-code{font-family:var(--mono);font-size:10px;font-weight:800;color:#eaf6ef;white-space:nowrap;letter-spacing:-.3px}
+.fm-m.util .fm-code{color:#e8e2a6} .fm-m.warn .fm-code{color:#ffdca6} .fm-m.bad .fm-code{color:#ffc2c2}
+.fm-m.limit .fm-code{color:var(--cyan)}
+.fm-name{position:absolute;transform:translate(-50%,7px);text-align:center;white-space:nowrap;z-index:2;
+  font-size:9px;color:var(--dim);pointer-events:none;text-shadow:0 1px 3px #000a}
+.fm-tech{position:absolute;transform:translate(-50%,-50%);width:15px;height:15px;border-radius:50%;
+  background:var(--cyan);border:3px solid #0e1620;z-index:4;pointer-events:none;
+  box-shadow:0 0 0 3px rgba(56,214,207,.28);animation:fmHere 1.6s infinite}
+@keyframes fmHere{0%,100%{box-shadow:0 0 0 3px rgba(56,214,207,.28)}55%{box-shadow:0 0 0 8px rgba(56,214,207,0)}}
 .fm-leg{font-size:9.5px;color:var(--dim);margin-top:7px;line-height:1.6}
 .fm-leg i{font-style:normal}
 @keyframes fmPulse{50%{box-shadow:0 0 0 6px rgba(255,90,90,.25)}}
@@ -376,7 +387,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
     <button id="acctbtn" title="Sign in to save progress to the cloud" aria-label="Cloud saves account">👤</button>
     <button id="homebtn" title="Choose plant" aria-label="Choose plant">🏭</button>
     <button id="mapbtn" title="Factory map (M)" aria-label="Factory map">🗺</button>
-    <div id="fmap" role="dialog" aria-label="Factory map"><div class="fm-head">🗺 FACTORY MAP — tap a machine to walk there<button class="x" id="fmapx" aria-label="Close map">×</button></div><div id="fmfloor"></div><div class="fm-leg">🟢 healthy · 🟡 known risk · 🔴 down (pulsing) · ◄ amber code = bottleneck · ⬛ square = utility · dashed = current job · <i style="color:var(--cyan)">●</i> you &nbsp;·&nbsp; keyboard <b>M</b></div></div>
+    <div id="fmap" role="dialog" aria-label="Factory map"><div class="fm-head">🗺 FACTORY MAP — tap a machine to walk there<button class="x" id="fmapx" aria-label="Close map">×</button></div><div id="fmfloor"></div><div class="fm-leg">🟩 healthy · 🟨 known risk · 🟥 down (pulsing) · ◄ cyan code = bottleneck · olive tile = utility (dashed feed) · cyan ring = current job · <i style="color:var(--cyan)">●</i> you are here &nbsp;·&nbsp; keyboard <b>M</b></div></div>
     <div id="planner"><div class="pl-head">📋 SHIFT PLANNER<button class="x" id="planx">×</button></div><div class="pl-body"></div></div>
     <div id="techchip">🔧 <b id="techstate">Idle</b><div id="techqueue"></div><div id="techbar"><div id="techfill"></div></div><div id="crewline"></div></div>
     <div id="joy"><div id="jnub"></div></div>
@@ -7236,25 +7247,63 @@ $('planx').onclick=()=>{ $('planner').classList.remove('open'); };
 function fmapRender(){
   const fl=$('fmfloor'); if(!fl || typeof MACH==='undefined' || !MACH || typeof HALL==='undefined') return;
   const W=HALL.w, D=HALL.d; fl.style.aspectRatio=W+' / '+D;
-  let h='';
+  // inset the layout a touch so wall-hugging machines never clip the floor edge;
+  // both the boxes and the SVG work in this same 0..100 padded space.
+  const PAD=5, SP=100-2*PAD;
+  const fxp=x=>(PAD+(x+W/2)/W*SP).toFixed(2), fyp=z=>(PAD+(z+D/2)/D*SP).toFixed(2);
+  // --- production-chain belt + dashed utility links (SVG, same padded % space,
+  //     so the whole layout is exactly to scale for any plant) ---
+  let lines='';
+  if(typeof CHAIN!=='undefined' && CHAIN){
+    const pts=CHAIN.map(id=>MACH[id]).filter(Boolean).map(m=>fxp(m.pos[0])+','+fyp(m.pos[1]));
+    if(pts.length>1) lines+='<polyline class="fm-belt" points="'+pts.join(' ')+'"/>';
+  }
+  for(const uid in MACH){ const u=MACH[uid]; if(!u.utility) continue;
+    let best=null,bd=1e9;                         // link each utility to its nearest line machine
+    for(const jid in MACH){ const j=MACH[jid]; if(j.utility) continue;
+      const dx=j.pos[0]-u.pos[0], dz=j.pos[1]-u.pos[1], dd=dx*dx+dz*dz; if(dd<bd){bd=dd;best=j;} }
+    if(best) lines+='<line class="fm-ulink" x1="'+fxp(u.pos[0])+'" y1="'+fyp(u.pos[1])+'" x2="'+fxp(best.pos[0])+'" y2="'+fyp(best.pos[1])+'"/>';
+  }
+  const svg='<svg class="fm-svg" viewBox="0 0 100 100" preserveAspectRatio="none">'+lines+'</svg>';
+  // --- machine footprint boxes, sized to the real hw/hd (rotation-aware). Labels
+  //     are the machine CODE (its real floor tag); the full name is on tap/hover. ---
+  let boxes='';
   for(const id in MACH){ const m=MACH[id];
     let mx=0; for(const c of m.ch){ if(c.reveal!=null && c.reveal>mx) mx=c.reveal; }
     let cls='fm-m'+(m.utility?' util':'');
     if(m.broken) cls+=' bad'; else if(mx>0.45) cls+=' warn';
     if(id===S.bottleneck) cls+=' limit';
     if(tech.busy && tech.job && tech.job.mid===id) cls+=' target';
-    h+='<button class="'+cls+'" data-m="'+id+'" aria-label="Walk to '+m.code+'"'
-      +' style="left:'+((m.pos[0]+W/2)/W*100).toFixed(2)+'%;top:'+((m.pos[1]+D/2)/D*100).toFixed(2)+'%">'
-      +'<div class="fm-dot"></div><div class="fm-c">'+(id===S.bottleneck?'◄ ':'')+m.code+(m.name?'<span class="fm-n"> — '+m.name+'</span>':'')+'</div></button>';
+    const rot=m.rot||0, ca=Math.abs(Math.cos(rot)), sa=Math.abs(Math.sin(rot));
+    const exW=(m.hw*ca+m.hd*sa)*2, exD=(m.hw*sa+m.hd*ca)*2;     // axis-aligned footprint
+    boxes+='<button class="'+cls+'" data-m="'+id+'" title="'+m.code+' — '+(m.name||'')+'" '
+      +'aria-label="Walk to '+m.code+(m.name?' ('+m.name+')':'')+'" '
+      +'style="left:'+fxp(m.pos[0])+'%;top:'+fyp(m.pos[1])+'%;width:'+(exW/W*SP).toFixed(2)+'%;height:'+(exD/D*SP).toFixed(2)+'%">'
+      +'<span class="fm-code">'+(id===S.bottleneck?'◄':'')+m.code+'</span></button>';
   }
-  // rebuild the machine nodes only when their state actually changed (rebuilding
-  // every tick would replace elements mid-tap); the tech dot moves every refresh
+  // tightest machine spacing → drives a uniform box size so packed plants stay
+  // readable (small boxes, no overlap) while sparse plants get roomy tiles
+  let gapMin=1e9; const _ids=Object.keys(MACH);
+  for(let i=0;i<_ids.length;i++){ const a=MACH[_ids[i]];
+    for(let j=i+1;j<_ids.length;j++){ const b=MACH[_ids[j]];
+      const dd=Math.hypot(a.pos[0]-b.pos[0], a.pos[1]-b.pos[1]); if(dd<gapMin) gapMin=dd; } }
+  if(!isFinite(gapMin)||gapMin<=0) gapMin=4;
+  const h=svg+boxes;
+  // rebuild nodes only when state actually changed (rebuilding every tick would
+  // replace elements mid-tap); the "you are here" dot moves every refresh
   if(fl._h!==h){ fl._h=h; fl.innerHTML=h+'<div class="fm-tech" style="display:none"></div>';
-    fl.querySelectorAll('.fm-m').forEach(el=>{ el.onclick=()=>{ fmapClose();
-      if(typeof walkTo==='function') walkTo(el.dataset.m, true); }; }); }
+    const fw=fl.clientWidth||340, pxM=fw/W;
+    const boxMin=Math.max(30,Math.min(58, gapMin*pxM*0.92)), boxH=Math.max(19,Math.min(26, boxMin*0.44));
+    fl.querySelectorAll('.fm-m').forEach(el=>{
+      el.onclick=()=>{ fmapClose(); if(typeof walkTo==='function') walkTo(el.dataset.m, true); };
+      el.style.minWidth=boxMin.toFixed(0)+'px'; el.style.minHeight=boxH.toFixed(0)+'px';
+      const cd=el.querySelector('.fm-code');       // shrink the code to fit its box; never truncate
+      if(cd){ const bw=Math.max(el.clientWidth, boxMin)-6, n=(cd.textContent.length||1);
+        cd.style.fontSize=Math.max(6.5,Math.min(11, bw/(n*0.6))).toFixed(1)+'px'; }
+    }); }
   const td=fl.querySelector('.fm-tech');
   if(td && typeof CH!=='undefined' && CH && CH.p){ td.style.display='block';
-    td.style.left=((CH.p.x+W/2)/W*100).toFixed(2)+'%'; td.style.top=((CH.p.z+D/2)/D*100).toFixed(2)+'%'; }
+    td.style.left=fxp(CH.p.x)+'%'; td.style.top=fyp(CH.p.z)+'%'; }
 }
 let _fmapIv=null;
 function fmapOpen(){ if(HEADLESS) return; const f=$('fmap'); if(!f) return;

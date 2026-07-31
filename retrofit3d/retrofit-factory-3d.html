@@ -285,36 +285,23 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 #fmap.open{display:block}
 .fm-head{display:flex;align-items:center;font-size:10px;color:var(--dim);letter-spacing:.6px;font-weight:700;padding:0 1px 7px}
 .fm-head .x{margin-left:auto;background:none;border:none;color:var(--dim);font-size:16px;cursor:pointer}
-#fmfloor{position:relative;background:#10161d;border:1px solid #26313d;border-radius:8px;width:100%;overflow:hidden}
-#fmfloor::before{content:'';position:absolute;inset:0;
-  background:linear-gradient(90deg,rgba(73,106,138,.07) 1px,transparent 1px) 0 0/24px 24px,
-             linear-gradient(rgba(73,106,138,.07) 1px,transparent 1px) 0 0/24px 24px}
-.fm-svg{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
-.fm-belt{fill:none;stroke:#33475d;stroke-width:5;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
-.fm-ulink{stroke:#46617a;stroke-width:2;stroke-dasharray:3 4;vector-effect:non-scaling-stroke;opacity:.65}
-.fm-m{position:absolute;transform:translate(-50%,-50%);box-sizing:border-box;z-index:2;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;padding:1px 3px;overflow:hidden;
-  min-width:30px;min-height:19px;border-radius:7px;
-  background:#13351f;border:1.5px solid #2c7a48;box-shadow:0 3px 9px #0006;transition:filter .1s}
-.fm-m:hover,.fm-m:focus-visible{z-index:5}
-.fm-m.util{background:#2a2f14;border-color:#6e7a2c}
-.fm-m.warn{background:#3a2c12;border-color:#7a5a2c}
-.fm-m.bad{background:#3a1414;border-color:#7a2c2c;animation:fmPulse 1s infinite}
-.fm-m.limit{outline:2px solid var(--cyan);outline-offset:2px}
-.fm-m.target{box-shadow:0 0 0 2px var(--cyan),0 3px 9px #0006}
-.fm-m:hover,.fm-m:focus-visible{filter:brightness(1.18);outline:none}
-.fm-code{font-family:var(--mono);font-size:10px;font-weight:800;color:#eaf6ef;white-space:nowrap;letter-spacing:-.3px}
-.fm-m.util .fm-code{color:#e8e2a6} .fm-m.warn .fm-code{color:#ffdca6} .fm-m.bad .fm-code{color:#ffc2c2}
-.fm-m.limit .fm-code{color:var(--cyan)}
-.fm-name{position:absolute;transform:translate(-50%,7px);text-align:center;white-space:nowrap;z-index:2;
-  font-size:9px;color:var(--dim);pointer-events:none;text-shadow:0 1px 3px #000a}
-.fm-tech{position:absolute;transform:translate(-50%,-50%);width:15px;height:15px;border-radius:50%;
-  background:var(--cyan);border:3px solid #0e1620;z-index:4;pointer-events:none;
-  box-shadow:0 0 0 3px rgba(56,214,207,.28);animation:fmHere 1.6s infinite}
-@keyframes fmHere{0%,100%{box-shadow:0 0 0 3px rgba(56,214,207,.28)}55%{box-shadow:0 0 0 8px rgba(56,214,207,0)}}
-.fm-leg{font-size:9.5px;color:var(--dim);margin-top:7px;line-height:1.6}
+#fmfloor{position:relative;border:1px solid #31363a;border-radius:8px;width:100%;overflow:hidden;background:#23272b}
+.fm-svg{display:block;width:100%;height:100%}
+.fm-hit{position:absolute;transform:translate(-50%,-50%);z-index:3;cursor:pointer;
+  background:none;border:none;min-width:34px;min-height:30px;border-radius:8px;padding:0}
+.fm-hit:hover,.fm-hit:focus-visible{outline:2px solid rgba(56,214,207,.65);outline-offset:-2px}
+#fmlist{margin-top:7px;display:grid;grid-template-columns:1fr 1fr;gap:1px 10px}
+.fm-row{display:flex;align-items:center;gap:5px;background:none;border:none;padding:1px 3px;cursor:pointer;
+  font-size:9.5px;color:#b7c5d3;text-align:left;border-radius:5px;min-width:0}
+.fm-row:hover,.fm-row:focus-visible{background:#1c2836;outline:none}
+.fm-row .n{flex:0 0 auto;width:13px;height:13px;border-radius:3px;font-family:var(--mono);font-size:8.5px;
+  font-weight:800;display:flex;align-items:center;justify-content:center;color:#0b0f14}
+.fm-row .cd{font-family:var(--mono);font-weight:700;color:#d6e2ec;white-space:nowrap}
+.fm-row.limit .cd{color:var(--cyan)}
+.fm-row.bad .cd{color:#ffb3ab}
+.fm-row .nm{color:var(--dim);font-size:8.8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fm-leg{font-size:9px;color:var(--dim);margin-top:6px;line-height:1.55}
 .fm-leg i{font-style:normal}
-@keyframes fmPulse{50%{box-shadow:0 0 0 6px rgba(255,90,90,.25)}}
 
 @media (max-width:520px), (pointer:coarse){
   .spd{width:44px;height:38px;font-size:13px;border-radius:8px}
@@ -387,7 +374,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
     <button id="acctbtn" title="Sign in to save progress to the cloud" aria-label="Cloud saves account">👤</button>
     <button id="homebtn" title="Choose plant" aria-label="Choose plant">🏭</button>
     <button id="mapbtn" title="Factory map (M)" aria-label="Factory map">🗺</button>
-    <div id="fmap" role="dialog" aria-label="Factory map"><div class="fm-head">🗺 FACTORY MAP — tap a machine to walk there<button class="x" id="fmapx" aria-label="Close map">×</button></div><div id="fmfloor"></div><div class="fm-leg">🟩 healthy · 🟨 known risk · 🟥 down (pulsing) · ◄ cyan code = bottleneck · olive tile = utility (dashed feed) · cyan ring = current job · <i style="color:var(--cyan)">●</i> you are here &nbsp;·&nbsp; keyboard <b>M</b></div></div>
+    <div id="fmap" role="dialog" aria-label="Factory map"><div class="fm-head">🗺 FACTORY MAP — tap a machine to walk there<button class="x" id="fmapx" aria-label="Close map">×</button></div><div id="fmfloor"></div><div id="fmlist"></div><div class="fm-leg">numbers follow the production flow · <i style="color:var(--green)">●</i> healthy · <i style="color:var(--amber)">●</i> known risk · <i style="color:var(--red)">●</i> down · <i style="color:var(--cyan)">◄</i> cyan frame = bottleneck · dashed frame = current job · olive block = utility · <i style="color:var(--cyan)">●</i> you are here &nbsp;·&nbsp; keyboard <b>M</b></div></div>
     <div id="planner"><div class="pl-head">📋 SHIFT PLANNER<button class="x" id="planx">×</button></div><div class="pl-body"></div></div>
     <div id="techchip">🔧 <b id="techstate">Idle</b><div id="techqueue"></div><div id="techbar"><div id="techfill"></div></div><div id="crewline"></div></div>
     <div id="joy"><div id="jnub"></div></div>
@@ -7246,64 +7233,82 @@ $('planx').onclick=()=>{ $('planner').classList.remove('open'); };
    handles the hands-full case). Refreshes ~1.4x/s only while open. ---- */
 function fmapRender(){
   const fl=$('fmfloor'); if(!fl || typeof MACH==='undefined' || !MACH || typeof HALL==='undefined') return;
-  const W=HALL.w, D=HALL.d; fl.style.aspectRatio=W+' / '+D;
-  // inset the layout a touch so wall-hugging machines never clip the floor edge;
-  // both the boxes and the SVG work in this same 0..100 padded space.
-  const PAD=5, SP=100-2*PAD;
-  const fxp=x=>(PAD+(x+W/2)/W*SP).toFixed(2), fyp=z=>(PAD+(z+D/2)/D*SP).toFixed(2);
-  // --- production-chain belt + dashed utility links (SVG, same padded % space,
-  //     so the whole layout is exactly to scale for any plant) ---
-  let lines='';
-  if(typeof CHAIN!=='undefined' && CHAIN){
-    const pts=CHAIN.map(id=>MACH[id]).filter(Boolean).map(m=>fxp(m.pos[0])+','+fyp(m.pos[1]));
-    if(pts.length>1) lines+='<polyline class="fm-belt" points="'+pts.join(' ')+'"/>';
-  }
-  for(const uid in MACH){ const u=MACH[uid]; if(!u.utility) continue;
-    let best=null,bd=1e9;                         // link each utility to its nearest line machine
-    for(const jid in MACH){ const j=MACH[jid]; if(j.utility) continue;
-      const dx=j.pos[0]-u.pos[0], dz=j.pos[1]-u.pos[1], dd=dx*dx+dz*dz; if(dd<bd){bd=dd;best=j;} }
-    if(best) lines+='<line class="fm-ulink" x1="'+fxp(u.pos[0])+'" y1="'+fyp(u.pos[1])+'" x2="'+fxp(best.pos[0])+'" y2="'+fyp(best.pos[1])+'"/>';
-  }
-  const svg='<svg class="fm-svg" viewBox="0 0 100 100" preserveAspectRatio="none">'+lines+'</svg>';
-  // --- machine footprint boxes, sized to the real hw/hd (rotation-aware). Labels
-  //     are the machine CODE (its real floor tag); the full name is on tap/hover. ---
-  let boxes='';
-  for(const id in MACH){ const m=MACH[id];
+  const W=HALL.w, D=HALL.d, PAD=2, VW=W+2*PAD, VD=D+2*PAD;
+  fl.style.aspectRatio=VW+' / '+VD;
+  const px=x=>((x+W/2+PAD)/VW*100).toFixed(2), py=z=>((z+D/2+PAD)/VD*100).toFixed(2);
+  // machines in flow order (chain first, utilities after) so the numbers mean something
+  const ids=[]; if(typeof CHAIN!=='undefined' && CHAIN) for(const id of CHAIN) if(MACH[id]) ids.push(id);
+  for(const id in MACH) if(ids.indexOf(id)<0) ids.push(id);
+  const col={ok:'#3ad17a',warn:'#ffb23e',bad:'#ff5a5a'}, st={};
+  for(const id of ids){ const m=MACH[id];
     let mx=0; for(const c of m.ch){ if(c.reveal!=null && c.reveal>mx) mx=c.reveal; }
-    let cls='fm-m'+(m.utility?' util':'');
-    if(m.broken) cls+=' bad'; else if(mx>0.45) cls+=' warn';
-    if(id===S.bottleneck) cls+=' limit';
-    if(tech.busy && tech.job && tech.job.mid===id) cls+=' target';
-    const rot=m.rot||0, ca=Math.abs(Math.cos(rot)), sa=Math.abs(Math.sin(rot));
-    const exW=(m.hw*ca+m.hd*sa)*2, exD=(m.hw*sa+m.hd*ca)*2;     // axis-aligned footprint
-    boxes+='<button class="'+cls+'" data-m="'+id+'" title="'+m.code+' — '+(m.name||'')+'" '
-      +'aria-label="Walk to '+m.code+(m.name?' ('+m.name+')':'')+'" '
-      +'style="left:'+fxp(m.pos[0])+'%;top:'+fyp(m.pos[1])+'%;width:'+(exW/W*SP).toFixed(2)+'%;height:'+(exD/D*SP).toFixed(2)+'%">'
-      +'<span class="fm-code">'+(id===S.bottleneck?'◄':'')+m.code+'</span></button>';
+    st[id]=m.broken?'bad':(mx>0.45?'warn':'ok'); }
+  const line=ids.filter(id=>!MACH[id].utility).map(id=>MACH[id]);
+  // --- the floor itself: concrete slab with joints, ceiling light pools,
+  //     painted aisle stripe, hall walls — all in metre units so it's to scale ---
+  let s='<defs>'
+   +'<linearGradient id="fmconc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a5f63"/><stop offset=".5" stop-color="#4e5459"/><stop offset="1" stop-color="#565b60"/></linearGradient>'
+   +'<radialGradient id="fmlite" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".14"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>'
+   +'<filter id="fmsh" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy=".35" stdDeviation=".3" flood-color="#000" flood-opacity=".55"/></filter>'
+   +'<filter id="fmgl" x="-70%" y="-70%" width="240%" height="240%"><feGaussianBlur stdDeviation=".55" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
+   +'</defs>'
+   +'<rect x="'+(-W/2-PAD)+'" y="'+(-D/2-PAD)+'" width="'+VW+'" height="'+VD+'" fill="#23272b"/>'
+   +'<rect x="'+(-W/2)+'" y="'+(-D/2)+'" width="'+W+'" height="'+D+'" fill="url(#fmconc)"/>';
+  s+='<g stroke="#2f3438" stroke-opacity=".55" stroke-width=".1">';
+  for(let gx=Math.ceil(-W/10)*5; gx<=W/2; gx+=5) s+='<line x1="'+gx+'" y1="'+(-D/2)+'" x2="'+gx+'" y2="'+(D/2)+'"/>';
+  for(let gz=Math.ceil(-D/10)*5; gz<=D/2; gz+=5) s+='<line x1="'+(-W/2)+'" y1="'+gz+'" x2="'+(W/2)+'" y2="'+gz+'"/>';
+  s+='</g>';
+  for(let lx=-W/2+W/6; lx<W/2; lx+=W/3) for(let lz=-D/2+D/4; lz<D/2; lz+=D/2)
+    s+='<ellipse cx="'+lx.toFixed(1)+'" cy="'+lz.toFixed(1)+'" rx="'+(W/7).toFixed(1)+'" ry="'+(D/5).toFixed(1)+'" fill="url(#fmlite)"/>';
+  if(line.length){
+    const ly=Math.max.apply(null,line.map(m=>m.pos[1]+m.hd))+1.6;
+    if(ly<D/2-1){
+      s+='<rect x="'+(-W/2+1)+'" y="'+(ly-.22).toFixed(2)+'" width="'+(W-2)+'" height=".44" fill="#c9a52e" opacity=".5"/>';
+      if(ly+1.6<D/2-1) s+='<rect x="'+(-W/2+1)+'" y="'+(ly+1.6).toFixed(2)+'" width="'+(W-2)+'" height=".2" fill="#c9a52e" opacity=".25"/>';
+    }
   }
-  // tightest machine spacing → drives a uniform box size so packed plants stay
-  // readable (small boxes, no overlap) while sparse plants get roomy tiles
-  let gapMin=1e9; const _ids=Object.keys(MACH);
-  for(let i=0;i<_ids.length;i++){ const a=MACH[_ids[i]];
-    for(let j=i+1;j<_ids.length;j++){ const b=MACH[_ids[j]];
-      const dd=Math.hypot(a.pos[0]-b.pos[0], a.pos[1]-b.pos[1]); if(dd<gapMin) gapMin=dd; } }
-  if(!isFinite(gapMin)||gapMin<=0) gapMin=4;
-  const h=svg+boxes;
-  // rebuild nodes only when state actually changed (rebuilding every tick would
-  // replace elements mid-tap); the "you are here" dot moves every refresh
-  if(fl._h!==h){ fl._h=h; fl.innerHTML=h+'<div class="fm-tech" style="display:none"></div>';
-    const fw=fl.clientWidth||340, pxM=fw/W;
-    const boxMin=Math.max(30,Math.min(58, gapMin*pxM*0.92)), boxH=Math.max(19,Math.min(26, boxMin*0.44));
-    fl.querySelectorAll('.fm-m').forEach(el=>{
-      el.onclick=()=>{ fmapClose(); if(typeof walkTo==='function') walkTo(el.dataset.m, true); };
-      el.style.minWidth=boxMin.toFixed(0)+'px'; el.style.minHeight=boxH.toFixed(0)+'px';
-      const cd=el.querySelector('.fm-code');       // shrink the code to fit its box; never truncate
-      if(cd){ const bw=Math.max(el.clientWidth, boxMin)-6, n=(cd.textContent.length||1);
-        cd.style.fontSize=Math.max(6.5,Math.min(11, bw/(n*0.6))).toFixed(1)+'px'; }
-    }); }
-  const td=fl.querySelector('.fm-tech');
-  if(td && typeof CH!=='undefined' && CH && CH.p){ td.style.display='block';
-    td.style.left=fxp(CH.p.x)+'%'; td.style.top=fyp(CH.p.z)+'%'; }
+  s+='<rect x="'+(-W/2)+'" y="'+(-D/2)+'" width="'+W+'" height="'+D+'" fill="none" stroke="#31363a" stroke-width=".6"/>';
+  if(typeof CHAIN!=='undefined' && CHAIN){
+    const bp=CHAIN.map(id=>MACH[id]).filter(Boolean).map(m=>m.pos[0]+','+m.pos[1]).join(' ');
+    s+='<polyline points="'+bp+'" fill="none" stroke="#3c4247" stroke-width=".85" stroke-linejoin="round" stroke-linecap="round"/>'
+      +'<polyline points="'+bp+'" fill="none" stroke="#6f777d" stroke-width=".2" stroke-dasharray=".6 .7"/>';
+  }
+  // --- machines: real footprints (rotation-aware), tinted steel with drop shadows;
+  //     status shows as a coloured glow so a block still reads as a machine ---
+  let hits='', rows='';
+  ids.forEach((id,idx)=>{
+    const m=MACH[id], n=idx+1, s0=st[id], c=col[s0];
+    const rot=m.rot||0, ca=Math.abs(Math.cos(rot)), sa=Math.abs(Math.sin(rot));
+    const hw=m.hw*ca+m.hd*sa, hd=m.hw*sa+m.hd*ca;
+    const bn=(id===S.bottleneck), tg=(tech.busy && tech.job && tech.job.mid===id);
+    if(s0!=='ok') s+='<rect x="'+(m.pos[0]-hw-.5)+'" y="'+(m.pos[1]-hd-.5)+'" width="'+(hw*2+1)+'" height="'+(hd*2+1)+'" rx=".6" fill="'+c+'" opacity=".3" filter="url(#fmgl)"/>';
+    s+='<g filter="url(#fmsh)">'
+      +'<rect x="'+(m.pos[0]-hw)+'" y="'+(m.pos[1]-hd)+'" width="'+(hw*2)+'" height="'+(hd*2)+'" rx=".25" fill="'+(m.utility?'#6e6a52':'#7d848b')+'" stroke="#2b3034" stroke-width=".14"/>'
+      +'<rect x="'+(m.pos[0]-hw+.18)+'" y="'+(m.pos[1]-hd+.18)+'" width="'+(hw*2-.36)+'" height="'+(hd*.7)+'" rx=".14" fill="#fff" fill-opacity=".07"/></g>';
+    if(bn) s+='<rect x="'+(m.pos[0]-hw-.35)+'" y="'+(m.pos[1]-hd-.35)+'" width="'+(hw*2+.7)+'" height="'+(hd*2+.7)+'" rx=".4" fill="none" stroke="#38d6cf" stroke-width=".22"/>';
+    if(tg) s+='<rect x="'+(m.pos[0]-hw-.75)+'" y="'+(m.pos[1]-hd-.75)+'" width="'+(hw*2+1.5)+'" height="'+(hd*2+1.5)+'" rx=".55" fill="none" stroke="#38d6cf" stroke-width=".16" stroke-dasharray=".6 .45"/>';
+    s+='<circle cx="'+m.pos[0]+'" cy="'+m.pos[1]+'" r=".92" fill="#181c1f" fill-opacity=".88"/>'
+      +'<text x="'+m.pos[0]+'" y="'+(m.pos[1]+.38).toFixed(2)+'" text-anchor="middle" font-size="1.15" font-weight="800" fill="'+c+'" font-family="ui-monospace,Menlo,Consolas,monospace">'+n+'</text>';
+    hits+='<button class="fm-hit" data-m="'+id+'" title="'+m.code+' — '+(m.name||'')+'" '
+      +'aria-label="Walk to '+m.code+(m.name?' ('+m.name+')':'')+'" '
+      +'style="left:'+px(m.pos[0])+'%;top:'+py(m.pos[1])+'%;width:'+(hw*2/VW*100).toFixed(2)+'%;height:'+(hd*2/VD*100).toFixed(2)+'%"></button>';
+    rows+='<button class="fm-row'+(bn?' limit':'')+(s0==='bad'?' bad':'')+'" data-m="'+id+'">'
+      +'<span class="n" style="background:'+c+'">'+n+'</span>'
+      +'<span class="cd">'+m.code+'</span><span class="nm">'+(bn?'◄ ':'')+(m.name||'')+'</span></button>';
+  });
+  s+='<g id="fmyou"><circle r="1.05" fill="#38d6cf" opacity=".3" filter="url(#fmgl)"/><circle r=".6" fill="#38d6cf" stroke="#12161a" stroke-width=".22"/></g>';
+  const svg='<svg class="fm-svg" viewBox="'+(-W/2-PAD)+' '+(-D/2-PAD)+' '+VW+' '+VD+'">'+s+'</svg>';
+  const h=svg+hits+rows;
+  // rebuild only when state actually changed (rebuilding every tick would replace
+  // elements mid-tap); the "you are here" marker moves every refresh regardless
+  if(fl._h!==h){ fl._h=h; fl.innerHTML=svg+hits;
+    const ls=$('fmlist'); if(ls) ls.innerHTML=rows;
+    document.querySelectorAll('#fmfloor .fm-hit, #fmlist .fm-row').forEach(el=>{
+      el.onclick=()=>{ fmapClose(); if(typeof walkTo==='function') walkTo(el.dataset.m, true); }; });
+  }
+  const you=fl.querySelector('#fmyou');
+  if(you && typeof CH!=='undefined' && CH && CH.p)
+    you.setAttribute('transform','translate('+CH.p.x.toFixed(2)+' '+CH.p.z.toFixed(2)+')');
 }
 let _fmapIv=null;
 function fmapOpen(){ if(HEADLESS) return; const f=$('fmap'); if(!f) return;
